@@ -1,4 +1,5 @@
 # ecg-criticality-psychiatry-pilot
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21794970.svg)](https://doi.org/10.5281/zenodo.21794970)
 
 Analysis code for a pilot study of cardiac autonomic complexity in treated psychiatric inpatients.
 
@@ -6,7 +7,7 @@ The study compares 30 healthy controls against 30 hospitalized psychiatric patie
 
 The primary finding is an elevated power-spectral scaling exponent (PSD β) in the patient group.
 
-**Status:** manuscript in preparation. Preprint and DOI links will be added here on posting.
+**Status:** manuscript in preparation. Code archived at [10.5281/zenodo.21794970](https://doi.org/10.5281/zenodo.21794970).
 
 ## Requirements
 
@@ -106,7 +107,7 @@ The classifier result in `results/Classification_Summary_NestedCV.csv` uses feat
 
 If you use this code, please cite the software archive:
 
-> Smith, C. (2026). ecg-criticality-psychiatry-pilot (v1.0.0). Zenodo. [DOI pending]
+> Smith, C. (2026). ecg-criticality-psychiatry-pilot (v1.0.0). Zenodo.(https://doi.org/10.5281/zenodo.21794970)
 
 Please also cite the source dataset:
 
