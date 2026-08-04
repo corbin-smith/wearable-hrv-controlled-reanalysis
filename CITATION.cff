@@ -14,7 +14,7 @@ version: "1.0.0"
 date-released: "2026-07-11"   # EDIT to the date you cut the release
 license: MIT
 repository-code: "https://github.com/corbin-smith/ecg-criticality-psychiatry-pilot"
-# doi: "10.5281/zenodo.XXXXXXX"   # UNCOMMENT and fill in after Zenodo mints it
+wdoi: "10.5281/zenodo.21794970"  
 keywords:
   - heart rate variability
   - cardiac autonomic complexity
