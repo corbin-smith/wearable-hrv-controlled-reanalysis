@@ -1,0 +1,31 @@
+Metric,Shapiro_p_Healthy,Shapiro_p_Psych,Healthy_Normal,Psych_Normal,Levene_p,Equal_Variance,Recommended_Test
+Mean NN (ms),0.5515,0.0336,True,False,0.3198,True,Nonparametric (Mann-Whitney U) preferred
+SDNN (ms),0.0019,0.0639,False,True,0.7013,True,Nonparametric (Mann-Whitney U) preferred
+RMSSD (ms),0.4972,0.0101,True,False,0.3133,True,Nonparametric (Mann-Whitney U) preferred
+pNN50 (%),0.0002,0.0000,False,False,0.0005,False,Nonparametric (Mann-Whitney U) preferred
+Mean HR (bpm),0.8252,0.6838,True,True,0.9572,True,Parametric (Welch t) valid
+SD1 (ms),0.4972,0.0101,True,False,0.3133,True,Nonparametric (Mann-Whitney U) preferred
+SD2 (ms),0.0017,0.0588,False,True,0.6996,True,Nonparametric (Mann-Whitney U) preferred
+SD1/SD2,0.2744,0.4441,True,True,0.2806,True,Parametric (Welch t) valid
+LF Power (ms²),0.0729,0.0000,True,False,0.0065,False,Nonparametric (Mann-Whitney U) preferred
+HF Power (ms²),0.0269,0.0001,False,False,0.0351,False,Nonparametric (Mann-Whitney U) preferred
+Total Power (ms²),0.1322,0.0002,True,False,0.0043,False,Nonparametric (Mann-Whitney U) preferred
+LF/HF Ratio,0.0008,0.1420,False,True,0.4784,True,Nonparametric (Mann-Whitney U) preferred
+PSD β,0.0837,0.3135,True,True,0.0122,False,Parametric (Welch t) valid
+Sample Entropy,0.8874,0.8630,True,True,0.7440,True,Parametric (Welch t) valid
+Approx. Entropy,0.6456,0.9554,True,True,0.4704,True,Parametric (Welch t) valid
+Permutation Entropy,0.0022,0.0070,False,False,0.6761,True,Nonparametric (Mann-Whitney U) preferred
+MSE Mean,0.1484,0.7478,True,True,0.9569,True,Parametric (Welch t) valid
+DFA α (full),0.0620,0.6322,True,True,0.0415,False,Parametric (Welch t) valid
+DFA α₁ (4–16),0.9028,0.0806,True,True,0.0088,False,Parametric (Welch t) valid
+DFA α₂ (16–64),0.1971,0.7528,True,True,0.0146,False,Parametric (Welch t) valid
+MFDFA Δh (width),0.5868,0.0000,True,False,0.1299,True,Nonparametric (Mann-Whitney U) preferred
+MFDFA H̅ (mean),0.2427,0.0002,True,False,0.2386,True,Nonparametric (Mann-Whitney U) preferred
+MFDFA Asymmetry,0.0770,0.0000,True,False,0.1306,True,Nonparametric (Mann-Whitney U) preferred
+MFDFA H(q=2),0.0115,0.8591,False,True,0.3298,True,Nonparametric (Mann-Whitney U) preferred
+RQA Recurrence,0.0002,0.0372,False,False,0.2439,True,Nonparametric (Mann-Whitney U) preferred
+RQA Determinism,0.7319,0.5758,True,True,0.5616,True,Parametric (Welch t) valid
+RQA Laminarity,0.4848,0.1104,True,True,0.7019,True,Parametric (Welch t) valid
+RNA Mean Degree,0.0000,0.0000,False,False,0.0013,False,Nonparametric (Mann-Whitney U) preferred
+RNA Clustering Coeff,0.1712,0.0432,True,False,0.0162,False,Nonparametric (Mann-Whitney U) preferred
+RNA Transitivity,0.0000,0.0136,False,False,0.1858,True,Nonparametric (Mann-Whitney U) preferred
