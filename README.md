@@ -1,110 +1,126 @@
-# Cardiac Autonomic Complexity in Treated Psychotic-Spectrum Disorders — Pilot Analysis Code
+# ecg-criticality-psychiatry-pilot
 
-<!-- After you mint the Zenodo DOI, uncomment and fill in the badge below:
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
--->
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Analysis code for a pilot study of cardiac autonomic complexity in treated psychiatric inpatients.
 
-This repository holds the complete analysis code for a **self-directed computational pilot study** testing whether measures of *cardiac autonomic complexity* — the moment-to-moment structure in the timing of heartbeats — differ between healthy volunteers and **treated, hospitalized psychotic-spectrum inpatients**, using only publicly available data.
+The study compares 30 healthy controls against 30 hospitalized psychiatric patients using R-R interval data from the HRV-ACC dataset (Książek et al., 2023). Both groups were recorded on the same Polar H10 hardware under the same protocol, which removes cross-device confounds by design. A second control group from the MIT-BIH Normal Sinus Rhythm database is included as a supplementary cross-device check.
 
-> **What this is, honestly.** This is a proof-of-concept pilot on public datasets, not a clinical tool and not a landmark result. Every subject in the patient group is already medicated and hospitalized, there is no symptom-level or longitudinal data, and the sample is small (30 vs. 30). The point of the work is to demonstrate that these methods can be applied rigorously and to see whether any signal is worth pursuing in a larger, mentored study — not to diagnose anyone. The code and write-up are deliberately conservative about what the numbers mean.
+The primary finding is an elevated power-spectral scaling exponent (PSD β) in the patient group.
 
----
+**Status:** manuscript in preparation. Preprint and DOI links will be added here on posting.
 
-## What the study looks at, in plain language
+## Requirements
 
-Every heartbeat is separated from the next by a tiny, constantly-changing gap. If you write down all those gaps in order, you get a wiggly sequence of numbers. Decades of research show that the *pattern* of that wiggle — not just the average heart rate — carries information about how the nervous system is regulating the heart. This project measures that pattern in several complementary ways (spectral slope, fractal scaling, several kinds of "entropy," recurrence structure, and so on) and asks a single question: do those pattern-measures differ, on average, between the two groups?
+Python 3.14.5. Install dependencies with:
 
-A few design choices were made specifically to keep the comparison fair:
-
-- **Same hardware for both groups.** Both cohorts were recorded on the same Polar H10 chest strap, so a difference between groups can't be blamed on different devices.
-- **An activity check.** The recordings include a walk, and movement can distort some measures. `accelerometer_mobility.py` measures how much each person actually moved and tests whether the main finding survives after accounting for it.
-- **An honest classifier.** A separate script (`nested_classifier.py`) checks how well the measures can tell the two groups apart *without cheating* — see its header for what "cheating" (data leakage) means and how it's avoided.
-
----
-
-## Repository contents
-
-| File | What it does (plain language) |
-|------|-------------------------------|
-| `pipeline.py` | The engine. Every analysis function lives here — it turns one person's heartbeat file into their full set of complexity measures. The other scripts import from it. |
-| `healthy_hrvacc.py` | Runs the pipeline over the **control** group of the primary (HRV-ACC) dataset. |
-| `psych_hrvacc.py` | Runs the pipeline over the **patient** group of the primary dataset. |
-| `healthy.py` | Runs the pipeline over a second, supplementary healthy set (MIT-BIH Normal Sinus Rhythm) recorded on *different* hardware, used only as a cross-device sanity check. |
-| `comparison.py` | Takes the per-person results and does the group statistics: effect sizes, the spectral-slope covariate analysis, MFDFA, recurrence-network measures, surrogate testing, and the metric-to-metric correlation tables. |
-| `accelerometer_mobility.py` | Measures physical movement from the built-in accelerometer and tests whether the main spectral-slope difference survives after removing the influence of movement (and heart rate and vagal power). Independent re-implementation of the dataset authors' method. |
-| `nested_classifier.py` | The leakage-free (honest) classifier: how well the measures separate the two groups when the model is never allowed to peek at the person it's being tested on. |
-| `figures.py` | Rebuilds the manuscript figures from the result tables. |
-| `results/` | The summary tables produced by the analysis, included so a reader can check the reported numbers without re-running everything. See `results/README.md`. |
-| `DATA_SETUP.md` | How to obtain the raw data (it is **not** included here) and where to put it. |
-| `download_data.py` | Convenience helper that downloads the supplementary MIT-BIH data automatically and gives step-by-step instructions for the primary dataset. |
-
----
-
-## Data availability
-
-The raw recordings are **not distributed in this repository** — they belong to the original dataset authors, and this project simply points you to the same public sources. See **[`DATA_SETUP.md`](DATA_SETUP.md)** for exact download links and the folder layout the scripts expect. In brief:
-
-- **Primary — HRV-ACC dataset** (Książek et al., 2023): Zenodo, DOI [10.5281/zenodo.8171266](https://doi.org/10.5281/zenodo.8171266). Contains both cohorts' heartbeat and accelerometer data.
-- **Supplementary — MIT-BIH Normal Sinus Rhythm database:** PhysioNet ([`nsrdb`](https://physionet.org/content/nsrdb/)).
-
----
-
-## Installation
-
-You need Python (this was developed and tested on **Python 3.14.5**). From a terminal:
-
-```bash
-# 1. Get the code
-git clone https://github.com/YOUR-USERNAME/ecg-criticality-psychiatry-pilot.git
-cd ecg-criticality-psychiatry-pilot
-
-# 2. (Recommended) make an isolated environment so these package versions
-#    don't collide with anything else on your machine
-python -m venv .venv
-source .venv/bin/activate        # on Windows: .venv\Scripts\activate
-
-# 3. Install the exact library versions used for the study
+```
 pip install -r requirements.txt
 ```
 
----
+Main libraries: NumPy, SciPy, pandas, matplotlib, NeuroKit2, WFDB.
 
-## How to run
+## Data
 
-First set up the data (see `DATA_SETUP.md`), then run the scripts **in this order**, because later steps read files the earlier ones produce:
+Raw recordings are not included in this repository. Both datasets are public and must be downloaded separately.
 
-```bash
-python healthy_hrvacc.py        # 1. control cohort  -> ecg_results_HealthyACC.csv
-python psych_hrvacc.py          # 2. patient cohort  -> ecg_results_Psychiatric.csv
-python healthy.py               # 3. (optional) supplementary MIT-BIH cross-device set
-python comparison.py            # 4. group statistics + all the summary tables
-python accelerometer_mobility.py# 5. activity-confound check on the main finding
-python nested_classifier.py     # 6. honest (leakage-free) classifier
-python figures.py               # 7. manuscript figures
+See `DATA_SETUP.md` for instructions, or run:
+
+```
+python download_data.py
 ```
 
-Each script writes into an `outputs/` folder (created automatically). Step 4 must come before step 7, because the figures are drawn from the tables step 4 produces.
+Expected folder layout after download:
 
----
+```
+Control ECGs/           control_N.csv       (HRV-ACC controls)
+Psychiatric ECGs/       treatment_N.csv     (HRV-ACC patients)
+Accelerometer ECGs/     control_N.csv, treatment_N.csv
+```
 
-## How to cite
+MIT-BIH records are fetched by `healthy.py` through the WFDB package and need no manual setup.
 
-If this code is useful to you, please cite **both** the manuscript and this repository. A machine-readable citation is in [`CITATION.cff`](CITATION.cff).
+## Files
 
-- **Manuscript:** *(add full reference / preprint DOI once posted)*
-- **Code:** Smith, C. (2026). *Cardiac autonomic complexity in treated psychotic-spectrum disorders — pilot analysis code* (v1.0.0). Zenodo. *(add DOI once minted)*
+| File | Purpose |
+|---|---|
+| `pipeline.py` | Shared analysis functions. Artifact rejection, spectral analysis, complexity metrics, surrogate testing. Imported by the cohort scripts. |
+| `healthy_hrvacc.py` | Runs the pipeline on the 30 HRV-ACC controls. |
+| `psych_hrvacc.py` | Runs the pipeline on the 30 HRV-ACC patients. Mirrors `healthy_hrvacc.py` exactly. |
+| `healthy.py` | Runs the pipeline on the MIT-BIH control group. Supplementary. |
+| `comparison.py` | Group statistics, effect sizes, FDR correction, sensitivity analyses. |
+| `accelerometer_mobility.py` | Checks whether physical activity explains the group difference in PSD β. |
+| `nested_classifier.py` | Nested leave-one-out cross-validation classifier with feature selection inside the loop. |
+| `figures.py` | Generates all manuscript figures. |
+| `download_data.py` | Downloads the public datasets. |
 
-Please also cite the dataset authors (Książek et al., 2023) and, for the mobility method specifically, their original paper, since `accelerometer_mobility.py` re-implements their approach.
+## Running the analysis
 
----
+Run from the project root, in this order:
+
+```
+python download_data.py
+python healthy_hrvacc.py
+python psych_hrvacc.py
+python healthy.py              # optional, supplementary control arm
+python comparison.py
+python accelerometer_mobility.py
+python nested_classifier.py
+python figures.py
+```
+
+The cohort scripts must run before `comparison.py`, which reads their per-subject CSVs. Everything downstream reads from `comparison.py` output.
+
+Surrogate testing is the slowest step. It runs 100 IAAFT surrogates per subject at 1000 iterations each, and can take several hours across both cohorts. Set `run_surrogates=False` in the cohort scripts to skip it during development.
+
+## Output
+
+Results are written to `outputs/`:
+
+```
+outputs/healthy_hrvacc/    per-subject metrics, HRV-ACC controls
+outputs/psychiatric/       per-subject metrics, HRV-ACC patients
+outputs/healthy/           per-subject metrics, MIT-BIH controls
+outputs/comparison/        group statistics and sensitivity tables
+outputs/accelerometer/     mobility analysis
+outputs/figures/           manuscript figures
+```
+
+The `results/` folder in this repository holds the summary tables reported in the manuscript, so the numbers can be checked without re-running the pipeline.
+
+## Analysis window
+
+All cohorts use minutes 10 to 40 of each recording. The first 10 minutes are skipped because heart rate is still elevated from the initial ambulation. The resulting window contains exactly one instructed walk for every subject, which keeps the activity protocol matched across groups.
+
+This window is set in `pipeline.py` and must stay identical across `healthy_hrvacc.py` and `psych_hrvacc.py`. Changing it for one cohort and not the other breaks the comparison.
+
+## Notes on interpretation
+
+Every patient in this dataset was medicated and hospitalized. The findings describe treated inpatients, and the contribution of medication cannot be separated from the contribution of illness.
+
+Subject-level age, sex, diagnosis, and medication data are not available in the public release, so these variables could not be used as covariates.
+
+Many of the 23 metrics are algebraically related. The significant results collapse to roughly five independent dimensions.
+
+The classifier result in `results/Classification_Summary_NestedCV.csv` uses feature selection inside each cross-validation fold. Earlier versions of this analysis selected features on the full sample, which inflates performance, and those results are not reported here.
+
+## Citation
+
+If you use this code, please cite the software archive:
+
+> Smith, C. (2026). ecg-criticality-psychiatry-pilot (v1.0.0). Zenodo. [DOI pending]
+
+Please also cite the source dataset:
+
+> Książek, W., et al. (2023). HRV-ACC: a dataset with R-R intervals and accelerometer data for the diagnosis of psychotic disorders. Zenodo. https://doi.org/10.5281/zenodo.8171266
+
+Machine-readable citation metadata is in `CITATION.cff`.
 
 ## License
 
-Released under the [MIT License](LICENSE). The accelerometer mobility method is an **independent re-implementation** written from the description in Książek et al.'s paper and shares no code with their GPL-3.0 implementation, so this repository as a whole is MIT-licensed. Please still cite their paper for the method.
+MIT. See `LICENSE`.
 
 ## Contact
 
-Corbin Smith — Independent Researcher
+Corbin Smith
 ORCID: [0009-0009-1721-8640](https://orcid.org/0009-0009-1721-8640)
+
 Email: corbinedwardsmith@gmail.com
