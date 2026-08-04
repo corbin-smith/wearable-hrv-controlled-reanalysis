@@ -13,7 +13,7 @@ authors:
 version: "1.0.0"
 date-released: "2026-07-11"   # EDIT to the date you cut the release
 license: MIT
-repository-code: "https://github.com/YOUR-USERNAME/ecg-criticality-psychiatry-pilot"
+repository-code: "https://github.com/corbin-smith/ecg-criticality-psychiatry-pilot"
 # doi: "10.5281/zenodo.XXXXXXX"   # UNCOMMENT and fill in after Zenodo mints it
 keywords:
   - heart rate variability
