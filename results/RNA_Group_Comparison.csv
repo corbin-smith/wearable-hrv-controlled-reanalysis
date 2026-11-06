@@ -1,4 +1,0 @@
-Metric,Healthy_N,Healthy_Mean,Healthy_SD,Psych_N,Psych_Mean,Psych_SD,Pct_Diff,r_effect,p_raw,p_adj,Significant
-RNA_MeanDegree,30,0.10009,0.00010,30,0.10053,0.00065,0.43729,0.63333,0.00002,0.00007,True
-RNA_ClusteringCoeff,30,0.63466,0.02178,30,0.65126,0.04122,2.61647,0.24222,0.10869,0.10869,False
-RNA_Transitivity,30,0.65095,0.03712,30,0.67831,0.04127,4.20294,0.43556,0.00385,0.00577,True

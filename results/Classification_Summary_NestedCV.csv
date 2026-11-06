@@ -1,5 +1,0 @@
-Model,AUC,Accuracy,Sensitivity,Specificity,Median_features,Perm_null_AUC_mean,Perm_p,Note
-Nested feature-selection (LOO),0.883,0.833,0.8,0.867,26,0.448,0.001,honest replacement for the leaky 23-feature model
-Fixed 5-domain (LOO),0.858,0.783,0.767,0.8,5,,,"features: HRV_RMSSD, PSD_Beta, DFA_Alpha2, SampEn, RQA_DET"
-MeanHR + RMSSD (LOO),0.84,,,,2,,,baseline for incremental test
-MeanHR + RMSSD + PSD_Beta (LOO),0.901,,,,3,,,delta AUC = +0.061 vs baseline
