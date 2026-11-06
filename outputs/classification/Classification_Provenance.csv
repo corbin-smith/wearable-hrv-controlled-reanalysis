@@ -1,0 +1,16 @@
+Item,Value
+scaling_fitted_where,"inside each fold, on training data only"
+feature_selection_where,inside each fold
+bootstrap_procedure,"full pipeline re-run per replicate, scored out-of-bag"
+bootstrap_replicates_auc_ci,2000
+bootstrap_replicates_delta_auc,10000
+bootstrap_counts_differ_why,"the AUC interval re-runs feature selection per replicate and is stable at 2,000; the delta interval uses fixed feature sets, is cheap per replicate, and carries a negative conclusion, so it is run at 10,000"
+permutation_procedure,entire nested pipeline re-run on every shuffled-label replicate
+permutation_replicates,1000
+permutation_p_convention,(count + 1) / (n_perm + 1)
+permutation_p_resolution,cannot resolve below 0.0010; report as p <= 0.001 rather than an exact value
+regularisation_C,1.0
+regularisation_C_chosen,fixed a priori; not tuned
+random_seed,42
+caveat_unsupervised_preprocessing,"missingness screening, zero-variance removal and complete-case filtering are applied to the pooled data before cross-validation. No outcome information is used, so this is not label leakage, but it is not fully nested either"
+caveat_artifact_free_features,the excluded feature set for the artifact-free model is data-derived rather than pre-registered; the direction of the choice is conservative

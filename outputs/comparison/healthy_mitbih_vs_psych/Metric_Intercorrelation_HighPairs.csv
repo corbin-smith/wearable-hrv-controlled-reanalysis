@@ -1,0 +1,49 @@
+Metric_1,Metric_2,r_Healthy,r_Psych,Note
+pNN50 (%),RMSSD (ms),0.967,0.878,|r|>0.7 in both
+pNN50 (%),SD1 (ms),0.967,0.878,|r|>0.7 in both
+pNN50 (%),HF Power (ms²),0.950,0.848,|r|>0.7 in both
+pNN50 (%),Total Power (ms²),0.882,0.751,|r|>0.7 in both
+pNN50 (%),SD2 (ms),0.761,0.649,|r|>0.7 in healthy
+pNN50 (%),SDNN (ms),0.761,0.649,|r|>0.7 in healthy
+pNN50 (%),Mean HR (bpm),-0.792,-0.255,|r|>0.7 in healthy
+pNN50 (%),Mean NN (ms),0.792,0.255,|r|>0.7 in healthy
+RMSSD (ms),SD1 (ms),1.000,1.000,|r|>0.7 in both
+RMSSD (ms),HF Power (ms²),0.959,0.931,|r|>0.7 in both
+RMSSD (ms),LF Power (ms²),0.711,0.760,|r|>0.7 in both
+RMSSD (ms),Total Power (ms²),0.893,0.785,|r|>0.7 in both
+RMSSD (ms),SD2 (ms),0.736,0.672,|r|>0.7 in healthy
+RMSSD (ms),SDNN (ms),0.736,0.672,|r|>0.7 in healthy
+RMSSD (ms),Mean HR (bpm),-0.736,-0.368,|r|>0.7 in healthy
+RMSSD (ms),Mean NN (ms),0.736,0.368,|r|>0.7 in healthy
+SD1 (ms),HF Power (ms²),0.959,0.931,|r|>0.7 in both
+SD1 (ms),LF Power (ms²),0.711,0.760,|r|>0.7 in both
+SD1 (ms),Total Power (ms²),0.893,0.785,|r|>0.7 in both
+SD1 (ms),SD2 (ms),0.736,0.672,|r|>0.7 in healthy
+SD1 (ms),SDNN (ms),0.736,0.672,|r|>0.7 in healthy
+SD1 (ms),Mean HR (bpm),-0.736,-0.368,|r|>0.7 in healthy
+SD1 (ms),Mean NN (ms),0.736,0.368,|r|>0.7 in healthy
+HF Power (ms²),LF Power (ms²),0.676,0.828,|r|>0.7 in psych
+HF Power (ms²),Total Power (ms²),0.839,0.842,|r|>0.7 in both
+HF Power (ms²),SD2 (ms),0.738,0.692,|r|>0.7 in healthy
+HF Power (ms²),SDNN (ms),0.738,0.692,|r|>0.7 in healthy
+LF Power (ms²),Total Power (ms²),0.866,0.952,|r|>0.7 in both
+LF Power (ms²),DFA α₂ (16–64),-0.022,-0.718,|r|>0.7 in psych
+LF Power (ms²),DFA α (full),-0.121,-0.747,|r|>0.7 in psych
+Total Power (ms²),SD2 (ms),0.699,0.721,|r|>0.7 in psych
+Total Power (ms²),SDNN (ms),0.699,0.721,|r|>0.7 in psych
+Total Power (ms²),Mean HR (bpm),-0.874,-0.017,|r|>0.7 in healthy
+Total Power (ms²),Mean NN (ms),0.874,0.017,|r|>0.7 in healthy
+PSD β,DFA α₂ (16–64),0.560,0.749,|r|>0.7 in psych
+PSD β,DFA α (full),0.209,0.717,|r|>0.7 in psych
+DFA α₂ (16–64),DFA α (full),0.569,0.867,|r|>0.7 in psych
+SD2 (ms),SDNN (ms),1.000,1.000,|r|>0.7 in both
+SD2 (ms),MSE Mean,-0.761,-0.216,|r|>0.7 in healthy
+SDNN (ms),MSE Mean,-0.761,-0.216,|r|>0.7 in healthy
+RQA Laminarity,Sample Entropy,-0.777,-0.875,|r|>0.7 in both
+RQA Laminarity,RQA Determinism,0.955,0.975,|r|>0.7 in both
+DFA α (full),MSE Mean,-0.868,-0.686,|r|>0.7 in healthy
+SD1/SD2,Sample Entropy,0.567,0.827,|r|>0.7 in psych
+SD1/SD2,MSE Mean,0.723,0.739,|r|>0.7 in both
+Sample Entropy,RQA Determinism,-0.794,-0.879,|r|>0.7 in both
+Sample Entropy,MSE Mean,0.531,0.716,|r|>0.7 in psych
+Mean HR (bpm),Mean NN (ms),-1.000,-1.000,|r|>0.7 in both

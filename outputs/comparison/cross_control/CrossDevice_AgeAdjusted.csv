@@ -1,0 +1,17 @@
+Metric,Comparison,Sign,N_First,N_Second,r_rank_biserial,p_rank_biserial,r_partial_unadjusted,p_partial_unadjusted,r_partial_age_adjusted,p_partial_age_adjusted,pct_retained
+PSD_Beta_NoMayer,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,-0.177778,0.311751,-0.149104,0.311797,-0.037575,0.799840,25.200608
+PSD_Beta_NoMayer,MITBIH_control vs patients,positive = second-named cohort higher,18,30,0.707407,0.000050,0.593308,0.000009,0.512612,0.000195,86.398934
+PSD_Beta,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,-0.125926,0.475591,-0.105615,0.474957,0.076779,0.603980,-72.697028
+PSD_Beta,MITBIH_control vs patients,positive = second-named cohort higher,18,30,0.703704,0.000054,0.590202,0.000010,0.516793,0.000169,87.562111
+PSD_Beta_low,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,0.022222,0.906759,0.018638,0.899942,0.011511,0.938104,61.763340
+PSD_Beta_low,MITBIH_control vs patients,positive = second-named cohort higher,18,30,0.396296,0.023328,0.332377,0.020992,0.366539,0.010396,110.278221
+DFA_Alpha2,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,0.018519,0.923654,0.015532,0.916554,0.042679,0.773326,274.788597
+DFA_Alpha2,MITBIH_control vs patients,positive = second-named cohort higher,18,30,0.681481,0.000093,0.571564,0.000022,0.507344,0.000233,88.764290
+HRV_RMSSD,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,0.362963,0.037862,0.304420,0.035404,0.177015,0.228743,58.148389
+HRV_RMSSD,MITBIH_control vs patients,positive = second-named cohort higher,18,30,-0.866667,0.000001,-0.726880,0.000000,-0.681491,0.000000,93.755688
+LF_Power_ms2,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,0.029630,0.873102,0.024851,0.866853,-0.164418,0.264117,-661.625215
+LF_Power_ms2,MITBIH_control vs patients,positive = second-named cohort higher,18,30,-0.818519,0.000003,-0.686498,0.000000,-0.641905,0.000001,93.504325
+VLF_Power_ms2,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,0.000000,1.000000,0.000000,1.000000,-0.125160,0.396653,
+VLF_Power_ms2,MITBIH_control vs patients,positive = second-named cohort higher,18,30,-0.688889,0.000078,-0.577776,0.000017,-0.532649,0.000097,92.189519
+VLF_LF_Ratio,HRVACC_control vs MITBIH_control,positive = second-named cohort higher,30,18,-0.062963,0.725302,-0.052808,0.721492,0.005593,0.969905,-10.590939
+VLF_LF_Ratio,MITBIH_control vs patients,positive = second-named cohort higher,18,30,0.681481,0.000093,0.571564,0.000022,0.497950,0.000317,87.120683

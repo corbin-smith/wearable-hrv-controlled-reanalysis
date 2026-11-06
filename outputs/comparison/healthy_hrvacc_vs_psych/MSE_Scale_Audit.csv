@@ -1,0 +1,5 @@
+Quantity,Scale_Basis,Healthy_Mean,Psych_Mean,r_effect,p_raw,N_Healthy,N_Psych
+MSE_Mean,all_retained_scales,1.186797,0.869181,-0.493333,0.001058,30,30
+MSE_Mean,common_scale_set,1.151060,0.779661,-0.573333,0.000141,30,30
+MSE_Scales_Retained,retention_check,19.900000,20.000000,0.033333,0.333711,30,30
+MSE_MaxScale_Retained,retention_check,19.900000,20.000000,0.033333,0.333711,30,30

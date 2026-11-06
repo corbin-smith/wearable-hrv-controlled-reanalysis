@@ -1,0 +1,7 @@
+Metric,Group,N,Observed_Mean,Surrogate_Mean,Surrogate_SD_Mean,N_Differing,N_Above_Surrogates,N_Below_Surrogates
+SampEn,Healthy,30,0.761431,0.850093,0.044285,18,2,16
+SampEn,Psychiatric,30,0.585462,0.647173,0.044776,15,3,12
+DFA_Alpha1,Healthy,30,1.384028,1.382901,0.006562,4,3,1
+DFA_Alpha1,Psychiatric,30,1.307730,1.316523,0.006695,7,2,5
+MSE_Mean,Healthy,30,1.186797,1.287019,0.062158,11,0,11
+MSE_Mean,Psychiatric,30,0.869181,1.020077,0.062422,16,0,16

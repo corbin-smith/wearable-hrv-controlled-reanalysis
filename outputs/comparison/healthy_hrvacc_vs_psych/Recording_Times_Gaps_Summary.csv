@@ -1,0 +1,6 @@
+Row,N,Median_Start,Earliest_Start,Latest_Start,Latest_End,Median_Start_Hours,Records_With_Gap_In_File,Records_With_Gap_In_Window,Missing_s_Window_Total,U,r_rank_biserial,p,Test,Threshold_s,Max_NonGap_Excess_s,Min_Gap_s,Max_Clock_vs_Gap_Residual_s,Gapfree_Clock_Minus_Beat_min_s,Gapfree_Clock_Minus_Beat_max_s,Seed,Dropped_Controls,Dropped_Patients,Gap_Records_Conclusions_Changed,Random_Median_Conclusions_Changed,Random_Share_At_Least_As_Many
+control,30.000000,11:22,09:10,16:10,16:40,11.371419,4.000000,3.000000,287.990000,,,,,,,,,,,,,,,,
+patient,30.000000,11:42,08:16,13:56,14:26,11.693569,4.000000,1.000000,635.153000,,,,,,,,,,,,,,,,
+"patients vs controls, window start",60.000000,,,,,,,,,488.000000,-0.084444,0.579294,"Mann-Whitney U, two-sided, continuity correction; U for controls; positive r = later in patients",,,,,,,,,,,,
+gap threshold,,,,,,,,,,,,,,2.000000,1.390000,7.279000,4.738000,-4.738000,0.593000,,,,,,
+random exclusion calibration,2000.000000,,,,,,,,,,,,,,,,,,,0.000000,3.000000,1.000000,2.000000,1.000000,0.423500

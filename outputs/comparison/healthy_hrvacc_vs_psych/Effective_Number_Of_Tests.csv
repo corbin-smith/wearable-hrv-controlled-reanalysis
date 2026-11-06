@@ -1,0 +1,2 @@
+Family,N_Nominal,N_Effective_LiJi,N_Effective_LiJi_Full,Leading_Eigenvalues,Near_Integer_Eigenvalue,Alpha_Nominal,Alpha_Effective,Note
+primary,21,7.0,7.0,10.4071; 4.3539; 3.0822; 1.1868; 0.5524,False,0.05,0.00714,"sensitivity analysis only; the primary correction remains BH at the nominal family size. The Li-Ji estimator is discontinuous at integer eigenvalues and can shift by about one unit on numerical noise, so it is reported to one decimal"

@@ -1,0 +1,5 @@
+Variant,Column,H_Mean_SD,P_Mean_SD,r_effect,p_raw
+"Primary (0.01–0.15 Hz, cubic)",PSD_Beta,1.000 ± 0.330,1.688 ± 0.506,0.703704,0.000054
+"Wide VLF–LF (0.003–0.15 Hz, cubic)",PSD_Beta_Wide,0.959 ± 0.242,1.582 ± 0.470,0.733333,0.000026
+"Full spectrum (0.003–0.40 Hz, cubic)",PSD_Beta_Full,1.398 ± 0.303,1.569 ± 0.395,0.292593,0.094578
+"Linear interp (0.01–0.15 Hz, linear)",PSD_Beta_Linear,1.038 ± 0.334,1.717 ± 0.509,0.700000,0.000060

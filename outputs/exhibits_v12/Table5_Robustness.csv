@@ -1,0 +1,19 @@
+﻿Control,Statistic,"Slope, baroreflex band excised",VLF/LF ratio,Source
+None (all subjects),rank-biserial r,+0.638 (p < 0.001),+0.613 (p < 0.001),HR_Adjusted_Comparison.csv
+"None, as a partial correlation",partial r,+0.552 (p < 0.001),+0.531 (p < 0.001),HR_Adjusted_Comparison.csv
+Mean heart rate,partial r; p adjusted (heart-rate family),+0.613 (p < 0.001),+0.557 (p < 0.001),HR_Adjusted_Comparison.csv
+Age and sex,partial r,+0.562 (p < 0.001),+0.491 (p < 0.001),AgeSex_Adjusted_Comparison.csv
+Accelerometer mobility,partial r,+0.470 (p < 0.001),+0.246 (p = 0.058),Beta_Activity_Covariate.csv
+HF power,partial r,+0.292 (p = 0.024),+0.281 (p = 0.030),Beta_Activity_Covariate.csv
+Mobility and mean heart rate,partial r,+0.654 (p < 0.001),+0.521 (p < 0.001),Beta_Activity_Covariate.csv
+"Mobility, HF power and mean heart rate",partial r,+0.426 (p < 0.001),+0.411 (p = 0.001),Beta_Activity_Covariate.csv
+"Age, sex, mobility, heart rate and HF power together",partial r,+0.429 (p < 0.001),+0.391 (p = 0.002),Length_Respiration_Checks.csv
+Schizophrenia patients only (n = 23),rank-biserial r,+0.626 (p < 0.001),+0.606 (p < 0.001),Diagnosis_Subgroup.csv
+Bipolar patients only (n = 7),rank-biserial r,+0.676 (p = 0.004),+0.638 (p = 0.008),Diagnosis_Subgroup.csv
+Patients without a substance-use code (n = 22),rank-biserial r,+0.694 (p < 0.001),+0.676 (p < 0.001),Comorbidity_Sensitivity.csv
+Quetiapine as a covariate,partial r,+0.474 (p < 0.001),+0.482 (p < 0.001),Quetiapine_Analysis.csv
+Patients without quetiapine only (n = 23),rank-biserial r,+0.554 (p < 0.001),+0.551 (p < 0.001),Quetiapine_Analysis.csv
+"Movement-free segments, 600 beats (25 controls, 26 patients)",rank-biserial r,+0.517 (p = 0.002),+0.271 (p = 0.099),Stationary_Reanalysis_beats.csv (r computed here)
+Re-quantized to the 7.8 ms grid,rank-biserial r,+0.633 (p < 0.001),+0.609 (p < 0.001),Requantization_Q128.csv
+"Onset skip 60, 360 or 600 s",rank-biserial r (range),+0.620 to +0.676 (largest p < 0.001),+0.607 to +0.616 (largest p < 0.001),Window_Skip_Sensitivity.csv
+"MIT-BIH controls instead, age-adjusted",partial r,+0.513 (p < 0.001),+0.498 (p < 0.001),CrossDevice_AgeAdjusted.csv

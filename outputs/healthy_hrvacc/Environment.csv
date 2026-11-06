@@ -1,0 +1,25 @@
+Item,Value
+python,3.14.5
+platform,Windows-11-10.0.26200-SP0
+seed_quant,1234
+seed_surrogate,42
+dither_replicates,20
+n_iaaft_iters,1000
+n_surrogates,100
+mfdfa_n_surrogates,20
+quant_step_s,0.001
+quant_target_ratio,0.088
+requant_target_step_s,0.0078125
+dfa_alpha1_nmin_sweep,"(8, 10)"
+entropy_r_sensitivity,"(0.1, 0.15, 0.2, 0.25, 0.3, 0.35)"
+skip_seconds,600
+mitbih_skip_seconds,600
+analysis_seconds,1800
+version_numpy,2.4.4
+version_scipy,1.17.1
+version_pandas,2.3.3
+version_sklearn,1.8.0
+version_neurokit2,0.2.13
+version_matplotlib,3.10.9
+version_wfdb,4.3.1
+version_statsmodels,0.14.6

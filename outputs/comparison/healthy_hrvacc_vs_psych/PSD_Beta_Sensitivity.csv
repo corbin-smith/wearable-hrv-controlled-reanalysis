@@ -1,0 +1,7 @@
+Metric,r_full,p_full,sig_full,r_filtered,p_filtered,sig_filtered
+PSD β,0.666667,0.000029,True,0.763668,0.000030,True
+PSD β,0.666667,0.000029,True,0.763668,0.000030,True
+DFA α₁ (4–16),-0.120000,0.428963,False,-0.037037,0.865199,False
+Sample Entropy,-0.340000,0.031706,True,-0.354497,0.052041,False
+MSE Mean,-0.493333,0.001708,True,-0.506173,0.006130,True
+RQA Determinism,0.297778,0.056482,False,0.305115,0.089281,False

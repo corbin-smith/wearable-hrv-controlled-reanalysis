@@ -1,0 +1,22 @@
+Variable,Healthy_Mean,Psych_Mean,r_effect,p_raw,Role
+Num_RR,2515.500000,2887.366667,0.531111,0.000422,group difference
+Series_N,2515.500000,2887.366667,0.531111,0.000422,group difference
+Resp_Peak_Freq,0.227865,0.319940,0.674603,0.001535,group difference
+Resp_Peak_Found (detection rate),0.400000,0.700000,,0.036992,detection rate (Fisher exact)
+Resp_Peak_Freq (detected subjects only),0.214844,0.343750,0.674603,0.001535,"DESCRIPTIVE: selected subset, not a covariate"
+PSD_Beta_NoMayer ~ Group | Age + Sex + mobility_mg + HRV_MeanHR + HF_Power_ms2,,,0.429286,0.000620,JOINT 5-covariate adjustment
+PSD_Beta ~ Group | Age + Sex + mobility_mg + HRV_MeanHR + HF_Power_ms2,,,0.497916,0.000052,JOINT 5-covariate adjustment
+PSD_Beta_low ~ Group | Age + Sex + mobility_mg + HRV_MeanHR + HF_Power_ms2,,,0.370214,0.003596,JOINT 5-covariate adjustment
+VLF_LF_Ratio ~ Group | Age + Sex + mobility_mg + HRV_MeanHR + HF_Power_ms2,,,0.390664,0.002028,JOINT 5-covariate adjustment
+PSD_Beta ~ Group | Num_RR,,,0.630564,0.000000,partial correlation
+PSD_Beta_NoMayer ~ Group | Num_RR,,,0.610558,0.000000,partial correlation
+PSD_Beta_low ~ Group | Num_RR,,,0.397610,0.001656,partial correlation
+DFA_Alpha2 ~ Group | Num_RR,,,0.542651,0.000007,partial correlation
+SampEn ~ Group | Num_RR,,,-0.052292,0.691511,partial correlation
+ApEn ~ Group | Num_RR,,,-0.096082,0.465215,partial correlation
+PermEn ~ Group | Num_RR,,,0.560767,0.000003,partial correlation
+MSE_Mean ~ Group | Num_RR,,,-0.349708,0.006164,partial correlation
+RQA_DET ~ Group | Num_RR,,,-0.012114,0.926803,partial correlation
+RQA_LAM ~ Group | Num_RR,,,-0.112698,0.391264,partial correlation
+RNA_ClusteringCoeff ~ Group | Num_RR,,,-0.055349,0.674462,partial correlation
+RNA_Transitivity ~ Group | Num_RR,,,-0.006335,0.961685,partial correlation

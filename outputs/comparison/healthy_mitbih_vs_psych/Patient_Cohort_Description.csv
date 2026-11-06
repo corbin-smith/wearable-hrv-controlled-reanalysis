@@ -1,0 +1,4 @@
+Group,N,Age_mean,Age_SD,Age_min,Age_max,N_female,N_male,N_quetiapine,N_comorbid_substance
+All patients,30,41.43,13.06,20.00,69.00,16,14,7,8
+Schizophrenia (F20),23,39.83,12.72,20.00,69.00,9,14,2,8
+Bipolar (F31),7,46.71,13.74,29.00,66.00,7,0,5,0

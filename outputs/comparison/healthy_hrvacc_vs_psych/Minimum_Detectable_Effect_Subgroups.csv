@@ -1,0 +1,8 @@
+Contrast,N_A,N_B,Power,Alpha,Min_Detectable_d,Min_Detectable_r_rankbiserial,Min_Detectable_r_pointbiserial
+Main comparison,30,30,0.8,0.05,0.723,0.391,0.34
+Schizophrenia vs bipolar,23,7,0.8,0.05,1.209,0.608,0.517
+Schizophrenia vs controls,30,23,0.8,0.05,0.776,0.417,0.362
+Bipolar vs controls,30,7,0.8,0.05,1.176,0.594,0.507
+Quetiapine exposed vs unexposed,7,23,0.8,0.05,1.209,0.608,0.517
+Quetiapine exposed vs controls,30,7,0.8,0.05,1.176,0.594,0.507
+Comorbidity-excluded vs controls,30,22,0.8,0.05,0.786,0.422,0.366

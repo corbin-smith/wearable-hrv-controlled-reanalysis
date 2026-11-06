@@ -1,0 +1,22 @@
+Metric,Shapiro_p_Healthy,Shapiro_p_Psych,Healthy_Normal,Psych_Normal,Levene_p,Equal_Variance,Recommended_Test
+Mean NN (ms),0.551518,0.033575,True,False,0.319812,True,Nonparametric (Mann-Whitney U) preferred
+SDNN (ms),0.001885,0.063916,False,True,0.701319,True,Nonparametric (Mann-Whitney U) preferred
+RMSSD (ms),0.497247,0.010060,True,False,0.313346,True,Nonparametric (Mann-Whitney U) preferred
+pNN50 (%),0.000170,0.000001,False,False,0.000526,False,Nonparametric (Mann-Whitney U) preferred
+Mean HR (bpm),0.825223,0.683820,True,True,0.957212,True,Parametric (Welch t) valid
+SD1 (ms),0.497247,0.010060,True,False,0.313346,True,Nonparametric (Mann-Whitney U) preferred
+SD2 (ms),0.001698,0.058850,False,True,0.699647,True,Nonparametric (Mann-Whitney U) preferred
+SD1/SD2,0.274375,0.444074,True,True,0.280577,True,Parametric (Welch t) valid
+LF Power (ms²),0.137759,0.000003,True,False,0.008645,False,Nonparametric (Mann-Whitney U) preferred
+HF Power (ms²),0.020924,0.000053,False,False,0.032779,False,Nonparametric (Mann-Whitney U) preferred
+Total Power (ms²),0.100217,0.000233,True,False,0.003874,False,Nonparametric (Mann-Whitney U) preferred
+LF/HF Ratio,0.000215,0.061782,False,True,0.612225,True,Nonparametric (Mann-Whitney U) preferred
+PSD β,0.270794,0.053235,True,True,0.033085,False,Parametric (Welch t) valid
+Sample Entropy,0.887411,0.862975,True,True,0.744039,True,Parametric (Welch t) valid
+Permutation Entropy,0.002236,0.006999,False,False,0.676119,True,Nonparametric (Mann-Whitney U) preferred
+MSE Mean,0.456263,0.846121,True,True,0.684835,True,Parametric (Welch t) valid
+DFA α (full),0.062044,0.632243,True,True,0.041539,False,Parametric (Welch t) valid
+DFA α₁ (4–16),0.902832,0.080570,True,True,0.008796,False,Parametric (Welch t) valid
+DFA α₂ (16–64),0.197139,0.752840,True,True,0.014565,False,Parametric (Welch t) valid
+RQA Determinism,0.914468,0.591377,True,True,0.160959,True,Parametric (Welch t) valid
+RQA Laminarity,0.547089,0.251427,True,True,0.336801,True,Parametric (Welch t) valid

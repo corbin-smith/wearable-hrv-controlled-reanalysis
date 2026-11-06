@@ -1,0 +1,11 @@
+Criterion,Group,N_Meeting,N_Total,Pct,Recording_Condition
+mean HR > 100 bpm,Healthy,3,18,16.7,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+mean HR > 100 bpm,Psychiatric,12,30,40.0,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+mean HR > 110 bpm,Healthy,0,18,0.0,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+mean HR > 110 bpm,Psychiatric,3,30,10.0,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+RMSSD < 10 ms,Healthy,1,18,5.6,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+RMSSD < 10 ms,Psychiatric,16,30,53.3,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+RMSSD < 5 ms,Healthy,0,18,0.0,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+RMSSD < 5 ms,Psychiatric,5,30,16.7,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+SDNN < 20 ms,Healthy,0,18,0.0,30-min mixed-activity window including an instructed walk; not comparable with resting norms
+SDNN < 20 ms,Psychiatric,2,30,6.7,30-min mixed-activity window including an instructed walk; not comparable with resting norms

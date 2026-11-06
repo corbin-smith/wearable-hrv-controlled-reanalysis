@@ -1,0 +1,10 @@
+Estimator,Description,Healthy_Mean,Psych_Mean,Abs_Diff,r_effect,p_raw,N_Healthy,N_Psych,p_adj
+PSD_Beta,"Legacy: linear-bin OLS, 0.01-0.15 Hz",0.999616,1.688229,0.688612,0.703704,0.000054,18,30,0.000123
+PSD_Beta_LogBin,Log-binned OLS (equal leverage across band),0.925055,1.611493,0.686438,0.688889,0.000078,18,30,0.000140
+PSD_Beta_NoMayer,"PRIMARY CONTROL: log-binned, 0.07-0.13 Hz excised",1.109787,1.735466,0.625680,0.707407,0.000050,18,30,0.000123
+PSD_Beta_Specparam,PRIMARY CONTROL: aperiodic + Gaussian peak model,1.354251,1.924084,0.569833,0.596296,0.000631,18,30,0.000946
+PSD_Beta_IRASA,IRASA (biased at this bandwidth; see pipeline),0.919533,1.529848,0.610315,0.707407,0.000050,18,30,0.000123
+Mayer_Peak_Amp,Fitted Mayer peak amplitude,0.413478,0.471427,0.057950,0.162963,0.354253,18,30,0.354253
+Mayer_Peak_Freq,Fitted Mayer peak frequency (Hz),0.095941,0.084178,-0.011763,-0.448148,0.010273,18,30,0.013208
+LF_Power_ms2,LF power (drives the peak),798.143371,199.163446,-598.979924,-0.818519,0.000003,18,30,0.000024
+PSD_Beta_Specparam_CleanFits,"Peak model, bound-hitting fits excluded",1.365065,1.737077,0.372012,0.367647,0.074573,16,17,0.083894

@@ -1,0 +1,2 @@
+Quantity,Method,Intercept_Included,Alternative_Not_Used,Equivalent,Note
+partial Spearman correlation,"regress-then-rank (OLS residuals of raw values, then Spearman of residuals)",True,rank-then-regress (residualise ranks),False,the two differ when the covariate relationship is monotone but nonlinear; this choice must be stated in the Methods

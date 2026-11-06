@@ -1,0 +1,12 @@
+﻿Characteristic,Controls,Patients,MIT-BIH reference,Comparison,Source
+"Participants, n",30,30,18,,ecg_results_*.csv
+"Age, years, mean (SD)",43.2 (14.1),41.4 (13.1),34.3 (8.4),"r = −0.050, p = 0.745",ecg_results_*.csv; Demographic_Matching.csv
+"Age range, years",24–69,20–69,20–50,,ecg_results_*.csv
+"Female, n / N",17 / 30,16 / 30,13 / 18,Fisher p = 1.000,ecg_results_*.csv; Demographic_Matching.csv
+"Schizophrenia (F20), n",,23,,,Patient_Cohort_Description.csv
+"Bipolar disorder (F31), n",,7,,,Patient_Cohort_Description.csv
+"Quetiapine recorded, n",,7,,,Patient_Cohort_Description.csv
+"Substance-use diagnosis (F1x), n",,8,,,Patient_Cohort_Description.csv
+Recording,Polar H10 chest strap,Polar H10 chest strap,Long-term ambulatory ECG,,dataset documentation
+R-R interval resolution,1.000 ms,1.000 ms,7.8125 ms (128 Hz),,measured step (decision 2b); NSRDB sampling rate
+Analyzed window,minutes 10–40,minutes 10–40,minutes 10–40,,"pipeline.py SKIP_SECONDS, ANALYSIS_SECONDS, MITBIH_SKIP_SECONDS"

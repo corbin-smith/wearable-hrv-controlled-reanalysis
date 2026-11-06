@@ -1,0 +1,2 @@
+Variable,Control_mean,Control_SD,Patient_mean,Patient_SD,r_effect,p_raw,N_control,N_patient
+Ambulatory beat fraction (%),35.017767,24.630792,27.253933,28.123923,-0.173333,0.248167,30,30

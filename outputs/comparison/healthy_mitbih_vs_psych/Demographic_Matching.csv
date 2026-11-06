@@ -1,0 +1,3 @@
+Variable,Control,Patient,Control_SD,Patient_SD,r_effect,p_value
+Age,34.333333,41.433333,8.436615,13.063989,0.322222,0.065257
+Sex (N female),13.000000,16.000000,,,,0.235222

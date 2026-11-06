@@ -1,0 +1,10 @@
+Item,Value
+Primary test,"Mann-Whitney U, two-sided"
+Continuity correction,True
+Tie correction,applied (SciPy default)
+Method,auto
+Effect size,rank-biserial r = 1 - 2U/(n1*n2)
+Multiple comparisons,Benjamini-Hochberg within family
+SciPy version,1.17.1
+NumPy version,2.4.4
+pandas version,2.3.3

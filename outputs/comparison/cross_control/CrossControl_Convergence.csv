@@ -1,0 +1,22 @@
+Metric,r_HRVACC,p_adj_HRVACC,sig_HRVACC,r_MITBIH,p_adj_MITBIH,sig_MITBIH,Same_Direction,Robust
+LF Power (ms²),-0.808889,0.000002,True,-0.818519,0.000011,True,True,True
+Total Power (ms²),-0.784444,0.000002,True,-0.766667,0.000038,True,True,True
+RMSSD (ms),-0.726667,0.000007,True,-0.866667,0.000006,True,True,True
+SD1 (ms),-0.726667,0.000007,True,-0.866667,0.000006,True,True,True
+pNN50 (%),-0.704444,0.000012,True,-0.848148,0.000006,True,True,True
+HF Power (ms²),-0.697778,0.000012,True,-0.848148,0.000006,True,True,True
+PSD β,0.666667,0.000029,True,0.703704,0.000163,True,True,True
+SDNN (ms),-0.662222,0.000029,True,-0.644444,0.000462,True,True,True
+SD2 (ms),-0.653333,0.000033,True,-0.644444,0.000462,True,True,True
+DFA α₂ (16–64),0.602222,0.000133,True,0.681481,0.000244,True,True,True
+Mean HR (bpm),0.528889,0.000780,True,0.537037,0.002742,True,True,True
+Mean NN (ms),-0.528889,0.000780,True,-0.537037,0.002742,True,True,True
+MSE Mean,-0.493333,0.001708,True,-0.474074,0.007727,True,True,True
+DFA α (full),0.475556,0.002395,True,0.585185,0.001393,True,True,True
+Sample Entropy,-0.340000,0.031706,True,-0.555556,0.002181,True,True,True
+SD1/SD2,-0.311111,0.048383,True,-0.559259,0.002181,True,True,True
+Permutation Entropy,0.400000,0.011143,True,0.270370,0.128730,False,True,False
+RQA Determinism,0.297778,0.056482,False,0.533333,0.002771,True,True,False
+RQA Laminarity,0.224444,0.151778,False,0.625926,0.000635,True,True,False
+LF/HF Ratio,-0.188889,0.222139,False,0.170370,0.332564,False,False,False
+DFA α₁ (4–16),-0.120000,0.428963,False,0.281481,0.119225,False,False,False

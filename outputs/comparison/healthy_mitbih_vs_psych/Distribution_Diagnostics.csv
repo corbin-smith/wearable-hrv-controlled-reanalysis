@@ -1,0 +1,22 @@
+Metric,Shapiro_p_Healthy,Shapiro_p_Psych,Healthy_Normal,Psych_Normal,Levene_p,Equal_Variance,Recommended_Test
+Mean NN (ms),0.973898,0.033575,True,False,0.214764,True,Nonparametric (Mann-Whitney U) preferred
+SDNN (ms),0.021409,0.063916,False,True,0.059072,True,Nonparametric (Mann-Whitney U) preferred
+RMSSD (ms),0.836046,0.010060,True,False,0.022401,False,Nonparametric (Mann-Whitney U) preferred
+pNN50 (%),0.125405,0.000001,True,False,0.000000,False,Nonparametric (Mann-Whitney U) preferred
+Mean HR (bpm),0.834752,0.683820,True,True,0.846185,True,Parametric (Welch t) valid
+SD1 (ms),0.836046,0.010060,True,False,0.022401,False,Nonparametric (Mann-Whitney U) preferred
+SD2 (ms),0.020147,0.058850,False,True,0.057579,True,Nonparametric (Mann-Whitney U) preferred
+SD1/SD2,0.671421,0.444074,True,True,0.588317,True,Parametric (Welch t) valid
+LF Power (ms²),0.755973,0.000003,True,False,0.047031,False,Nonparametric (Mann-Whitney U) preferred
+HF Power (ms²),0.004934,0.000053,False,False,0.001973,False,Nonparametric (Mann-Whitney U) preferred
+Total Power (ms²),0.378935,0.000233,True,False,0.001392,False,Nonparametric (Mann-Whitney U) preferred
+LF/HF Ratio,0.000006,0.061782,False,True,0.684166,True,Nonparametric (Mann-Whitney U) preferred
+PSD β,0.396463,0.053235,True,True,0.153078,True,Parametric (Welch t) valid
+Sample Entropy,0.293731,0.862975,True,True,0.161835,True,Parametric (Welch t) valid
+Permutation Entropy,0.350074,0.006999,True,False,0.107587,True,Nonparametric (Mann-Whitney U) preferred
+MSE Mean,0.267432,0.846121,True,True,0.860522,True,Parametric (Welch t) valid
+DFA α (full),0.853883,0.632243,True,True,0.049653,False,Parametric (Welch t) valid
+DFA α₁ (4–16),0.353195,0.080570,True,True,0.182042,True,Parametric (Welch t) valid
+DFA α₂ (16–64),0.596389,0.752840,True,True,0.012933,False,Parametric (Welch t) valid
+RQA Determinism,0.024101,0.591377,False,True,0.816691,True,Nonparametric (Mann-Whitney U) preferred
+RQA Laminarity,0.143427,0.251427,True,True,0.467715,True,Parametric (Welch t) valid

@@ -1,0 +1,7 @@
+Metric,Scale,Column,r_effect,p_raw,p_adj
+SampEn,raw,SampEn,-0.555556,0.001454,0.008723
+SampEn,surrogate_Z,SURR_SampEn_Z,0.111111,0.529854,0.635825
+DFA_Alpha1,raw,DFA_Alpha1,0.281481,0.107870,0.161806
+DFA_Alpha1,surrogate_Z,SURR_DFA_Alpha1_Z,-0.288889,0.098855,0.161806
+MSE_Mean,raw,MSE_Mean,-0.474074,0.006623,0.019869
+MSE_Mean,surrogate_Z,SURR_MSE_Mean_Z,-0.003704,0.991504,0.991504

@@ -1,0 +1,6 @@
+Analysis,r_or_AUC,p
+PSD_Beta ~ Group (unadjusted),0.577430,0.000001
+PSD_Beta ~ Group | MeanHR,0.630119,0.000000
+PSD_Beta ~ Group | RMSSD,0.326869,0.010800
+PSD_Beta ~ Group | MeanHR + RMSSD,0.403112,0.001406
+"LOO-AUC incremental test (see nested_classifier.py, Classification_Summary_NestedCV.csv)",,

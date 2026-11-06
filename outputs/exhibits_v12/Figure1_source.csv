@@ -1,0 +1,83 @@
+Figure,Family,Measure,Label,Statistic,Before,After,p_raw_after,p_adj_after,Significant_after,Source
+1B,Amplitude,HRV_RMSSD,RMSSD,partial Spearman r with group,-0.62939922,-0.4685746,0.0001594363,0.00033481623,True,HR_Adjusted_Comparison.csv
+1B,Amplitude,HRV_SDNN,SDNN,partial Spearman r with group,-0.57358094,-0.39672131,0.0016998145,0.0032451004,True,HR_Adjusted_Comparison.csv
+1B,Amplitude,LF_Power_ms2,LF power,partial Spearman r with group,-0.70061564,-0.5726035,1.7489542e-06,1.2242679e-05,True,HR_Adjusted_Comparison.csv
+1B,Amplitude,HF_Power_ms2,HF power,partial Spearman r with group,-0.60437723,-0.48135593,9.8810852e-05,0.00023055866,True,HR_Adjusted_Comparison.csv
+1B,Amplitude,VLF_Power_ms2,VLF power,partial Spearman r with group,-0.65249643,-0.48241178,9.4900979e-05,0.00023055866,True,HR_Adjusted_Comparison.csv
+1B,Amplitude,Total_Power_ms2,Total power,partial Spearman r with group,-0.67944319,-0.52714643,1.5096514e-05,4.5289541e-05,True,HR_Adjusted_Comparison.csv
+1B,Spectral distribution,VLF_LF_Ratio,VLF/LF ratio,partial Spearman r with group,0.53123604,0.55693248,3.8118881e-06,1.600993e-05,True,HR_Adjusted_Comparison.csv
+1B,Spectral distribution,LF_HF_Ratio,LF/HF ratio,partial Spearman r with group,-0.1636053,-0.33370381,0.0091703319,0.012838465,True,HR_Adjusted_Comparison.csv
+1B,Spectral distribution,PSD_Beta,"Slope, uncorrected",partial Spearman r with group,0.57743047,0.63011948,6.865735e-08,1.4418043e-06,True,HR_Adjusted_Comparison.csv
+1B,Spectral distribution,PSD_Beta_NoMayer,"Slope, baroreflex band excised",partial Spearman r with group,0.55240849,0.61250347,1.9824064e-07,2.0815267e-06,True,HR_Adjusted_Comparison.csv
+1B,Fractal scaling (DFA),DFA_Alpha,"DFA α, full range",partial Spearman r with group,0.4119004,0.38138372,0.0026421165,0.0046237038,True,HR_Adjusted_Comparison.csv
+1B,Fractal scaling (DFA),DFA_Alpha1,DFA α₁,partial Spearman r with group,-0.10393749,-0.35887747,0.0048650157,0.0078588715,True,HR_Adjusted_Comparison.csv
+1B,Fractal scaling (DFA),DFA_Alpha2,DFA α₂,partial Spearman r with group,0.52161219,0.54837455,5.7380719e-06,2.0083251e-05,True,HR_Adjusted_Comparison.csv
+1B,Entropy,MSE_Mean,Multiscale entropy,partial Spearman r with group,-0.42729855,-0.35437622,0.0054691459,0.0082037189,True,HR_Adjusted_Comparison.csv
+1B,Entropy,SampEn,Sample entropy,partial Spearman r with group,-0.29448954,-0.061906085,0.63843621,0.7220697,False,HR_Adjusted_Comparison.csv
+1B,Entropy,ApEn,Approximate entropy,partial Spearman r with group,-0.33490967,-0.09969436,0.44852549,0.5540609,False,HR_Adjusted_Comparison.csv
+1B,Entropy,PermEn,Permutation entropy,partial Spearman r with group,0.34645828,0.56315643,2.8107758e-06,1.4756573e-05,True,HR_Adjusted_Comparison.csv
+1B,Recurrence,RQA_DET,Determinism,partial Spearman r with group,0.25791894,-0.011614337,0.92981729,0.96638716,False,HR_Adjusted_Comparison.csv
+1B,Recurrence,RQA_LAM,Laminarity,partial Spearman r with group,0.19440159,-0.10697416,0.41591675,0.54589073,False,HR_Adjusted_Comparison.csv
+1B,Recurrence,RNA_ClusteringCoeff,Network clustering,partial Spearman r with group,0.13665855,-0.059183106,0.65330116,0.7220697,False,HR_Adjusted_Comparison.csv
+1B,Recurrence,RNA_Transitivity,Network transitivity,partial Spearman r with group,0.25214464,0.0055570992,0.96638716,0.96638716,False,HR_Adjusted_Comparison.csv
+1A,,control_2,beats vs mean HR,per-subject values,105.43145899628448,3163.0,,,,ecg_results_*.csv
+1A,,control_16,beats vs mean HR,per-subject values,58.85964443969889,1764.0,,,,ecg_results_*.csv
+1A,,control_18,beats vs mean HR,per-subject values,68.96505703713837,2067.0,,,,ecg_results_*.csv
+1A,,control_19,beats vs mean HR,per-subject values,80.89533677818395,2383.0,,,,ecg_results_*.csv
+1A,,control_20,beats vs mean HR,per-subject values,81.37898856429223,2436.0,,,,ecg_results_*.csv
+1A,,control_21,beats vs mean HR,per-subject values,83.30877405650672,2497.0,,,,ecg_results_*.csv
+1A,,control_22,beats vs mean HR,per-subject values,81.36371549843062,2438.0,,,,ecg_results_*.csv
+1A,,control_24,beats vs mean HR,per-subject values,98.96451629771464,2965.0,,,,ecg_results_*.csv
+1A,,control_25,beats vs mean HR,per-subject values,69.47257566175303,2078.0,,,,ecg_results_*.csv
+1A,,control_26,beats vs mean HR,per-subject values,71.29557568006445,2136.0,,,,ecg_results_*.csv
+1A,,control_28,beats vs mean HR,per-subject values,85.3607391907628,2551.0,,,,ecg_results_*.csv
+1A,,control_29,beats vs mean HR,per-subject values,84.0519150078621,2515.0,,,,ecg_results_*.csv
+1A,,control_30,beats vs mean HR,per-subject values,88.35151767531403,2645.0,,,,ecg_results_*.csv
+1A,,control_31,beats vs mean HR,per-subject values,95.7801627037018,2787.0,,,,ecg_results_*.csv
+1A,,control_32,beats vs mean HR,per-subject values,111.97631120486687,3353.0,,,,ecg_results_*.csv
+1A,,control_33,beats vs mean HR,per-subject values,93.12272543864395,2781.0,,,,ecg_results_*.csv
+1A,,control_34,beats vs mean HR,per-subject values,88.03407813859354,2636.0,,,,ecg_results_*.csv
+1A,,control_35,beats vs mean HR,per-subject values,71.16954619956181,2132.0,,,,ecg_results_*.csv
+1A,,control_36,beats vs mean HR,per-subject values,87.94269619572853,2629.0,,,,ecg_results_*.csv
+1A,,control_37,beats vs mean HR,per-subject values,99.85492020611336,2994.0,,,,ecg_results_*.csv
+1A,,control_38,beats vs mean HR,per-subject values,101.47878028591244,3024.0,,,,ecg_results_*.csv
+1A,,control_39,beats vs mean HR,per-subject values,74.49326383003114,2231.0,,,,ecg_results_*.csv
+1A,,control_40,beats vs mean HR,per-subject values,74.38302356186416,2226.0,,,,ecg_results_*.csv
+1A,,control_41,beats vs mean HR,per-subject values,86.62255549344458,2593.0,,,,ecg_results_*.csv
+1A,,control_42,beats vs mean HR,per-subject values,84.42790811407104,2532.0,,,,ecg_results_*.csv
+1A,,control_43,beats vs mean HR,per-subject values,70.98472833643227,2129.0,,,,ecg_results_*.csv
+1A,,control_44,beats vs mean HR,per-subject values,95.55501622086202,2861.0,,,,ecg_results_*.csv
+1A,,control_45,beats vs mean HR,per-subject values,79.10019079135266,2368.0,,,,ecg_results_*.csv
+1A,,control_46,beats vs mean HR,per-subject values,71.95793331208415,2156.0,,,,ecg_results_*.csv
+1A,,control_47,beats vs mean HR,per-subject values,80.04447286509081,2395.0,,,,ecg_results_*.csv
+1A,,treatment_1,beats vs mean HR,per-subject values,94.2348605559957,2823.0,,,,ecg_results_*.csv
+1A,,treatment_2,beats vs mean HR,per-subject values,96.98854689536806,2898.0,,,,ecg_results_*.csv
+1A,,treatment_3,beats vs mean HR,per-subject values,118.4182867108367,3549.0,,,,ecg_results_*.csv
+1A,,treatment_4,beats vs mean HR,per-subject values,129.7551328770776,3893.0,,,,ecg_results_*.csv
+1A,,treatment_7,beats vs mean HR,per-subject values,103.32839653216573,3100.0,,,,ecg_results_*.csv
+1A,,treatment_8,beats vs mean HR,per-subject values,101.09247422691868,3033.0,,,,ecg_results_*.csv
+1A,,treatment_9,beats vs mean HR,per-subject values,98.2193073042302,2931.0,,,,ecg_results_*.csv
+1A,,treatment_13,beats vs mean HR,per-subject values,89.46149585227008,2681.0,,,,ecg_results_*.csv
+1A,,treatment_15,beats vs mean HR,per-subject values,103.53779229843522,3093.0,,,,ecg_results_*.csv
+1A,,treatment_16,beats vs mean HR,per-subject values,83.7895691489007,2513.0,,,,ecg_results_*.csv
+1A,,treatment_17,beats vs mean HR,per-subject values,85.05929947097266,2542.0,,,,ecg_results_*.csv
+1A,,treatment_19,beats vs mean HR,per-subject values,102.26797342410488,3068.0,,,,ecg_results_*.csv
+1A,,treatment_20,beats vs mean HR,per-subject values,99.04292972255304,2969.0,,,,ecg_results_*.csv
+1A,,treatment_21,beats vs mean HR,per-subject values,78.84560154418493,2361.0,,,,ecg_results_*.csv
+1A,,treatment_22,beats vs mean HR,per-subject values,108.81716477144552,3256.0,,,,ecg_results_*.csv
+1A,,treatment_23,beats vs mean HR,per-subject values,103.85374264535967,3116.0,,,,ecg_results_*.csv
+1A,,treatment_24,beats vs mean HR,per-subject values,114.19230505658636,3416.0,,,,ecg_results_*.csv
+1A,,treatment_25,beats vs mean HR,per-subject values,99.02700660791116,2971.0,,,,ecg_results_*.csv
+1A,,treatment_26,beats vs mean HR,per-subject values,100.00752564992348,2990.0,,,,ecg_results_*.csv
+1A,,treatment_27,beats vs mean HR,per-subject values,106.62446439099638,3198.0,,,,ecg_results_*.csv
+1A,,treatment_29,beats vs mean HR,per-subject values,93.14128318352812,2792.0,,,,ecg_results_*.csv
+1A,,treatment_31,beats vs mean HR,per-subject values,89.78982381996707,2694.0,,,,ecg_results_*.csv
+1A,,treatment_32,beats vs mean HR,per-subject values,99.18764287282542,2944.0,,,,ecg_results_*.csv
+1A,,treatment_33,beats vs mean HR,per-subject values,67.16554724087932,2015.0,,,,ecg_results_*.csv
+1A,,treatment_36,beats vs mean HR,per-subject values,89.27955800613437,2676.0,,,,ecg_results_*.csv
+1A,,treatment_37,beats vs mean HR,per-subject values,89.36551496821752,2648.0,,,,ecg_results_*.csv
+1A,,treatment_38,beats vs mean HR,per-subject values,69.49341493401576,2081.0,,,,ecg_results_*.csv
+1A,,treatment_40,beats vs mean HR,per-subject values,104.54146149367062,3106.0,,,,ecg_results_*.csv
+1A,,treatment_41,beats vs mean HR,per-subject values,91.54311946220376,2726.0,,,,ecg_results_*.csv
+1A,,treatment_42,beats vs mean HR,per-subject values,84.60192704389377,2538.0,,,,ecg_results_*.csv
+1A,,Pearson r (n = 60),beats vs mean HR,Pearson r,,0.9994820696018344,2.8777312105023003e-88,,,computed here from Num_RR and HRV_MeanHR

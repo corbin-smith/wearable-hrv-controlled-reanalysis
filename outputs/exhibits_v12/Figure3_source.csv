@@ -1,0 +1,81 @@
+Figure,Family,Measure,Label,Statistic,Before,After,p_raw_before,p_raw_after,Source
+3B,Amplitude,HRV_RMSSD,RMSSD,rank-biserial r,-0.72666667,-0.72444444,1.3852521e-06,1.491804e-06,Requantization_Q128.csv
+3B,Amplitude,HRV_SDNN,SDNN,rank-biserial r,-0.66222222,-0.66222222,1.0906865e-05,1.0906865e-05,Requantization_Q128.csv
+3B,Amplitude,LF_Power_ms2,LF power,rank-biserial r,-0.80888889,-0.80888889,7.6949636e-08,7.6949636e-08,Requantization_Q128.csv
+3B,Amplitude,HF_Power_ms2,HF power,rank-biserial r,-0.69777778,-0.70222222,3.5708009e-06,3.0938906e-06,Requantization_Q128.csv
+3B,Amplitude,VLF_Power_ms2,VLF power,rank-biserial r,-0.75333333,-0.75111111,5.5999071e-07,6.0459494e-07,Requantization_Q128.csv
+3B,Amplitude,Total_Power_ms2,Total power,rank-biserial r,-0.78444444,-0.78444444,1.8730978e-07,1.8730978e-07,Requantization_Q128.csv
+3B,Spectral distribution,VLF_LF_Ratio,VLF/LF ratio,rank-biserial r,0.61333333,0.60888889,4.638966e-05,5.265009e-05,Requantization_Q128.csv
+3B,Spectral distribution,LF_HF_Ratio,LF/HF ratio,rank-biserial r,-0.18888889,-0.26666667,0.21156124,0.077271976,Requantization_Q128.csv
+3B,Spectral distribution,PSD_Beta,"Slope, uncorrected",rank-biserial r,0.66666667,0.66222222,9.5139379e-06,1.0906865e-05,Requantization_Q128.csv
+3B,Spectral distribution,PSD_Beta_NoMayer,"Slope, baroreflex band excised",rank-biserial r,0.63777778,0.63333333,2.2780239e-05,2.59736e-05,Requantization_Q128.csv
+3B,Fractal scaling (DFA),DFA_Alpha1,DFA α₁,rank-biserial r,-0.12,-0.44666667,0.42896339,0.0030339476,Requantization_Q128.csv
+3B,Fractal scaling (DFA),DFA_Alpha2,DFA α₂,rank-biserial r,0.60222222,0.59111111,6.3560425e-05,8.6634329e-05,Requantization_Q128.csv
+3B,Entropy,MSE_Mean,Multiscale entropy,rank-biserial r,-0.49333333,-0.46888889,0.0010575543,0.00185748,Requantization_Q128.csv
+3B,Entropy,SampEn,Sample entropy,rank-biserial r,-0.34,-0.048888889,0.024156885,0.75058723,Requantization_Q128.csv
+3B,Entropy,ApEn,Approximate entropy,rank-biserial r,-0.38666667,0.017777778,0.010314672,0.91170898,Requantization_Q128.csv
+3B,Entropy,PermEn,Permutation entropy,rank-biserial r,0.4,-0.46222222,0.0079589957,0.0021566378,Requantization_Q128.csv
+3B,Recurrence,RQA_DET,Determinism,rank-biserial r,0.29777778,0.4,0.048413499,0.0079589957,Requantization_Q128.csv
+3B,Recurrence,RQA_LAM,Laminarity,rank-biserial r,0.22444444,0.24666667,0.13732283,0.10232627,Requantization_Q128.csv
+3B,Recurrence,RNA_ClusteringCoeff,Network clustering,rank-biserial r,0.15777778,-0.10222222,0.29727169,0.50114367,Requantization_Q128.csv
+3B,Recurrence,RNA_Transitivity,Network transitivity,rank-biserial r,0.29111111,-0.06,0.053685253,0.6952154,Requantization_Q128.csv
+3A,,control_2,control,RMSSD / 7.8125 ms,,1.2166145123251872,,,ecg_results_*.csv
+3A,,control_16,control,RMSSD / 7.8125 ms,,4.616057995154973,,,ecg_results_*.csv
+3A,,control_18,control,RMSSD / 7.8125 ms,,3.111628235022829,,,ecg_results_*.csv
+3A,,control_19,control,RMSSD / 7.8125 ms,,3.9356864162113614,,,ecg_results_*.csv
+3A,,control_20,control,RMSSD / 7.8125 ms,,2.986639381903335,,,ecg_results_*.csv
+3A,,control_21,control,RMSSD / 7.8125 ms,,1.540759719365909,,,ecg_results_*.csv
+3A,,control_22,control,RMSSD / 7.8125 ms,,2.926150667965896,,,ecg_results_*.csv
+3A,,control_24,control,RMSSD / 7.8125 ms,,1.8392791406105329,,,ecg_results_*.csv
+3A,,control_25,control,RMSSD / 7.8125 ms,,4.877631356457196,,,ecg_results_*.csv
+3A,,control_26,control,RMSSD / 7.8125 ms,,2.7739684566690457,,,ecg_results_*.csv
+3A,,control_28,control,RMSSD / 7.8125 ms,,2.9575045082093165,,,ecg_results_*.csv
+3A,,control_29,control,RMSSD / 7.8125 ms,,3.7475013715585126,,,ecg_results_*.csv
+3A,,control_30,control,RMSSD / 7.8125 ms,,2.806514073828255,,,ecg_results_*.csv
+3A,,control_31,control,RMSSD / 7.8125 ms,,4.2590118075034376,,,ecg_results_*.csv
+3A,,control_32,control,RMSSD / 7.8125 ms,,1.8401947390980924,,,ecg_results_*.csv
+3A,,control_33,control,RMSSD / 7.8125 ms,,2.3391077386366024,,,ecg_results_*.csv
+3A,,control_34,control,RMSSD / 7.8125 ms,,3.418784969647945,,,ecg_results_*.csv
+3A,,control_35,control,RMSSD / 7.8125 ms,,5.112747937697022,,,ecg_results_*.csv
+3A,,control_36,control,RMSSD / 7.8125 ms,,2.673184946746659,,,ecg_results_*.csv
+3A,,control_37,control,RMSSD / 7.8125 ms,,1.7665364755017985,,,ecg_results_*.csv
+3A,,control_38,control,RMSSD / 7.8125 ms,,1.2881439894201752,,,ecg_results_*.csv
+3A,,control_39,control,RMSSD / 7.8125 ms,,2.280915143222773,,,ecg_results_*.csv
+3A,,control_40,control,RMSSD / 7.8125 ms,,3.170773426791158,,,ecg_results_*.csv
+3A,,control_41,control,RMSSD / 7.8125 ms,,2.2374320377291443,,,ecg_results_*.csv
+3A,,control_42,control,RMSSD / 7.8125 ms,,2.189158254511341,,,ecg_results_*.csv
+3A,,control_43,control,RMSSD / 7.8125 ms,,3.780114490846775,,,ecg_results_*.csv
+3A,,control_44,control,RMSSD / 7.8125 ms,,2.1689910980031204,,,ecg_results_*.csv
+3A,,control_45,control,RMSSD / 7.8125 ms,,2.286095573243653,,,ecg_results_*.csv
+3A,,control_46,control,RMSSD / 7.8125 ms,,3.145242877906392,,,ecg_results_*.csv
+3A,,control_47,control,RMSSD / 7.8125 ms,,4.150883758503506,,,ecg_results_*.csv
+3A,,treatment_1,patient,RMSSD / 7.8125 ms,,2.513365746629178,,,ecg_results_*.csv
+3A,,treatment_2,patient,RMSSD / 7.8125 ms,,2.0665709611461534,,,ecg_results_*.csv
+3A,,treatment_3,patient,RMSSD / 7.8125 ms,,1.0521387505431916,,,ecg_results_*.csv
+3A,,treatment_4,patient,RMSSD / 7.8125 ms,,0.6345336959573082,,,ecg_results_*.csv
+3A,,treatment_7,patient,RMSSD / 7.8125 ms,,0.8192740850656444,,,ecg_results_*.csv
+3A,,treatment_8,patient,RMSSD / 7.8125 ms,,2.2170128468415986,,,ecg_results_*.csv
+3A,,treatment_9,patient,RMSSD / 7.8125 ms,,1.6883101085184558,,,ecg_results_*.csv
+3A,,treatment_13,patient,RMSSD / 7.8125 ms,,1.1596772376495048,,,ecg_results_*.csv
+3A,,treatment_15,patient,RMSSD / 7.8125 ms,,0.6651712421409097,,,ecg_results_*.csv
+3A,,treatment_16,patient,RMSSD / 7.8125 ms,,1.1770967631460534,,,ecg_results_*.csv
+3A,,treatment_17,patient,RMSSD / 7.8125 ms,,2.057390513755736,,,ecg_results_*.csv
+3A,,treatment_19,patient,RMSSD / 7.8125 ms,,2.966061172393918,,,ecg_results_*.csv
+3A,,treatment_20,patient,RMSSD / 7.8125 ms,,1.0511889097537224,,,ecg_results_*.csv
+3A,,treatment_21,patient,RMSSD / 7.8125 ms,,0.5854442323164033,,,ecg_results_*.csv
+3A,,treatment_22,patient,RMSSD / 7.8125 ms,,0.8175307109138166,,,ecg_results_*.csv
+3A,,treatment_23,patient,RMSSD / 7.8125 ms,,0.6788985357399558,,,ecg_results_*.csv
+3A,,treatment_24,patient,RMSSD / 7.8125 ms,,0.6449769587403903,,,ecg_results_*.csv
+3A,,treatment_25,patient,RMSSD / 7.8125 ms,,0.6099945310788685,,,ecg_results_*.csv
+3A,,treatment_26,patient,RMSSD / 7.8125 ms,,0.2711603358439957,,,ecg_results_*.csv
+3A,,treatment_27,patient,RMSSD / 7.8125 ms,,0.5566654553251261,,,ecg_results_*.csv
+3A,,treatment_29,patient,RMSSD / 7.8125 ms,,0.8545932177924253,,,ecg_results_*.csv
+3A,,treatment_31,patient,RMSSD / 7.8125 ms,,1.4330738411669204,,,ecg_results_*.csv
+3A,,treatment_32,patient,RMSSD / 7.8125 ms,,2.254748090454924,,,ecg_results_*.csv
+3A,,treatment_33,patient,RMSSD / 7.8125 ms,,2.5503548192499594,,,ecg_results_*.csv
+3A,,treatment_36,patient,RMSSD / 7.8125 ms,,2.5119741888072102,,,ecg_results_*.csv
+3A,,treatment_37,patient,RMSSD / 7.8125 ms,,1.2565572192838412,,,ecg_results_*.csv
+3A,,treatment_38,patient,RMSSD / 7.8125 ms,,2.253218143012344,,,ecg_results_*.csv
+3A,,treatment_40,patient,RMSSD / 7.8125 ms,,2.589738254980137,,,ecg_results_*.csv
+3A,,treatment_41,patient,RMSSD / 7.8125 ms,,2.535081958105481,,,ecg_results_*.csv
+3A,,treatment_42,patient,RMSSD / 7.8125 ms,,1.3341392492766209,,,ecg_results_*.csv

@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use this code or its results, please cite this archive and the datasets it analyzes."
+title: "Heart rate or complexity? Analysis code for a controlled reanalysis of wearable heart rate variability in medicated inpatients with schizophrenia or bipolar disorder"
+type: software
+authors:
+  - family-names: Smith
+    given-names: Corbin
+    orcid: "https://orcid.org/0009-0009-1721-8640"
+    email: "corbinedwardsmith@gmail.com"
+    affiliation: "Independent researcher"
+version: "2.0.0"
+date-released: "2026-11-06"
+doi: "10.5281/zenodo.21794970"
+license: MIT
+repository-code: "https://github.com/corbin-smith/wearable-hrv-controlled-reanalysis"
+abstract: >-
+  Code and results for a controlled reanalysis of wearable heart rate variability in the open
+  HRV-ACC dataset (30 medicated inpatients with schizophrenia or bipolar disorder and 30 controls,
+  Polar H10), with the MIT-BIH Normal Sinus Rhythm Database as an external control cohort. Twenty-one
+  HRV measures are tested against mean heart rate, recording resolution and estimator settings, and
+  against movement, age, sex, diagnosis and the one recorded medication.
+keywords:
+  - heart rate variability
+  - schizophrenia
+  - bipolar disorder
+  - wearable sensors
+  - heart rate
+  - entropy
+  - spectral analysis
+  - reproducibility
+references:
+  - type: data
+    title: "HRV-ACC: a dataset with R-R intervals and accelerometer data for the diagnosis of psychotic disorders using a Polar H10 wearable sensor"
+    authors:
+      - family-names: Książek
+        given-names: Kamil
+      - name: "et al."
+    version: "2"
+    doi: "10.5281/zenodo.21886112"
+    license: CC-BY-4.0
+  - type: database
+    title: "MIT-BIH Normal Sinus Rhythm Database"
+    authors:
+      - name: "PhysioNet"
+    doi: "10.13026/C2NK5R"

@@ -1,0 +1,82 @@
+Metric,Pair,z,p_raw,p_adj,Significant
+Mean NN (ms),MIT-BIH vs HRV-ACC,0.360170,0.718720,0.776218,False
+Mean NN (ms),MIT-BIH vs Psychiatric,3.295803,0.000981,0.002271,True
+Mean NN (ms),HRV-ACC vs Psychiatric,3.389777,0.000699,0.001954,True
+SDNN (ms),MIT-BIH vs HRV-ACC,0.223667,0.823016,0.865770,False
+SDNN (ms),MIT-BIH vs Psychiatric,3.924045,0.000087,0.000392,True
+SDNN (ms),HRV-ACC vs Psychiatric,4.272828,0.000019,0.000105,True
+RMSSD (ms),MIT-BIH vs HRV-ACC,1.600208,0.109553,0.156199,False
+RMSSD (ms),MIT-BIH vs Psychiatric,5.497939,0.000000,0.000002,True
+RMSSD (ms),HRV-ACC vs Psychiatric,4.500712,0.000007,0.000055,True
+pNN50 (%),MIT-BIH vs HRV-ACC,1.516870,0.129300,0.177513,False
+pNN50 (%),MIT-BIH vs Psychiatric,5.327141,0.000000,0.000002,True
+pNN50 (%),HRV-ACC vs Psychiatric,4.399722,0.000011,0.000080,True
+Mean HR (bpm),MIT-BIH vs HRV-ACC,-0.360170,0.718720,0.776218,False
+Mean HR (bpm),MIT-BIH vs Psychiatric,-3.295803,0.000981,0.002271,True
+Mean HR (bpm),HRV-ACC vs Psychiatric,-3.389777,0.000699,0.001954,True
+SD1 (ms),MIT-BIH vs HRV-ACC,1.600208,0.109553,0.156199,False
+SD1 (ms),MIT-BIH vs Psychiatric,5.497939,0.000000,0.000002,True
+SD1 (ms),HRV-ACC vs Psychiatric,4.500712,0.000007,0.000055,True
+SD2 (ms),MIT-BIH vs HRV-ACC,0.177618,0.859023,0.892062,False
+SD2 (ms),MIT-BIH vs Psychiatric,3.863194,0.000112,0.000477,True
+SD2 (ms),HRV-ACC vs Psychiatric,4.255737,0.000021,0.000105,True
+SD1/SD2,MIT-BIH vs HRV-ACC,1.616654,0.105953,0.156199,False
+SD1/SD2,MIT-BIH vs Psychiatric,3.343497,0.000827,0.002031,True
+SD1/SD2,HRV-ACC vs Psychiatric,1.993986,0.046154,0.076295,False
+LF Power (ms²),MIT-BIH vs HRV-ACC,0.126635,0.899229,0.910470,False
+LF Power (ms²),MIT-BIH vs Psychiatric,4.769376,0.000002,0.000021,True
+LF Power (ms²),HRV-ACC vs Psychiatric,5.360975,0.000000,0.000002,True
+HF Power (ms²),MIT-BIH vs HRV-ACC,1.662703,0.096372,0.147285,False
+HF Power (ms²),MIT-BIH vs Psychiatric,5.392684,0.000000,0.000002,True
+HF Power (ms²),HRV-ACC vs Psychiatric,4.307011,0.000017,0.000103,True
+Total Power (ms²),MIT-BIH vs HRV-ACC,0.131569,0.895325,0.910470,False
+Total Power (ms²),MIT-BIH vs Psychiatric,4.572022,0.000005,0.000049,True
+Total Power (ms²),HRV-ACC vs Psychiatric,5.127394,0.000000,0.000004,True
+LF/HF Ratio,MIT-BIH vs HRV-ACC,-2.508034,0.012141,0.022869,True
+LF/HF Ratio,MIT-BIH vs Psychiatric,-1.254839,0.209537,0.261116,False
+LF/HF Ratio,HRV-ACC vs Psychiatric,1.447064,0.147879,0.193197,False
+PSD β,MIT-BIH vs HRV-ACC,-0.529565,0.596413,0.661774,False
+PSD β,MIT-BIH vs Psychiatric,-4.259546,0.000020,0.000105,True
+PSD β,HRV-ACC vs Psychiatric,-4.307011,0.000017,0.000103,True
+Sample Entropy,MIT-BIH vs HRV-ACC,1.504820,0.132370,0.178700,False
+Sample Entropy,MIT-BIH vs Psychiatric,3.369811,0.000752,0.001986,True
+Sample Entropy,HRV-ACC vs Psychiatric,2.153505,0.031279,0.053906,False
+Approx. Entropy,MIT-BIH vs HRV-ACC,1.598563,0.109918,0.156199,False
+Approx. Entropy,MIT-BIH vs Psychiatric,3.725047,0.000195,0.000743,True
+Approx. Entropy,HRV-ACC vs Psychiatric,2.455452,0.014071,0.025903,True
+Permutation Entropy,MIT-BIH vs HRV-ACC,0.906181,0.364840,0.428290,False
+Permutation Entropy,MIT-BIH vs Psychiatric,-1.462060,0.143725,0.190848,False
+Permutation Entropy,HRV-ACC vs Psychiatric,-2.734610,0.006245,0.012647,True
+MSE Mean,MIT-BIH vs HRV-ACC,-0.266427,0.789910,0.841878,False
+MSE Mean,MIT-BIH vs Psychiatric,2.639603,0.008300,0.016398,True
+MSE Mean,HRV-ACC vs Psychiatric,3.355594,0.000792,0.002005,True
+DFA α (full),MIT-BIH vs HRV-ACC,-0.690737,0.489731,0.550947,False
+DFA α (full),MIT-BIH vs Psychiatric,-3.414215,0.000640,0.001919,True
+DFA α (full),HRV-ACC vs Psychiatric,-3.144801,0.001662,0.003638,True
+DFA α₁ (4–16),MIT-BIH vs HRV-ACC,-2.878071,0.004001,0.008310,True
+DFA α₁ (4–16),MIT-BIH vs Psychiatric,-1.975179,0.048248,0.078161,False
+DFA α₁ (4–16),HRV-ACC vs Psychiatric,1.042570,0.297147,0.359238,False
+DFA α₂ (16–64),MIT-BIH vs HRV-ACC,-0.110189,0.912259,0.912259,False
+DFA α₂ (16–64),MIT-BIH vs Psychiatric,-3.716824,0.000202,0.000743,True
+DFA α₂ (16–64),HRV-ACC vs Psychiatric,-4.164583,0.000031,0.000149,True
+MFDFA Δh (width),MIT-BIH vs HRV-ACC,1.064064,0.287300,0.352595,False
+MFDFA Δh (width),MIT-BIH vs Psychiatric,-2.004782,0.044986,0.075914,False
+MFDFA Δh (width),HRV-ACC vs Psychiatric,-3.543599,0.000395,0.001279,True
+MFDFA H̅ (mean),MIT-BIH vs HRV-ACC,-0.749943,0.453289,0.524520,False
+MFDFA H̅ (mean),MIT-BIH vs Psychiatric,-3.419149,0.000628,0.001919,True
+MFDFA H̅ (mean),HRV-ACC vs Psychiatric,-3.082133,0.002055,0.004381,True
+MFDFA H(q=2),MIT-BIH vs HRV-ACC,-0.712117,0.476392,0.543490,False
+MFDFA H(q=2),MIT-BIH vs Psychiatric,-3.628015,0.000286,0.000964,True
+MFDFA H(q=2),HRV-ACC vs Psychiatric,-3.366988,0.000760,0.001986,True
+RQA Determinism,MIT-BIH vs HRV-ACC,-1.536068,0.124522,0.173901,False
+RQA Determinism,MIT-BIH vs Psychiatric,-3.188903,0.001428,0.003213,True
+RQA Determinism,HRV-ACC vs Psychiatric,-1.908530,0.056323,0.089454,False
+RQA Laminarity,MIT-BIH vs HRV-ACC,-2.614934,0.008924,0.017212,True
+RQA Laminarity,MIT-BIH vs Psychiatric,-3.799054,0.000145,0.000588,True
+RQA Laminarity,HRV-ACC vs Psychiatric,-1.367305,0.171530,0.220538,False
+RNA Clustering Coeff,MIT-BIH vs HRV-ACC,-1.348582,0.177471,0.224612,False
+RNA Clustering Coeff,MIT-BIH vs Psychiatric,-2.221871,0.026292,0.047326,True
+RNA Clustering Coeff,HRV-ACC vs Psychiatric,-1.008387,0.313269,0.373158,False
+RNA Transitivity,MIT-BIH vs HRV-ACC,-2.164310,0.030441,0.053602,False
+RNA Transitivity,MIT-BIH vs Psychiatric,-3.693799,0.000221,0.000778,True
+RNA Transitivity,HRV-ACC vs Psychiatric,-1.766102,0.077379,0.120532,False

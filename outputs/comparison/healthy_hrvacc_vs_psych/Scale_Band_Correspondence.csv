@@ -1,0 +1,5 @@
+Group,Exponent,Scale_Lo_Beats,Scale_Hi_Beats,Mean_NN_s,Freq_Lo_Hz,Freq_Hi_Hz,Beta_Band_Lo_Hz,Beta_Band_Hi_Hz,Overlap_With_Beta_Band_Hz
+Healthy,alpha1,4,16,0.728,0.08586,0.34343,0.0156,0.15,0.06414
+Healthy,alpha2,16,64,0.728,0.02146,0.08586,0.0156,0.15,0.06439
+Psychiatric,alpha1,4,16,0.6338,0.09861,0.39445,0.0156,0.15,0.05139
+Psychiatric,alpha2,16,64,0.6338,0.02465,0.09861,0.0156,0.15,0.07396

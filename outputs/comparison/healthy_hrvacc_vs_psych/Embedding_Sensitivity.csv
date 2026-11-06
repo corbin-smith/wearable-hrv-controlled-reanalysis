@@ -1,0 +1,7 @@
+Quantity,Type,Healthy_Median,Psych_Median,r_effect,p_raw,N_Healthy,N_Psych
+Embed_Delay_MI,selected_parameter,13.000000,14.000000,0.012222,0.940848,30,30
+Embed_Dim_FNN,selected_parameter,7.000000,5.000000,-0.268889,0.071115,30,30
+RQA_DET,primary_embedding,0.810469,0.845884,0.297778,0.048413,30,30
+RQA_DET,selected_embedding,0.870675,0.868193,-0.024444,0.876635,30,30
+RQA_LAM,primary_embedding,0.833428,0.874604,0.224444,0.137323,30,30
+RQA_LAM,selected_embedding,0.921663,0.920848,-0.024444,0.876635,30,30
