@@ -1,0 +1,2 @@
+Comparison,Control_median,Patient_median,Control_mean,Patient_mean,rank_biserial_r,p_value,note
+Mobility: control vs patient,106.36,114.7,108.99,114.72,-0.144,0.34029,r>0: controls more mobile; r<0: patients more mobile

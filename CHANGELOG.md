@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1 (November 2026)
+
+Adds `outputs/accelerometer/` (mobility, activity-structure and covariate tables, and the movement-free beat masks), which version 2.0.0 left out by mistake: an unanchored `.gitignore` pattern for the raw accelerometer folder also matched it on a case-insensitive file system. The patterns are now anchored to the top folder. No code or result changed.
+
 ## 2.0.0 (November 2026)
 
 Code and results for manuscript v12, *Heart rate or complexity? A controlled reanalysis of wearable heart rate variability in medicated inpatients with schizophrenia or bipolar disorder*. The repository was renamed from `ecg-criticality-psychiatry-pilot` to `wearable-hrv-controlled-reanalysis` to match the study's framing.

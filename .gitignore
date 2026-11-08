@@ -1,15 +1,17 @@
 # Raw data: download from the sources in DATA_SETUP.md; do not commit.
-Control ECGs/
-Psychiatric ECGs/
-Accelerometer ECGs/
-Long Healthy ECGs/
-accelerometer_anonymized_data/
-Accelerometer/
-ACC ECGs/
-patient_data_summary.csv
-control_data_summary.csv
-PANSS.csv
-*.zip
+# Anchored to the top folder (leading /): on Windows git ignores case, so an unanchored
+# "Accelerometer/" would also match outputs/accelerometer/.
+/Control ECGs/
+/Psychiatric ECGs/
+/Accelerometer ECGs/
+/Long Healthy ECGs/
+/accelerometer_anonymized_data/
+/Accelerometer/
+/ACC ECGs/
+/patient_data_summary.csv
+/control_data_summary.csv
+/PANSS.csv
+/*.zip
 *.dat
 *.hea
 *.atr

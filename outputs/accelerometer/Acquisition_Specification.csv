@@ -1,0 +1,23 @@
+Item,Value
+gravity_removal,per-axis Gaussian high-pass: each axis minus a Gaussian-smoothed copy of itself
+gravity_time_constant_s,10.0
+motion_definition,Euclidean norm of the three gravity-removed axes
+motion_smoothing_s,15.0
+bout_threshold,"per-subject, relative: motion above threshold_mult x the subject's own median motion"
+bout_threshold_mult_default,2.5
+bout_min_duration_s,20.0
+bout_pad_pre_s,30.0
+bout_pad_post_s,180.0
+min_acc_samples_in_window,500
+min_window_coverage,0.5
+synchronisation_method,"RR window mapped to wall-clock times, then accelerometer samples selected by timestamp within those bounds"
+synchronisation_verified,no independent verification available; the two streams share the device clock but no common event marker exists in the exported files
+dynamic_range_g,unknown; not recoverable from the exported files
+device_side_filtering,unknown; not documented in the dataset release
+axis_orientation,unknown; the analysis uses the norm and is therefore orientation-invariant
+sampling_interval_s_median,0.010000000002037268
+sampling_rate_hz_median,99.99999997962732
+n_samples,756036
+trace_duration_s,7481.081000000006
+sampling_interval_s_max,0.010000000002037268
+largest_gap_s,0.0
