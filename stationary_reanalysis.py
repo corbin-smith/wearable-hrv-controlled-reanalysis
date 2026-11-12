@@ -1,14 +1,4 @@
-"""stationary_reanalysis.py: recompute the primary measures on movement-free data.
-
-Uses each subject's longest contiguous movement-free run, not the concatenated pieces: splicing
-non-adjacent segments adds a discontinuity at every join, which spectra read as broadband power
-and DFA as a step.
-
-Usage:  python stationary_reanalysis.py --assess                           (run lengths only)
-        python stationary_reanalysis.py --run --truncate 600 --match beats
-        python stationary_reanalysis.py --run --truncate 370 --match duration
-Surrogate tests are not repeated here.
-"""
+"""stationary_reanalysis.py: recompute the primary measures on movement-free data."""
 import argparse
 import os
 import sys
@@ -27,14 +17,12 @@ COHORTS = {
     "control":   {"dir": "Control ECGs",     "prefix": "control"},
     "treatment": {"dir": "Psychiatric ECGs", "prefix": "treatment"},
 }
-# Analysis window constants come from pipeline.py.
 SKIP_SECONDS = PIPE_SKIP
 ANALYSIS_SECONDS = PIPE_ANALYSIS
-MIN_SEGMENT_BEATS = 500          # below this a subject is not analysable
+MIN_SEGMENT_BEATS = 500
 
 
 def longest_true_run(mask):
-    """Return (start, end) of the longest contiguous True run in a bool array."""
     mask = np.asarray(mask, dtype=bool)
     if not mask.any():
         return 0, 0
@@ -48,7 +36,6 @@ def longest_true_run(mask):
 
 
 def load_window(record_id):
-    """Return the R-R series for the analysis window, in seconds."""
     pref = str(record_id).split("_")[0]
     cfg = next((c for c in COHORTS.values() if c["prefix"] == pref), None)
     if cfg is None:
@@ -68,7 +55,6 @@ def load_window(record_id):
 
 
 def gather():
-    """Load every mask and pair it with its R-R window."""
     if not os.path.isdir(MASK_DIR):
         sys.exit(f"mask folder not found: {MASK_DIR}. "
                  f"Run accelerometer_mobility.py first.")
@@ -125,12 +111,6 @@ def assess():
 
 
 def run(truncate, match="beats"):
-    """Recompute the measures on segments matched by beat count or by duration.
-
-    Matched beats give patients, whose heart rate is higher, shorter segments and noisier spectra;
-    matched duration gives them more beats, which affects entropy and DFA. Running both separates
-    the two: --match beats suits entropy, DFA, MFDFA and recurrence, --match duration the spectra.
-    """
     data = gather()
     rows = []
     skipped = []
@@ -138,7 +118,6 @@ def run(truncate, match="beats"):
         a, b = longest_true_run(mask)
         seg = rr[a:b]
         if match == "duration":
-            # Take the leading `truncate` seconds of the segment.
             cum = np.cumsum(seg)
             keep = cum <= truncate
             if keep.sum() < MIN_SEGMENT_BEATS or cum[-1] < truncate:
@@ -167,9 +146,7 @@ def run(truncate, match="beats"):
                "N_Beats": n, "Duration_s": float(np.sum(clean)),
                "Artifact_Percent": pct,
                "Match_Mode": match,
-               # Number of Welch segments averaged, reported because it sets spectral precision.
                "Welch_N_Segments": fd.get("Welch_N_Segments", np.nan)}
-        # Spectral distribution, amplitude and heart rate for the same segments.
         for k in ("PSD_Beta", "PSD_Beta_NoMayer", "PSD_Beta_Specparam",
                   "LF_Power_ms2", "HF_Power_ms2", "Mayer_Peak_Amp",
                   "VLF_Power_ms2", "VLF_LF_Ratio", "LF_HF_Ratio",

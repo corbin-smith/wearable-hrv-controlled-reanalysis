@@ -1,8 +1,8 @@
 Analysis,r_or_AUC,p
 PSD_Beta ~ Group (unadjusted),0.590202,0.000010
-PSD_Beta ~ Group | MeanHR,0.640360,0.000001
-PSD_Beta ~ Group | RMSSD,0.235454,0.107177
-PSD_Beta ~ Group | MeanHR + RMSSD,0.265415,0.068269
+PSD_Beta ~ Group | MeanHR,0.642768,0.000001
+PSD_Beta ~ Group | RMSSD,0.210554,0.155433
+PSD_Beta ~ Group | MeanHR + RMSSD,0.263299,0.077064
 "LOO-AUC incremental test (see nested_classifier.py, Classification_Summary_NestedCV.csv)",,
 "Within-healthy: PSD_Beta ~ Age (N=18, Spearman)",0.322450,0.191887
 "Within-healthy: PSD_Beta by Sex (M n=5, F n=13, MW)",-0.138462,0.702848

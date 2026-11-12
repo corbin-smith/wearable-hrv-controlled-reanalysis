@@ -1,12 +1,4 @@
-"""mitbih_metadata.py: attach per-record age and sex to the MIT-BIH results file.
-
-Age and sex are read from the .hea header comments when present, otherwise from MITBIH_AGES below.
-If neither is available the script reports it and writes nothing. The table is checked against the
-database's published aggregate demographics before it is used.
-
-Usage:  python mitbih_metadata.py --check   (report what is available; write nothing)
-        python mitbih_metadata.py --write   (merge into the results CSV)
-"""
+"""mitbih_metadata.py: attach per-record age and sex to the MIT-BIH results file."""
 import argparse
 import glob
 import os
@@ -18,13 +10,8 @@ import pandas as pd
 RESULTS_CSV = os.path.join("outputs", "healthy", "ecg_results_Healthy.csv")
 HEADER_DIRS = [".", "nsrdb", os.path.join("data", "nsrdb"), "Long Healthy ECGs"]
 
-# The record list comes from healthy.py.
 from healthy import RECORD_IDS as RECORDS
 
-# Per-record demographics from Beecardia's PhysioNet mirror (beecardia.com). check_against_published()
-# asserts that they reproduce the documented sex counts and within-sex age ranges (5 men aged 26-45,
-# 13 women aged 20-50).
-# Format: "record_id": {"Age": int, "Sex": "F" or "M"}
 MITBIH_AGES = {
     "16265": {"Age": 32, "Sex": "M"},
     "16272": {"Age": 20, "Sex": "F"},
@@ -46,7 +33,6 @@ MITBIH_AGES = {
     "19830": {"Age": 50, "Sex": "F"},
 }
 
-
 PUBLISHED = {
     "n_male": 5, "male_age_range": (26, 45),
     "n_female": 13, "female_age_range": (20, 50),
@@ -55,10 +41,6 @@ PUBLISHED = {
 
 
 def check_against_published(table):
-    """Check the per-record table against the database's published aggregate demographics.
-
-    The sex counts and both within-sex age ranges must all agree.
-    """
     ages = {"M": [], "F": []}
     for rec, info in table.items():
         if "Age" in info and info.get("Sex") in ages:
@@ -93,7 +75,6 @@ def check_against_published(table):
 
 
 def find_headers():
-    """Locate .hea files for the NSR records, wherever they were downloaded."""
     found = {}
     for d in HEADER_DIRS:
         if not os.path.isdir(d):
@@ -107,10 +88,6 @@ def find_headers():
 
 
 def parse_header(path):
-    """Extract age and sex from '#' comment lines in the header, if present.
-
-    Several formats are tried; returns {} when nothing is found.
-    """
     out = {}
     try:
         with open(path, "r", errors="ignore") as fh:
@@ -137,7 +114,6 @@ def parse_header(path):
 
 
 def gather():
-    """Combine header-derived and hand-entered metadata."""
     headers = find_headers()
     print(f"  Header files located: {len(headers)}/{len(RECORDS)}")
     from_header = {}
@@ -204,7 +180,6 @@ def main():
         sys.exit(f"  Results file not found: {args.csv}")
     df = pd.read_csv(args.csv, index_col=0)
     before = df.copy()
-    # Build both columns, then concatenate once.
     add = pd.DataFrame(index=df.index, columns=["Age", "Sex"], dtype=object)
     df = pd.concat([df.drop(columns=[c for c in ("Age", "Sex")
                                      if c in df.columns]), add], axis=1)

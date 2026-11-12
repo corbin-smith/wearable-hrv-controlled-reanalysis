@@ -1,14 +1,4 @@
-"""rna_controls.py: recurrence-network measures under the resolution controls, merged into the results files.
-
-Clustering coefficient and transitivity are recomputed for each subject as observed, with dither
-(uniform noise one step wide), re-quantized to a common step-to-RMSSD ratio, and truncated to a
-common beat count. The first three use the functions and seed of pipeline.quantization_controls(),
-so the values are directly comparable with the entropy and RQA controls.
-
-Usage:  python rna_controls.py --check   (report what would be computed)
-        python rna_controls.py --run     (compute and merge into the results CSVs)
-Run comparison.py afterwards.
-"""
+"""rna_controls.py: recurrence-network measures under the resolution controls, merged into the results files."""
 import argparse
 import os
 import sys
@@ -31,24 +21,19 @@ COHORTS = {
                   "csv": os.path.join("outputs", "psychiatric",
                                       "ecg_results_Psychiatric.csv")},
 }
-# Analysis window constants come from pipeline.py.
 SKIP_SECONDS = PIPE_SKIP
 ANALYSIS_SECONDS = PIPE_ANALYSIS
 
-# Every column subject_controls() produces. The merge drops these before re-adding them and the
-# guard excludes them from its unchanged-columns check; _assert_columns_declared() enforces the list.
 NEW_COLS = [
     "RNA_ClusteringCoeff_Dither", "RNA_Transitivity_Dither",
     "RNA_ClusteringCoeff_MatchedQuant", "RNA_Transitivity_MatchedQuant",
     "RNA_ClusteringCoeff_Trunc", "RNA_Transitivity_Trunc",
     "RNA_Controls_NBeats",
-    # Theiler window the controls were computed on, recorded per subject.
     "RNA_Controls_Theiler_W", "RNA_Controls_Theiler_Source",
 ]
 
 
 def _assert_columns_declared(sample_row):
-    """Stop if subject_controls() produced a key that NEW_COLS does not list."""
     undeclared = [k for k in sample_row if k not in NEW_COLS]
     if undeclared:
         sys.exit(
@@ -72,20 +57,11 @@ def load_window(path):
 
 
 def rna_pair(x, theiler):
-    """Clustering coefficient and transitivity for one series, on a fixed Theiler window.
-
-    The window is passed in so that every condition uses the same eligible pair set.
-    """
     out = compute_recurrence_network(x, theiler=theiler)
     return out.get("RNA_ClusteringCoeff", np.nan), out.get("RNA_Transitivity", np.nan)
 
 
 def subject_controls(rr_clean, trunc_n=None, theiler=None):
-    """Recurrence-network measures under each control condition, with the pipeline's settings.
-
-    theiler: the window the pipeline used for this subject, read from the results CSV. When it is
-    unavailable, it is resolved once from the observed series and reused for every condition.
-    """
     rng = np.random.default_rng(QUANT_SEED)
     res = {}
     res["RNA_Controls_NBeats"] = int(len(rr_clean))
@@ -135,7 +111,6 @@ def gather(cohort, trunc_n, verbose=True):
             rr = load_window(path)
             clean, _, _, _ = reject_ectopic_beats(rr, verbose=False)
             clean = truncate_series(clean)
-            # The Theiler window the pipeline used for this subject.
             _tw = None
             if "RQA_Theiler_W" in df.columns and rid in df.index:
                 _tw = pd.to_numeric(pd.Series([df.at[rid, "RQA_Theiler_W"]]),
@@ -161,7 +136,6 @@ def main():
     print("  RECURRENCE-NETWORK INSTRUMENTATION CONTROLS")
     print("=" * 68)
 
-    # Common beat count from the existing results, if not supplied.
     trunc = args.truncate
     if trunc is None:
         mins = []

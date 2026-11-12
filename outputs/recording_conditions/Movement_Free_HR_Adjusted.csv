@@ -1,0 +1,18 @@
+Metric,N_Controls,N_Patients,Control_Median,Patient_Median,r_rank_biserial,p_rank_biserial,r_partial_unadjusted,p_partial_unadjusted,r_partial_HR,p_partial_HR,n_HR,Median_Duration_s,Segment
+HRV_MeanHR,25,26,83.942891,94.635216,0.48615385,0.0030008481,0.42102158,0.0020941588,,,0,405.692,first 600 beats of the longest segment outside detected walking bouts
+HRV_RMSSD,25,26,20.504197,8.4212815,-0.63692308,9.9864756e-05,-0.55159156,2.7248341e-05,-0.39762787,0.0042434228,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+LF_Power_ms2,25,26,533.18626,71.857701,-0.76923077,2.5871802e-06,-0.66617339,9.5354191e-08,-0.5868257,7.5024502e-06,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+HF_Power_ms2,25,26,184.19569,15.375414,-0.63076923,0.00011656704,-0.54626218,3.3744637e-05,-0.40509523,0.0035201221,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+VLF_Power_ms2,25,26,687.04047,155.9835,-0.75076923,4.4733541e-06,-0.65018523,2.422213e-07,-0.56390598,2.0036033e-05,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+Total_Power_ms2,25,26,1392.8631,393.56012,-0.79076923,1.3446938e-06,-0.68482624,2.9850145e-08,-0.60141513,3.8571712e-06,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+VLF_LF_Ratio,25,26,1.334256,1.870684,0.27076923,0.099210131,0.23449303,0.09766455,0.22966105,0.10862553,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+LF_HF_Ratio,25,26,5.173261,2.899013,-0.16923077,0.30446686,-0.14655815,0.30477769,-0.31701134,0.024889395,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+PSD_Beta,25,26,1.13176,1.763753,0.48923077,0.0028219706,0.42368627,0.001947851,0.36613415,0.0089235805,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+PSD_Beta_NoMayer,25,26,1.169398,1.839304,0.51692308,0.0015990866,0.44766852,0.0009880602,0.39935415,0.0040655234,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+DFA_Alpha2,25,26,1.00578,1.0869675,0.28307692,0.084696302,0.24515181,0.082935986,0.19931777,0.16522502,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+MSE_Mean,25,26,1.471088,1.033887,-0.39076923,0.01714693,-0.33841608,0.015140369,-0.21318094,0.13716368,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+SampEn,25,26,1.046968,0.942945,-0.13538462,0.4124231,-0.11724652,0.41256886,0.093063221,0.52034769,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+ApEn,25,26,1.057372,0.952492,-0.15692308,0.3413341,-0.13589937,0.34166704,0.090454256,0.53215921,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+PermEn,25,26,0.936838,0.9473285,0.27076923,0.099210131,0.23449303,0.09766455,0.38001965,0.0064862802,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+RQA_DET,25,26,0.751323,0.783588,0.10769231,0.51565547,0.093264274,0.51507919,-0.13938549,0.33434503,51,405.692,first 600 beats of the longest segment outside detected walking bouts
+RQA_LAM,25,26,0.757591,0.777591,0.033846154,0.84316759,0.029311629,0.83821187,-0.2329258,0.10355595,51,405.692,first 600 beats of the longest segment outside detected walking bouts

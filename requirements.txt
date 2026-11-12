@@ -1,5 +1,4 @@
-# Package versions used to produce the results (Python 3.14.5).
-# Install with:  pip install -r requirements.txt
+# Python 3.14.5
 neurokit2==0.2.13
 numpy==2.4.4
 pandas==2.3.3

@@ -1,0 +1,4 @@
+Metric,N,r_unadjusted,rank_then_regress_mean,rank_then_regress_lo,rank_then_regress_hi,regress_then_rank_mean,regress_then_rank_lo,regress_then_rank_hi,regress_then_rank_shrinkage_pct,N_Draws,Seed
+HRV_RMSSD,48,-0.72688,-0.726873,-0.747469,-0.704885,-0.646462,-0.724493,-0.553078,11.0634,2000,1234
+VLF_LF_Ratio,48,0.571564,0.571926,0.541647,0.60405,0.488826,0.276039,0.61225,14.4757,2000,1234
+SampEn,48,-0.465949,-0.466272,-0.502187,-0.431368,-0.403904,-0.481768,-0.328696,13.3159,2000,1234

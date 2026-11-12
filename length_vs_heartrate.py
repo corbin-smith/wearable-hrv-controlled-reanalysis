@@ -1,21 +1,11 @@
-"""length_vs_heartrate.py: separate series length from mean heart rate for the entropy and recurrence contrasts.
-
-Over a fixed 1800 s window the beat count is about 30 x mean heart rate, so adjusting for length and
-adjusting for heart rate are nearly the same adjustment. This script equalizes length by design: each
-measure is recomputed on the first 2000 (primary) and 2400 clean intervals of every subject, which
-makes length identical across groups while leaving heart rate unchanged. Equal beat counts mean
-unequal durations, so the result is a consistency check rather than a separate estimate.
-
-Usage:  python length_vs_heartrate.py --check   (subject retention only)
-        python length_vs_heartrate.py --run     (full analysis, about 25 min)
-"""
+"""length_vs_heartrate.py: separate series length from mean heart rate for the entropy and recurrence contrasts."""
 import argparse
 import os
 import sys
 
 import numpy as np
 import pandas as pd
-from scipy.stats import mannwhitneyu, spearmanr
+from scipy.stats import mannwhitneyu, spearmanr, rankdata, t as t_dist
 
 from pipeline import (
     SKIP_SECONDS as PIPE_SKIP,
@@ -38,17 +28,12 @@ COHORTS = {
                                       "ecg_results_Psychiatric.csv")},
 }
 OUT_DIR = os.path.join("outputs", "comparison")
-# Analysis window constants come from pipeline.py.
 SKIP_SECONDS = PIPE_SKIP
 ANALYSIS_SECONDS = PIPE_ANALYSIS
-# Candidate fixed beat counts. The primary is the largest that keeps at least MIN_RETAIN_FRAC of both
-# groups (2000 keeps 29 controls and 30 patients; 2400 keeps only 18 controls), so that subjects are
-# not dropped unevenly.
 FIXED_N = [2000, 2400]
 MIN_PER_GROUP = 15
 MIN_RETAIN_FRAC = 0.90
 
-# MSE_Mean is computed by metrics_for() with the same call as pipeline.compute_complexity_metrics.
 METRICS = ["SampEn", "ApEn", "PermEn", "MSE_Mean", "RQA_DET", "RQA_LAM",
            "RNA_ClusteringCoeff", "RNA_Transitivity"]
 
@@ -66,7 +51,6 @@ def load_window(path):
 
 
 def metrics_for(x):
-    """The measures affected by the length adjustment, for one series."""
     out = {}
     sd = float(np.std(x, ddof=1))
     r_tol = ENTROPY_R_FRAC * sd
@@ -80,8 +64,6 @@ def metrics_for(x):
             out["PermEn"] = np.nan
     else:
         out["PermEn"] = np.nan
-    # Refined composite MSE, as in pipeline.compute_complexity_metrics: tolerance from the SD of this
-    # series; scales capped at MSE_MAX_SCALE and kept while they hold at least MSE_MIN_POINTS points.
     try:
         mse_scales, mse_values = rcmse(x, m=ENTROPY_M, r_frac=ENTROPY_R_FRAC,
                                        max_scale=MSE_MAX_SCALE,
@@ -90,7 +72,6 @@ def metrics_for(x):
         mse_values = mse_values[finite]
         out["MSE_Mean"] = (float(np.mean(mse_values)) if len(mse_values)
                            else np.nan)
-        # Number of scales kept, the only route by which beat count could affect MSE mechanically.
         out["MSE_N_Scales"] = int(len(mse_values))
     except Exception:
         out["MSE_Mean"] = np.nan
@@ -133,7 +114,6 @@ def gather(cohort, fixed_ns, verbose=True):
                     for key, val in metrics_for(clean[:n]).items():
                         rec[f"fixed{n}__{key}"] = val
                 else:
-                    # Fill every key metrics_for() would produce, so short subjects give complete rows.
                     for key in (METRICS + ["MSE_N_Scales", "Ordinal_Tie_Rate",
                                            "N_beats", "Duration_s", "MeanHR"]):
                         rec[f"fixed{n}__{key}"] = np.nan
@@ -153,10 +133,18 @@ def partial(v, g, covs):
     ok = np.isfinite(v) & np.isfinite(g)
     for c in covs:
         ok &= np.isfinite(c)
-    if ok.sum() < 8:
+    n = int(ok.sum())
+    if n < 8:
         return np.nan, np.nan
-    return spearmanr(_resid(v[ok], [c[ok] for c in covs]),
-                     _resid(g[ok], [c[ok] for c in covs]))
+    rc = [rankdata(c[ok]) for c in covs]
+    a, b = _resid(rankdata(v[ok]), rc), _resid(rankdata(g[ok]), rc)
+    if np.std(a) == 0 or np.std(b) == 0:
+        return np.nan, np.nan
+    r = float(np.corrcoef(a, b)[0, 1])
+    dof = n - 2 - len(covs)
+    if dof <= 0 or abs(r) >= 1.0:
+        return r, np.nan
+    return r, float(2.0 * t_dist.sf(abs(r * np.sqrt(dof / (1.0 - r ** 2))), dof))
 
 
 def contrast(a, b):
@@ -181,7 +169,6 @@ def main():
     print("  RECORDING LENGTH VERSUS MEAN HEART RATE")
     print("=" * 72)
 
-    # -- retention check, from the existing results --
     counts = {}
     for coh, cfg in COHORTS.items():
         if not os.path.exists(cfg["csv"]):
@@ -242,7 +229,6 @@ def main():
     h, p = frames["control"], frames["treatment"]
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    # -- correlation of beat count with mean heart rate --
     nh = pd.to_numeric(h["observed__N_beats"], errors="coerce").values
     np_ = pd.to_numeric(p["observed__N_beats"], errors="coerce").values
     hr_h = pd.to_numeric(h["observed__MeanHR"], errors="coerce").values
@@ -270,7 +256,6 @@ def main():
     print("    (30 x HR is the exact expectation over an 1800 s window; the")
     print("     residual is artifact removal only)")
 
-    # -- group contrasts under every condition --
     rows = []
     conds = [("observed", "observed")] + \
             [(f"fixed{n}", f"fixed {n} beats") for n in usable]
@@ -314,7 +299,6 @@ def main():
     for _, r in out[out.Condition == "observed"].iterrows():
         print(f"  {r['Metric']:<22}{r['r_adj_beats']:>14.3f}{r['r_adj_HR']:>14.3f}")
 
-    # -- summary --
     print("\n" + "=" * 72)
     print("  HOW TO READ THIS")
     print("=" * 72)

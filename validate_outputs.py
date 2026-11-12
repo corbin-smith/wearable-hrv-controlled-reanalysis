@@ -1,17 +1,4 @@
-"""validate_outputs.py: internal-consistency checks across every analysis output.
-
-Checks include: no correction family contains a quantity fixed by construction; adjusted p values
-reconcile with raw p values and family sizes; reported proportions are whole numbers of subjects;
-the same comparison carries the same effect size in every table; percentage differences match the
-values shown; cohort sizes; construction invariants; empty or all-NaN tables; the manuscript table
-against its statistics; collinear covariates in fitted models; rank-biserial values on the lattice
-admissible for their sample sizes; family inventories; output freshness; adjusted-p precision.
-
-Usage:  python validate_outputs.py                 (check outputs/)
-        python validate_outputs.py --dir some/path
-        python validate_outputs.py --strict        (exit non-zero on any WARN too)
-Exit status is 0 if no check FAILs, 1 otherwise.
-"""
+"""validate_outputs.py: internal-consistency checks across every analysis output."""
 import argparse
 import glob
 import os
@@ -28,7 +15,6 @@ RESULTS = {
     "mitbih":    os.path.join("outputs", "healthy",        "ecg_results_Healthy.csv"),
 }
 
-# INFO records something true that a reader should know; WARN should be fixed; FAIL must be fixed.
 _results = {"PASS": 0, "INFO": 0, "WARN": 0, "FAIL": 0}
 _log = []
 
@@ -41,7 +27,6 @@ def record(level, check, detail):
 
 
 def bh(p):
-    """Reference Benjamini-Hochberg, independent of the pipeline's own code."""
     p = np.asarray(p, dtype=float)
     n = p.size
     if n == 0:
@@ -75,9 +60,7 @@ def subjects_only(df, prefixes=("control_", "treatment_")):
     return df.loc[keep] if keep else df
 
 
-# ---- Check 1: no correction family contains a column with zero variance ----
 def check_degenerate_in_families(outdir):
-    """A quantity fixed by construction is not a hypothesis test, and including one changes the family size."""
     print("\n[1] Degenerate columns inside FDR families")
     hit = False
     n_inspected = 0
@@ -85,14 +68,11 @@ def check_degenerate_in_families(outdir):
         d = load(f)
         if d is None:
             continue
-        # Any adjusted-p column, whatever its exact name.
         _padj_cols = [c for c in d.columns if str(c).endswith("p_adj")]
         if not _padj_cols:
             continue
         n_inspected += 1
         zero = set()
-        # Every SD column naming convention is examined, and the number of columns actually examined is
-        # recorded; a file with an adjusted p but no recognizable SD column is reported, not skipped.
         _sd_cols = [c for c in ("Healthy_SD", "Psych_SD", "Control_SD",
                                 "Patient_SD", "A_SD", "B_SD", "SD",
                                 "Group_A_SD", "Group_B_SD")
@@ -112,7 +92,6 @@ def check_degenerate_in_families(outdir):
                    f"remove from the family and report as a normalisation check")
             hit = True
     if not hit:
-        # A pass with zero files inspected is reported as such.
         if n_inspected == 0:
             record("WARN", "degenerate in FDR family",
                    "no table with an adjusted p-value column was found; this "
@@ -122,9 +101,7 @@ def check_degenerate_in_families(outdir):
                    f"none found across {n_inspected} tables")
 
 
-# ---- Check 2: adjusted p values reconcile with raw p values and family size ----
 def check_fdr_arithmetic(outdir):
-    """Recompute BH from the raw p values with an independent implementation and compare."""
     print("\n[2] BH-FDR arithmetic")
     any_checked = False
     for f in sorted(glob.glob(os.path.join(outdir, "**", "*.csv"), recursive=True)):
@@ -139,7 +116,6 @@ def check_fdr_arithmetic(outdir):
         any_checked = True
         expect = bh(praw[ok].values)
         diff = np.abs(expect - padj[ok].values)
-        # allow for printed rounding
         bad = diff > 5e-4
         if bad.any():
             idx = list(np.asarray(d.index[ok])[bad])[:4]
@@ -149,7 +125,6 @@ def check_fdr_arithmetic(outdir):
                    f"e.g. {idx}")
         else:
             record("PASS", "BH arithmetic", os.path.basename(f))
-        # adjusted must never fall below raw
         if (padj[ok].values < praw[ok].values - 1e-9).any():
             record("FAIL", "BH monotonicity",
                    f"{os.path.basename(f)}: an adjusted p is below its raw p")
@@ -157,11 +132,7 @@ def check_fdr_arithmetic(outdir):
         record("WARN", "BH arithmetic", "no table with both p_raw and p_adj found")
 
 
-# ---- Check 3: reported proportions correspond to whole numbers of subjects ----
 def check_proportions_are_integral(outdir):
-    """Accuracy, sensitivity and specificity are counts over N; a rate whose count is not an integer means
-    the analysis did not run on the sample it states.
-    """
     print("\n[3] Classification rates consistent with sample size")
     f = os.path.join(outdir, "comparison", "Classification_Summary_NestedCV.csv")
     if not os.path.exists(f):
@@ -186,13 +157,11 @@ def check_proportions_are_integral(outdir):
             v = pd.to_numeric(pd.Series([row[col]]), errors="coerce").iloc[0]
             if not np.isfinite(v):
                 continue
-            # The CSV stores a rounded rate, so test whether any integer count is consistent with the rounding
-            # interval [v - 0.5*10^-d, v + 0.5*10^-d] (46/60 = 0.7667 is stored as 0.767).
             s = str(row[col])
             dec = len(s.split(".")[1]) if "." in s else 0
             half = 0.5 * (10 ** -dec) if dec else 0.0
             lo, hi = (v - half) * denom, (v + half) * denom
-            if np.floor(hi) < np.ceil(lo):      # no integer in the interval
+            if np.floor(hi) < np.ceil(lo):
                 problems.append(f"{row.get('Model', '?')}: {col}={v} implies "
                                 f"{lo:.2f}-{hi:.2f} of {denom}, which contains "
                                 f"no whole number of subjects")
@@ -204,9 +173,6 @@ def check_proportions_are_integral(outdir):
         record("PASS", "classification rates",
                f"all rates are whole counts over N={n_total}/{n_per}")
 
-
-# ---- Check 4: the same comparison reports the same effect size everywhere ----
-# Files that carry the same metric on several rows by design are exempt.
 MULTI_ROW_BY_DESIGN = {
     "Embedding_Sensitivity.csv":   "primary vs selected embedding",
     "MSE_Scale_Audit.csv":         "all retained vs common scale set",
@@ -221,18 +187,12 @@ MULTI_ROW_BY_DESIGN = {
 
 
 def check_effect_size_agreement(outdir):
-    """A metric compared in more than one table should carry the same effect size in each, unless the
-    tables are deliberately different analyses.
-    """
     print("\n[4] Effect-size agreement across tables")
-    # Grouped by output folder: each folder holds a different comparison.
     seen = {}
     for f in sorted(glob.glob(os.path.join(outdir, "**", "*.csv"), recursive=True)):
         base = os.path.basename(f)
         subdir = os.path.relpath(os.path.dirname(f), outdir)
-        # Skip tables that report a different comparison (control against control, subgroups, adjusted models).
         if base.startswith(("Stationary_Reanalysis", "Quantization",
-                            # Same metric on several rows by design (embedding choices; MSE scale sets).
                             "Embedding_Sensitivity", "MSE_Scale_Audit",
                             "Scale_Band_Correspondence",
                             "Diagnosis_", "Quetiapine", "Comorbidity",
@@ -241,10 +201,9 @@ def check_effect_size_agreement(outdir):
                             "CrossControl", "ThreeGroup", "Mayer_",
                             "Length_Respiration", "Surrogate_",
                             "Beta_Activity", "Mobility_", "PSD_Beta_",
-                            # Same metric under several conditions by design (fixed beat counts, window skips).
                             "Length_vs_HeartRate", "Window_Skip_Sensitivity",
                             "Activity_Structure", "Deterministic_Checks")):
-            continue           # deliberately different comparisons
+            continue
         d = load(f)
         if d is None or "r_effect" not in d.columns:
             continue
@@ -269,7 +228,6 @@ def check_effect_size_agreement(outdir):
                f"{len(seen)} metrics consistent across tables")
 
 
-# ---- Check 5: percentage differences match the values shown ----
 def check_percent_differences(outdir):
     print("\n[5] Percentage differences match reported means")
     bad = []
@@ -277,7 +235,6 @@ def check_percent_differences(outdir):
         d = load(f)
         if d is None or "Pct_Diff" not in d.columns:
             continue
-        # Percentages may be computed from medians; each table declares its basis in Pct_Diff_Basis.
         if "Pct_Diff_Basis" in d.columns:
             _basis = set(str(v) for v in d["Pct_Diff_Basis"].dropna().unique())
             if _basis and not _basis <= {"mean"}:
@@ -311,7 +268,6 @@ def check_percent_differences(outdir):
         record("PASS", "percent difference", "consistent with reported means")
 
 
-# ---- Check 6: cohort sizes and completeness ----
 def check_cohorts():
     print("\n[6] Cohort sizes and metadata completeness")
     expect = {"healthy": 30, "psych": 30, "mitbih": 18}
@@ -336,7 +292,6 @@ def check_cohorts():
                            f"{k}: {miss} subjects missing {col}")
 
 
-# ---- Check 7: construction invariants hold ----
 def check_construction_invariants():
     print("\n[7] Quantities fixed by construction")
     for k, path in RESULTS.items():
@@ -357,7 +312,6 @@ def check_construction_invariants():
             else:
                 record("PASS", "construction invariant",
                        f"{k}.{col} = {target} (max dev {dev:.1e})")
-        # SD1 must equal RMSSD / sqrt(2).
         if {"HRV_SD1", "HRV_RMSSD"} <= set(d.columns):
             a = pd.to_numeric(d["HRV_SD1"], errors="coerce")
             b = pd.to_numeric(d["HRV_RMSSD"], errors="coerce") / np.sqrt(2)
@@ -369,7 +323,6 @@ def check_construction_invariants():
                 record("PASS", "construction invariant", f"{k}: SD1 identity holds")
 
 
-# ---- Check 8: no output table is empty or truncated ----
 def check_table_shapes(outdir):
     print("\n[8] Output table shapes")
     empty = []
@@ -385,12 +338,10 @@ def check_table_shapes(outdir):
     else:
         record("PASS", "output shapes", "no empty tables")
 
-
-# ---- Check 9: no unexpected all-NaN column ----
 EXPECTED_ALL_NAN = {
-    "ICD_All", "ICD_Primary", "Comorbid_Codes",     # controls have no diagnosis
-    "MFDFA_Asymmetry",                              # undefined for positive q
-    "Stat_ADF_p", "Stat_KPSS_p",                    # absent without statsmodels
+    "ICD_All", "ICD_Primary", "Comorbid_Codes",
+    "MFDFA_Asymmetry",
+    "Stat_ADF_p", "Stat_KPSS_p",
 }
 
 
@@ -408,11 +359,8 @@ def check_unexpected_nan_columns():
             record("PASS", "all-NaN column", f"{k}: none unexpected")
 
 
-# ---- Check 10: the manuscript table matches the statistics it came from ----
 def check_manuscript_table_currency(outdir):
-    """Confirm that the generated manuscript table agrees with the statistics file."""
     print("\n[10] Manuscript table currency")
-    # Take the first match in sorted order, and report when more than one copy exists.
     cands = sorted(glob.glob(os.path.join(outdir, "**", "TABLE1_MANUSCRIPT.md"),
                              recursive=True))
     if len(cands) > 1:
@@ -434,7 +382,6 @@ def check_manuscript_table_currency(outdir):
         return
 
     text = open(tab, encoding="utf-8").read()
-    # Data rows begin with "| " and are not the header or separator.
     rows = [ln for ln in text.splitlines()
             if ln.startswith("| ") and "---" not in ln
             and not ln.startswith("| Metric ")]
@@ -454,29 +401,18 @@ def check_manuscript_table_currency(outdir):
         record("PASS", "manuscript table",
                f"{n_rows} rows, {n_sig_tab} significant, matches statistics")
 
-    # The stated family size in the caption must match too.
     m = re.search(r"all (\d+) primary metrics", text)
     if m and int(m.group(1)) != n_stats:
         record("FAIL", "manuscript table",
                f"caption says {m.group(1)} metrics, file has {n_stats}")
 
-
-# ---- Check 11: covariates collinear with each other or with group ----
 COVARIATE_CANDIDATES = ["Num_RR", "HRV_MeanHR", "HRV_RMSSD", "HF_Power_ms2",
                         "Age", "mobility_mg", "Series_N", "HRV_MeanNN"]
 
-# Variables that are the same quantity by arithmetic: over a fixed window, beat count is 30 x mean
-# heart rate, Series_N is the same count, and mean NN is the reciprocal of mean heart rate.
 IDENTITY_CLUSTER = {"Num_RR", "Series_N", "HRV_MeanHR", "HRV_MeanNN"}
 
 
 def _models_with_covariates(outdir):
-    """Every fitted model in the outputs that lists its covariates.
-
-    The covariates are encoded in the row label, e.g.
-    "PSD_Beta ~ Group | Age + Sex + mobility_mg + HRV_MeanHR + HF_Power_ms2".
-    Returns a list of (source_file, label, [covariate names]).
-    """
     found = []
     for path in glob.glob(os.path.join(outdir, "**", "*.csv"), recursive=True):
         try:
@@ -495,8 +431,6 @@ def _models_with_covariates(outdir):
                     found.append((os.path.basename(path), label, covs))
     return found
 
-
-# Human-written covariate labels do not always match column names.
 _LABEL_ALIASES = {
     "meanhr": "HRV_MeanHR", "mean hr": "HRV_MeanHR", "heart rate": "HRV_MeanHR",
     "meannn": "HRV_MeanNN", "mean nn": "HRV_MeanNN",
@@ -511,14 +445,8 @@ def _canonical(cov):
 
 
 def check_covariate_collinearity(outdir="outputs"):
-    """Fail when a fitted model adjusts for two variables that are one variable.
-
-    The collinearity among such variables is reported as information; only models that include two of
-    them at once fail.
-    """
     print("\n[11] Covariate collinearity")
 
-    # -- 1. Report the structure --
     frames = []
     for k, path in RESULTS.items():
         d = subjects_only(load(path))
@@ -548,7 +476,6 @@ def check_covariate_collinearity(outdir="outputs"):
                    f"reciprocal. Reported, not failed; what matters is whether a "
                    f"model adjusts for two at once.")
 
-    # -- 2. Fail only on models that adjust for two of one variable --
     models = _models_with_covariates(outdir)
     if not models:
         record("WARN", "covariate collinearity",
@@ -573,22 +500,14 @@ def check_covariate_collinearity(outdir="outputs"):
 
 
 def check_effect_size_admissibility(outdir):
-    """Check that each rank-biserial correlation is admissible for its sample sizes.
-
-    r = 1 - 2U/(n1*n2) with integer or half-integer U, so r lies on a lattice of spacing 1/(n1*n2)
-    (half that with ties); a reported value off the lattice is a transcription or rounding error.
-    """
     print("\n[12] Effect-size admissibility (rank-biserial lattice)")
     n_checked, n_bad = 0, 0
     for f in glob.glob(os.path.join(outdir, "**", "*.csv"), recursive=True):
         d = load(f)
         if d is None:
             continue
-        # Only point estimates from a single Mann-Whitney comparison: bootstrap bounds and partial
-        # correlations are not on the lattice.
         _EXCLUDE_SUBSTR = ("_CI_", "_ci_", "CI_low", "CI_high", "partial",
                            "_adj", "change", "unadj")
-        # Use the table's primary effect-size column only, so it is paired with the right sample sizes.
         rcols = [c for c in d.columns
                  if c in ("r_effect", "rank_biserial_r")
                  and not any(x in c for x in _EXCLUDE_SUBSTR)]
@@ -600,7 +519,6 @@ def check_effect_size_admissibility(outdir):
         if not rcols:
             continue
         if len(ncols) != 1:
-            # Several candidate sample-size pairs: skip rather than guess.
             if ncols:
                 record("INFO", "effect-size admissibility",
                        f"{os.path.relpath(f, outdir)}: multiple N-column pairs "
@@ -614,7 +532,6 @@ def check_effect_size_admissibility(outdir):
                 continue
             if n1 < 2 or n2 < 2:
                 continue
-            # Lattice spacing, allowing half-integer U from ties.
             step = 1.0 / (n1 * n2)
             for rc in rcols:
                 v = pd.to_numeric(pd.Series([row.get(rc)]),
@@ -622,11 +539,9 @@ def check_effect_size_admissibility(outdir):
                 if not np.isfinite(v) or abs(v) > 1.0:
                     continue
                 n_checked += 1
-                # Tolerance: half of the last printed digit. float() first, because numpy 2 reprs such as
-                # "np.float64(-0.311111)" would otherwise miscount the decimals.
                 _s = repr(float(v))
                 if "e" in _s or "E" in _s:
-                    _dec = 12          # scientific notation: treat as exact
+                    _dec = 12
                 else:
                     _dec = len(_s.split(".")[1]) if "." in _s else 0
                 _tol = max(0.5 * (10.0 ** -_dec), 1e-9)
@@ -646,7 +561,6 @@ def check_effect_size_admissibility(outdir):
 
 
 def check_family_inventory_consistency(outdir):
-    """Every declared family size must match the Correction_Family_Inventory.csv in the same comparison folder."""
     print("\n[13] Correction-family inventory consistency")
     inv_paths = sorted(glob.glob(os.path.join(outdir, "**",
                                               "Correction_Family_Inventory.csv"),
@@ -698,13 +612,7 @@ def check_family_inventory_consistency(outdir):
 
 
 def check_output_freshness(outdir):
-    """Detect summary tables that predate the per-subject columns they summarize.
-
-    For example, if comparison.py runs before rna_controls.py, the quantization table lacks the
-    recurrence-network rows but looks complete.
-    """
     print("\n[14] Output freshness (summaries vs available columns)")
-    # Every Quantization_Control.csv is checked (one per comparison folder).
     qc_paths = sorted(glob.glob(os.path.join(outdir, "**",
                                              "Quantization_Control.csv"),
                                 recursive=True))
@@ -714,7 +622,6 @@ def check_output_freshness(outdir):
         if qc is None or "Metric" not in qc.columns:
             continue
         metrics_present = set(qc["Metric"].astype(str))
-        # A row exists only if both cohorts carry the column; the MIT-BIH comparison has no network-control rows.
         _ctrl = load(RESULTS["mitbih"] if "mitbih" in _qp.lower()
                      else RESULTS["healthy"])
         for csv_name, cols in (
@@ -745,10 +652,6 @@ def check_output_freshness(outdir):
 
 
 def check_adjusted_p_resolution(outdir):
-    """Warn where an adjusted p value is printed too coarsely for its family size to be recovered.
-
-    Under BH, p_adj / p = family size / rank, which needs enough printed digits to check.
-    """
     print("\n[15] Adjusted p-value resolution")
     warned = False
     for f in glob.glob(os.path.join(outdir, "**", "*.csv"), recursive=True):
@@ -761,7 +664,6 @@ def check_adjusted_p_resolution(outdir):
         if ok.sum() < 2:
             continue
         ratio = (pa[ok] / pr[ok]).round(4)
-        # Scaled by the rank, the ratio should be a near-integer.
         ranks = pr[ok].rank(method="first")
         implied = (ratio * ranks)
         frac = (implied - implied.round()).abs()

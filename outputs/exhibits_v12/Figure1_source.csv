@@ -1,83 +1,142 @@
-Figure,Family,Measure,Label,Statistic,Before,After,p_raw_after,p_adj_after,Significant_after,Source
-1B,Amplitude,HRV_RMSSD,RMSSD,partial Spearman r with group,-0.62939922,-0.4685746,0.0001594363,0.00033481623,True,HR_Adjusted_Comparison.csv
-1B,Amplitude,HRV_SDNN,SDNN,partial Spearman r with group,-0.57358094,-0.39672131,0.0016998145,0.0032451004,True,HR_Adjusted_Comparison.csv
-1B,Amplitude,LF_Power_ms2,LF power,partial Spearman r with group,-0.70061564,-0.5726035,1.7489542e-06,1.2242679e-05,True,HR_Adjusted_Comparison.csv
-1B,Amplitude,HF_Power_ms2,HF power,partial Spearman r with group,-0.60437723,-0.48135593,9.8810852e-05,0.00023055866,True,HR_Adjusted_Comparison.csv
-1B,Amplitude,VLF_Power_ms2,VLF power,partial Spearman r with group,-0.65249643,-0.48241178,9.4900979e-05,0.00023055866,True,HR_Adjusted_Comparison.csv
-1B,Amplitude,Total_Power_ms2,Total power,partial Spearman r with group,-0.67944319,-0.52714643,1.5096514e-05,4.5289541e-05,True,HR_Adjusted_Comparison.csv
-1B,Spectral distribution,VLF_LF_Ratio,VLF/LF ratio,partial Spearman r with group,0.53123604,0.55693248,3.8118881e-06,1.600993e-05,True,HR_Adjusted_Comparison.csv
-1B,Spectral distribution,LF_HF_Ratio,LF/HF ratio,partial Spearman r with group,-0.1636053,-0.33370381,0.0091703319,0.012838465,True,HR_Adjusted_Comparison.csv
-1B,Spectral distribution,PSD_Beta,"Slope, uncorrected",partial Spearman r with group,0.57743047,0.63011948,6.865735e-08,1.4418043e-06,True,HR_Adjusted_Comparison.csv
-1B,Spectral distribution,PSD_Beta_NoMayer,"Slope, baroreflex band excised",partial Spearman r with group,0.55240849,0.61250347,1.9824064e-07,2.0815267e-06,True,HR_Adjusted_Comparison.csv
-1B,Fractal scaling (DFA),DFA_Alpha,"DFA α, full range",partial Spearman r with group,0.4119004,0.38138372,0.0026421165,0.0046237038,True,HR_Adjusted_Comparison.csv
-1B,Fractal scaling (DFA),DFA_Alpha1,DFA α₁,partial Spearman r with group,-0.10393749,-0.35887747,0.0048650157,0.0078588715,True,HR_Adjusted_Comparison.csv
-1B,Fractal scaling (DFA),DFA_Alpha2,DFA α₂,partial Spearman r with group,0.52161219,0.54837455,5.7380719e-06,2.0083251e-05,True,HR_Adjusted_Comparison.csv
-1B,Entropy,MSE_Mean,Multiscale entropy,partial Spearman r with group,-0.42729855,-0.35437622,0.0054691459,0.0082037189,True,HR_Adjusted_Comparison.csv
-1B,Entropy,SampEn,Sample entropy,partial Spearman r with group,-0.29448954,-0.061906085,0.63843621,0.7220697,False,HR_Adjusted_Comparison.csv
-1B,Entropy,ApEn,Approximate entropy,partial Spearman r with group,-0.33490967,-0.09969436,0.44852549,0.5540609,False,HR_Adjusted_Comparison.csv
-1B,Entropy,PermEn,Permutation entropy,partial Spearman r with group,0.34645828,0.56315643,2.8107758e-06,1.4756573e-05,True,HR_Adjusted_Comparison.csv
-1B,Recurrence,RQA_DET,Determinism,partial Spearman r with group,0.25791894,-0.011614337,0.92981729,0.96638716,False,HR_Adjusted_Comparison.csv
-1B,Recurrence,RQA_LAM,Laminarity,partial Spearman r with group,0.19440159,-0.10697416,0.41591675,0.54589073,False,HR_Adjusted_Comparison.csv
-1B,Recurrence,RNA_ClusteringCoeff,Network clustering,partial Spearman r with group,0.13665855,-0.059183106,0.65330116,0.7220697,False,HR_Adjusted_Comparison.csv
-1B,Recurrence,RNA_Transitivity,Network transitivity,partial Spearman r with group,0.25214464,0.0055570992,0.96638716,0.96638716,False,HR_Adjusted_Comparison.csv
-1A,,control_2,beats vs mean HR,per-subject values,105.43145899628448,3163.0,,,,ecg_results_*.csv
-1A,,control_16,beats vs mean HR,per-subject values,58.85964443969889,1764.0,,,,ecg_results_*.csv
-1A,,control_18,beats vs mean HR,per-subject values,68.96505703713837,2067.0,,,,ecg_results_*.csv
-1A,,control_19,beats vs mean HR,per-subject values,80.89533677818395,2383.0,,,,ecg_results_*.csv
-1A,,control_20,beats vs mean HR,per-subject values,81.37898856429223,2436.0,,,,ecg_results_*.csv
-1A,,control_21,beats vs mean HR,per-subject values,83.30877405650672,2497.0,,,,ecg_results_*.csv
-1A,,control_22,beats vs mean HR,per-subject values,81.36371549843062,2438.0,,,,ecg_results_*.csv
-1A,,control_24,beats vs mean HR,per-subject values,98.96451629771464,2965.0,,,,ecg_results_*.csv
-1A,,control_25,beats vs mean HR,per-subject values,69.47257566175303,2078.0,,,,ecg_results_*.csv
-1A,,control_26,beats vs mean HR,per-subject values,71.29557568006445,2136.0,,,,ecg_results_*.csv
-1A,,control_28,beats vs mean HR,per-subject values,85.3607391907628,2551.0,,,,ecg_results_*.csv
-1A,,control_29,beats vs mean HR,per-subject values,84.0519150078621,2515.0,,,,ecg_results_*.csv
-1A,,control_30,beats vs mean HR,per-subject values,88.35151767531403,2645.0,,,,ecg_results_*.csv
-1A,,control_31,beats vs mean HR,per-subject values,95.7801627037018,2787.0,,,,ecg_results_*.csv
-1A,,control_32,beats vs mean HR,per-subject values,111.97631120486687,3353.0,,,,ecg_results_*.csv
-1A,,control_33,beats vs mean HR,per-subject values,93.12272543864395,2781.0,,,,ecg_results_*.csv
-1A,,control_34,beats vs mean HR,per-subject values,88.03407813859354,2636.0,,,,ecg_results_*.csv
-1A,,control_35,beats vs mean HR,per-subject values,71.16954619956181,2132.0,,,,ecg_results_*.csv
-1A,,control_36,beats vs mean HR,per-subject values,87.94269619572853,2629.0,,,,ecg_results_*.csv
-1A,,control_37,beats vs mean HR,per-subject values,99.85492020611336,2994.0,,,,ecg_results_*.csv
-1A,,control_38,beats vs mean HR,per-subject values,101.47878028591244,3024.0,,,,ecg_results_*.csv
-1A,,control_39,beats vs mean HR,per-subject values,74.49326383003114,2231.0,,,,ecg_results_*.csv
-1A,,control_40,beats vs mean HR,per-subject values,74.38302356186416,2226.0,,,,ecg_results_*.csv
-1A,,control_41,beats vs mean HR,per-subject values,86.62255549344458,2593.0,,,,ecg_results_*.csv
-1A,,control_42,beats vs mean HR,per-subject values,84.42790811407104,2532.0,,,,ecg_results_*.csv
-1A,,control_43,beats vs mean HR,per-subject values,70.98472833643227,2129.0,,,,ecg_results_*.csv
-1A,,control_44,beats vs mean HR,per-subject values,95.55501622086202,2861.0,,,,ecg_results_*.csv
-1A,,control_45,beats vs mean HR,per-subject values,79.10019079135266,2368.0,,,,ecg_results_*.csv
-1A,,control_46,beats vs mean HR,per-subject values,71.95793331208415,2156.0,,,,ecg_results_*.csv
-1A,,control_47,beats vs mean HR,per-subject values,80.04447286509081,2395.0,,,,ecg_results_*.csv
-1A,,treatment_1,beats vs mean HR,per-subject values,94.2348605559957,2823.0,,,,ecg_results_*.csv
-1A,,treatment_2,beats vs mean HR,per-subject values,96.98854689536806,2898.0,,,,ecg_results_*.csv
-1A,,treatment_3,beats vs mean HR,per-subject values,118.4182867108367,3549.0,,,,ecg_results_*.csv
-1A,,treatment_4,beats vs mean HR,per-subject values,129.7551328770776,3893.0,,,,ecg_results_*.csv
-1A,,treatment_7,beats vs mean HR,per-subject values,103.32839653216573,3100.0,,,,ecg_results_*.csv
-1A,,treatment_8,beats vs mean HR,per-subject values,101.09247422691868,3033.0,,,,ecg_results_*.csv
-1A,,treatment_9,beats vs mean HR,per-subject values,98.2193073042302,2931.0,,,,ecg_results_*.csv
-1A,,treatment_13,beats vs mean HR,per-subject values,89.46149585227008,2681.0,,,,ecg_results_*.csv
-1A,,treatment_15,beats vs mean HR,per-subject values,103.53779229843522,3093.0,,,,ecg_results_*.csv
-1A,,treatment_16,beats vs mean HR,per-subject values,83.7895691489007,2513.0,,,,ecg_results_*.csv
-1A,,treatment_17,beats vs mean HR,per-subject values,85.05929947097266,2542.0,,,,ecg_results_*.csv
-1A,,treatment_19,beats vs mean HR,per-subject values,102.26797342410488,3068.0,,,,ecg_results_*.csv
-1A,,treatment_20,beats vs mean HR,per-subject values,99.04292972255304,2969.0,,,,ecg_results_*.csv
-1A,,treatment_21,beats vs mean HR,per-subject values,78.84560154418493,2361.0,,,,ecg_results_*.csv
-1A,,treatment_22,beats vs mean HR,per-subject values,108.81716477144552,3256.0,,,,ecg_results_*.csv
-1A,,treatment_23,beats vs mean HR,per-subject values,103.85374264535967,3116.0,,,,ecg_results_*.csv
-1A,,treatment_24,beats vs mean HR,per-subject values,114.19230505658636,3416.0,,,,ecg_results_*.csv
-1A,,treatment_25,beats vs mean HR,per-subject values,99.02700660791116,2971.0,,,,ecg_results_*.csv
-1A,,treatment_26,beats vs mean HR,per-subject values,100.00752564992348,2990.0,,,,ecg_results_*.csv
-1A,,treatment_27,beats vs mean HR,per-subject values,106.62446439099638,3198.0,,,,ecg_results_*.csv
-1A,,treatment_29,beats vs mean HR,per-subject values,93.14128318352812,2792.0,,,,ecg_results_*.csv
-1A,,treatment_31,beats vs mean HR,per-subject values,89.78982381996707,2694.0,,,,ecg_results_*.csv
-1A,,treatment_32,beats vs mean HR,per-subject values,99.18764287282542,2944.0,,,,ecg_results_*.csv
-1A,,treatment_33,beats vs mean HR,per-subject values,67.16554724087932,2015.0,,,,ecg_results_*.csv
-1A,,treatment_36,beats vs mean HR,per-subject values,89.27955800613437,2676.0,,,,ecg_results_*.csv
-1A,,treatment_37,beats vs mean HR,per-subject values,89.36551496821752,2648.0,,,,ecg_results_*.csv
-1A,,treatment_38,beats vs mean HR,per-subject values,69.49341493401576,2081.0,,,,ecg_results_*.csv
-1A,,treatment_40,beats vs mean HR,per-subject values,104.54146149367062,3106.0,,,,ecg_results_*.csv
-1A,,treatment_41,beats vs mean HR,per-subject values,91.54311946220376,2726.0,,,,ecg_results_*.csv
-1A,,treatment_42,beats vs mean HR,per-subject values,84.60192704389377,2538.0,,,,ecg_results_*.csv
-1A,,Pearson r (n = 60),beats vs mean HR,Pearson r,,0.9994820696018344,2.8777312105023003e-88,,,computed here from Num_RR and HRV_MeanHR
+Figure,Measure,Label,Statistic,Before,After,Source,Family,After_CI_low,After_CI_high,p_raw_after,p_adj_after,Significant_after
+1A,control_2,control,per-subject mean heart rate and HRV_RMSSD,105.43145899628448,9.504800877540523,ecg_results_*.csv,,,,,,
+1A,control_16,control,per-subject mean heart rate and HRV_RMSSD,58.85964443969889,36.06295308714822,ecg_results_*.csv,,,,,,
+1A,control_18,control,per-subject mean heart rate and HRV_RMSSD,68.96505703713837,24.30959558611585,ecg_results_*.csv,,,,,,
+1A,control_19,control,per-subject mean heart rate and HRV_RMSSD,80.89533677818395,30.74755012665126,ecg_results_*.csv,,,,,,
+1A,control_20,control,per-subject mean heart rate and HRV_RMSSD,81.37898856429223,23.3331201711198,ecg_results_*.csv,,,,,,
+1A,control_21,control,per-subject mean heart rate and HRV_RMSSD,83.30877405650672,12.03718530754616,ecg_results_*.csv,,,,,,
+1A,control_22,control,per-subject mean heart rate and HRV_RMSSD,81.36371549843062,22.86055209348356,ecg_results_*.csv,,,,,,
+1A,control_24,control,per-subject mean heart rate and HRV_RMSSD,98.96451629771464,14.369368286019789,ecg_results_*.csv,,,,,,
+1A,control_25,control,per-subject mean heart rate and HRV_RMSSD,69.47257566175303,38.10649497232184,ecg_results_*.csv,,,,,,
+1A,control_26,control,per-subject mean heart rate and HRV_RMSSD,71.29557568006445,21.67162856772692,ecg_results_*.csv,,,,,,
+1A,control_28,control,per-subject mean heart rate and HRV_RMSSD,85.3607391907628,23.10550397038529,ecg_results_*.csv,,,,,,
+1A,control_29,control,per-subject mean heart rate and HRV_RMSSD,84.0519150078621,29.27735446530088,ecg_results_*.csv,,,,,,
+1A,control_30,control,per-subject mean heart rate and HRV_RMSSD,88.35151767531403,21.92589120178324,ecg_results_*.csv,,,,,,
+1A,control_31,control,per-subject mean heart rate and HRV_RMSSD,95.7801627037018,33.2735297461206,ecg_results_*.csv,,,,,,
+1A,control_32,control,per-subject mean heart rate and HRV_RMSSD,111.97631120486687,14.376521399203844,ecg_results_*.csv,,,,,,
+1A,control_33,control,per-subject mean heart rate and HRV_RMSSD,93.12272543864395,18.274279208098456,ecg_results_*.csv,,,,,,
+1A,control_34,control,per-subject mean heart rate and HRV_RMSSD,88.03407813859354,26.70925757537457,ecg_results_*.csv,,,,,,
+1A,control_35,control,per-subject mean heart rate and HRV_RMSSD,71.16954619956181,39.94334326325798,ecg_results_*.csv,,,,,,
+1A,control_36,control,per-subject mean heart rate and HRV_RMSSD,87.94269619572853,20.88425739645828,ecg_results_*.csv,,,,,,
+1A,control_37,control,per-subject mean heart rate and HRV_RMSSD,99.85492020611336,13.8010662148578,ecg_results_*.csv,,,,,,
+1A,control_38,control,per-subject mean heart rate and HRV_RMSSD,101.47878028591244,10.063624917345122,ecg_results_*.csv,,,,,,
+1A,control_39,control,per-subject mean heart rate and HRV_RMSSD,74.49326383003114,17.81964955642791,ecg_results_*.csv,,,,,,
+1A,control_40,control,per-subject mean heart rate and HRV_RMSSD,74.38302356186416,24.771667396805924,ecg_results_*.csv,,,,,,
+1A,control_41,control,per-subject mean heart rate and HRV_RMSSD,86.62255549344458,17.47993779475894,ecg_results_*.csv,,,,,,
+1A,control_42,control,per-subject mean heart rate and HRV_RMSSD,84.42790811407104,17.102798863369852,ecg_results_*.csv,,,,,,
+1A,control_43,control,per-subject mean heart rate and HRV_RMSSD,70.98472833643227,29.53214445974044,ecg_results_*.csv,,,,,,
+1A,control_44,control,per-subject mean heart rate and HRV_RMSSD,95.55501622086202,16.945242953149382,ecg_results_*.csv,,,,,,
+1A,control_45,control,per-subject mean heart rate and HRV_RMSSD,79.10019079135266,17.860121665966037,ecg_results_*.csv,,,,,,
+1A,control_46,control,per-subject mean heart rate and HRV_RMSSD,71.95793331208415,24.572209983643685,ecg_results_*.csv,,,,,,
+1A,control_47,control,per-subject mean heart rate and HRV_RMSSD,80.04447286509081,32.428779363308635,ecg_results_*.csv,,,,,,
+1A,treatment_1,patient,per-subject mean heart rate and HRV_RMSSD,94.2348605559957,19.635669895540453,ecg_results_*.csv,,,,,,
+1A,treatment_2,patient,per-subject mean heart rate and HRV_RMSSD,96.98854689536806,16.145085633954327,ecg_results_*.csv,,,,,,
+1A,treatment_3,patient,per-subject mean heart rate and HRV_RMSSD,118.4182867108367,8.219833988618685,ecg_results_*.csv,,,,,,
+1A,treatment_4,patient,per-subject mean heart rate and HRV_RMSSD,129.7551328770776,4.957294499666469,ecg_results_*.csv,,,,,,
+1A,treatment_7,patient,per-subject mean heart rate and HRV_RMSSD,103.32839653216573,6.400578789575345,ecg_results_*.csv,,,,,,
+1A,treatment_8,patient,per-subject mean heart rate and HRV_RMSSD,101.09247422691868,17.320412865949983,ecg_results_*.csv,,,,,,
+1A,treatment_9,patient,per-subject mean heart rate and HRV_RMSSD,98.2193073042302,13.18992272280043,ecg_results_*.csv,,,,,,
+1A,treatment_13,patient,per-subject mean heart rate and HRV_RMSSD,89.46149585227008,9.059978419136764,ecg_results_*.csv,,,,,,
+1A,treatment_15,patient,per-subject mean heart rate and HRV_RMSSD,103.53779229843522,5.196650329225857,ecg_results_*.csv,,,,,,
+1A,treatment_16,patient,per-subject mean heart rate and HRV_RMSSD,83.7895691489007,9.196068462078545,ecg_results_*.csv,,,,,,
+1A,treatment_17,patient,per-subject mean heart rate and HRV_RMSSD,85.05929947097266,16.073363388716686,ecg_results_*.csv,,,,,,
+1A,treatment_19,patient,per-subject mean heart rate and HRV_RMSSD,102.26797342410488,23.172352909327486,ecg_results_*.csv,,,,,,
+1A,treatment_20,patient,per-subject mean heart rate and HRV_RMSSD,99.04292972255304,8.212413357450952,ecg_results_*.csv,,,,,,
+1A,treatment_21,patient,per-subject mean heart rate and HRV_RMSSD,78.84560154418493,4.573783064971898,ecg_results_*.csv,,,,,,
+1A,treatment_22,patient,per-subject mean heart rate and HRV_RMSSD,108.81716477144552,6.386958679014192,ecg_results_*.csv,,,,,,
+1A,treatment_23,patient,per-subject mean heart rate and HRV_RMSSD,103.85374264535967,5.303894810468401,ecg_results_*.csv,,,,,,
+1A,treatment_24,patient,per-subject mean heart rate and HRV_RMSSD,114.19230505658636,5.038882490159298,ecg_results_*.csv,,,,,,
+1A,treatment_25,patient,per-subject mean heart rate and HRV_RMSSD,99.02700660791116,4.765582274053656,ecg_results_*.csv,,,,,,
+1A,treatment_26,patient,per-subject mean heart rate and HRV_RMSSD,100.00752564992348,2.118440123781215,ecg_results_*.csv,,,,,,
+1A,treatment_27,patient,per-subject mean heart rate and HRV_RMSSD,106.62446439099638,4.348948869727551,ecg_results_*.csv,,,,,,
+1A,treatment_29,patient,per-subject mean heart rate and HRV_RMSSD,93.14128318352812,6.67650951400332,ecg_results_*.csv,,,,,,
+1A,treatment_31,patient,per-subject mean heart rate and HRV_RMSSD,89.78982381996707,11.195889384116562,ecg_results_*.csv,,,,,,
+1A,treatment_32,patient,per-subject mean heart rate and HRV_RMSSD,99.18764287282542,17.615219456679093,ecg_results_*.csv,,,,,,
+1A,treatment_33,patient,per-subject mean heart rate and HRV_RMSSD,67.16554724087932,19.92464702539031,ecg_results_*.csv,,,,,,
+1A,treatment_36,patient,per-subject mean heart rate and HRV_RMSSD,89.27955800613437,19.62479835005633,ecg_results_*.csv,,,,,,
+1A,treatment_37,patient,per-subject mean heart rate and HRV_RMSSD,89.36551496821752,9.816853275655014,ecg_results_*.csv,,,,,,
+1A,treatment_38,patient,per-subject mean heart rate and HRV_RMSSD,69.49341493401576,17.603266742283946,ecg_results_*.csv,,,,,,
+1A,treatment_40,patient,per-subject mean heart rate and HRV_RMSSD,104.54146149367062,20.23233011703233,ecg_results_*.csv,,,,,,
+1A,treatment_41,patient,per-subject mean heart rate and HRV_RMSSD,91.54311946220376,19.80532779769908,ecg_results_*.csv,,,,,,
+1A,treatment_42,patient,per-subject mean heart rate and HRV_RMSSD,84.60192704389377,10.422962884973604,ecg_results_*.csv,,,,,,
+1B,control_2,control,per-subject mean heart rate and SampEn,105.43145899628448,0.4856320422992529,ecg_results_*.csv,,,,,,
+1B,control_16,control,per-subject mean heart rate and SampEn,58.85964443969889,1.2888036498435125,ecg_results_*.csv,,,,,,
+1B,control_18,control,per-subject mean heart rate and SampEn,68.96505703713837,0.5925553263908666,ecg_results_*.csv,,,,,,
+1B,control_19,control,per-subject mean heart rate and SampEn,80.89533677818395,0.7991042164424101,ecg_results_*.csv,,,,,,
+1B,control_20,control,per-subject mean heart rate and SampEn,81.37898856429223,1.0864529883608822,ecg_results_*.csv,,,,,,
+1B,control_21,control,per-subject mean heart rate and SampEn,83.30877405650672,0.5170269725807672,ecg_results_*.csv,,,,,,
+1B,control_22,control,per-subject mean heart rate and SampEn,81.36371549843062,0.7856550760917176,ecg_results_*.csv,,,,,,
+1B,control_24,control,per-subject mean heart rate and SampEn,98.96451629771464,0.376461122042638,ecg_results_*.csv,,,,,,
+1B,control_25,control,per-subject mean heart rate and SampEn,69.47257566175303,0.5291018821957455,ecg_results_*.csv,,,,,,
+1B,control_26,control,per-subject mean heart rate and SampEn,71.29557568006445,0.6916132303381162,ecg_results_*.csv,,,,,,
+1B,control_28,control,per-subject mean heart rate and SampEn,85.3607391907628,0.8135315362826545,ecg_results_*.csv,,,,,,
+1B,control_29,control,per-subject mean heart rate and SampEn,84.0519150078621,0.9670308533934938,ecg_results_*.csv,,,,,,
+1B,control_30,control,per-subject mean heart rate and SampEn,88.35151767531403,0.7976666450498894,ecg_results_*.csv,,,,,,
+1B,control_31,control,per-subject mean heart rate and SampEn,95.7801627037018,0.6583687005616804,ecg_results_*.csv,,,,,,
+1B,control_32,control,per-subject mean heart rate and SampEn,111.97631120486687,0.4468679355722166,ecg_results_*.csv,,,,,,
+1B,control_33,control,per-subject mean heart rate and SampEn,93.12272543864395,1.0378218203351377,ecg_results_*.csv,,,,,,
+1B,control_34,control,per-subject mean heart rate and SampEn,88.03407813859354,0.729973401045334,ecg_results_*.csv,,,,,,
+1B,control_35,control,per-subject mean heart rate and SampEn,71.16954619956181,0.8746788299305023,ecg_results_*.csv,,,,,,
+1B,control_36,control,per-subject mean heart rate and SampEn,87.94269619572853,0.817212616061615,ecg_results_*.csv,,,,,,
+1B,control_37,control,per-subject mean heart rate and SampEn,99.85492020611336,0.4203927278932222,ecg_results_*.csv,,,,,,
+1B,control_38,control,per-subject mean heart rate and SampEn,101.47878028591244,0.3375766449894411,ecg_results_*.csv,,,,,,
+1B,control_39,control,per-subject mean heart rate and SampEn,74.49326383003114,0.988346838578718,ecg_results_*.csv,,,,,,
+1B,control_40,control,per-subject mean heart rate and SampEn,74.38302356186416,0.850992076667237,ecg_results_*.csv,,,,,,
+1B,control_41,control,per-subject mean heart rate and SampEn,86.62255549344458,0.5730639035288311,ecg_results_*.csv,,,,,,
+1B,control_42,control,per-subject mean heart rate and SampEn,84.42790811407104,0.730013341742726,ecg_results_*.csv,,,,,,
+1B,control_43,control,per-subject mean heart rate and SampEn,70.98472833643227,1.3195075653882622,ecg_results_*.csv,,,,,,
+1B,control_44,control,per-subject mean heart rate and SampEn,95.55501622086202,0.9056033099827084,ecg_results_*.csv,,,,,,
+1B,control_45,control,per-subject mean heart rate and SampEn,79.10019079135266,0.2609032005365709,ecg_results_*.csv,,,,,,
+1B,control_46,control,per-subject mean heart rate and SampEn,71.95793331208415,1.140721041114841,ecg_results_*.csv,,,,,,
+1B,control_47,control,per-subject mean heart rate and SampEn,80.04447286509081,1.020253228551134,ecg_results_*.csv,,,,,,
+1B,treatment_1,patient,per-subject mean heart rate and SampEn,94.2348605559957,0.5838015543435819,ecg_results_*.csv,,,,,,
+1B,treatment_2,patient,per-subject mean heart rate and SampEn,96.98854689536806,0.2310628596384798,ecg_results_*.csv,,,,,,
+1B,treatment_3,patient,per-subject mean heart rate and SampEn,118.4182867108367,0.216733078455255,ecg_results_*.csv,,,,,,
+1B,treatment_4,patient,per-subject mean heart rate and SampEn,129.7551328770776,0.549676377747391,ecg_results_*.csv,,,,,,
+1B,treatment_7,patient,per-subject mean heart rate and SampEn,103.32839653216573,0.2989517931196347,ecg_results_*.csv,,,,,,
+1B,treatment_8,patient,per-subject mean heart rate and SampEn,101.09247422691868,0.8021621709495946,ecg_results_*.csv,,,,,,
+1B,treatment_9,patient,per-subject mean heart rate and SampEn,98.2193073042302,0.8944267601083455,ecg_results_*.csv,,,,,,
+1B,treatment_13,patient,per-subject mean heart rate and SampEn,89.46149585227008,0.6967789729015722,ecg_results_*.csv,,,,,,
+1B,treatment_15,patient,per-subject mean heart rate and SampEn,103.53779229843522,0.41545034121255,ecg_results_*.csv,,,,,,
+1B,treatment_16,patient,per-subject mean heart rate and SampEn,83.7895691489007,0.8559560653765238,ecg_results_*.csv,,,,,,
+1B,treatment_17,patient,per-subject mean heart rate and SampEn,85.05929947097266,1.2257881044842172,ecg_results_*.csv,,,,,,
+1B,treatment_19,patient,per-subject mean heart rate and SampEn,102.26797342410488,0.3593796592337142,ecg_results_*.csv,,,,,,
+1B,treatment_20,patient,per-subject mean heart rate and SampEn,99.04292972255304,0.6824543180344311,ecg_results_*.csv,,,,,,
+1B,treatment_21,patient,per-subject mean heart rate and SampEn,78.84560154418493,0.2777139221155575,ecg_results_*.csv,,,,,,
+1B,treatment_22,patient,per-subject mean heart rate and SampEn,108.81716477144552,0.1968051655600461,ecg_results_*.csv,,,,,,
+1B,treatment_23,patient,per-subject mean heart rate and SampEn,103.85374264535967,0.3948472857937678,ecg_results_*.csv,,,,,,
+1B,treatment_24,patient,per-subject mean heart rate and SampEn,114.19230505658636,0.4678618562980908,ecg_results_*.csv,,,,,,
+1B,treatment_25,patient,per-subject mean heart rate and SampEn,99.02700660791116,0.9088523987184124,ecg_results_*.csv,,,,,,
+1B,treatment_26,patient,per-subject mean heart rate and SampEn,100.00752564992348,0.0629221170663943,ecg_results_*.csv,,,,,,
+1B,treatment_27,patient,per-subject mean heart rate and SampEn,106.62446439099638,0.4501371716722159,ecg_results_*.csv,,,,,,
+1B,treatment_29,patient,per-subject mean heart rate and SampEn,93.14128318352812,0.6180951118427679,ecg_results_*.csv,,,,,,
+1B,treatment_31,patient,per-subject mean heart rate and SampEn,89.78982381996707,0.2949133440301131,ecg_results_*.csv,,,,,,
+1B,treatment_32,patient,per-subject mean heart rate and SampEn,99.18764287282542,0.6994097169569533,ecg_results_*.csv,,,,,,
+1B,treatment_33,patient,per-subject mean heart rate and SampEn,67.16554724087932,0.5025444035319204,ecg_results_*.csv,,,,,,
+1B,treatment_36,patient,per-subject mean heart rate and SampEn,89.27955800613437,1.0060342994734035,ecg_results_*.csv,,,,,,
+1B,treatment_37,patient,per-subject mean heart rate and SampEn,89.36551496821752,1.0676957526237052,ecg_results_*.csv,,,,,,
+1B,treatment_38,patient,per-subject mean heart rate and SampEn,69.49341493401576,0.6813360721163728,ecg_results_*.csv,,,,,,
+1B,treatment_40,patient,per-subject mean heart rate and SampEn,104.54146149367062,0.5693141111342328,ecg_results_*.csv,,,,,,
+1B,treatment_41,patient,per-subject mean heart rate and SampEn,91.54311946220376,0.8964951924978972,ecg_results_*.csv,,,,,,
+1B,treatment_42,patient,per-subject mean heart rate and SampEn,84.60192704389377,0.6562482755317849,ecg_results_*.csv,,,,,,
+1C,HRV_RMSSD,RMSSD,Spearman correlation with group; partial given mean heart rate,-0.62939922,-0.49221213,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Amplitude,-0.67417973,-0.27798405,7.5064158e-05,0.0001751497,True
+1C,HRV_SDNN,SDNN,Spearman correlation with group; partial given mean heart rate,-0.57358094,-0.45000026,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Amplitude,-0.65335661,-0.20003474,0.00034901809,0.00066630726,True
+1C,LF_Power_ms2,LF power,Spearman correlation with group; partial given mean heart rate,-0.70061564,-0.63844768,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Amplitude,-0.78473878,-0.44899614,5.3217217e-08,7.185368e-07,True
+1C,HF_Power_ms2,HF power,Spearman correlation with group; partial given mean heart rate,-0.60437723,-0.48646111,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Amplitude,-0.68142241,-0.27291518,9.3659538e-05,0.00019668503,True
+1C,VLF_Power_ms2,VLF power,Spearman correlation with group; partial given mean heart rate,-0.65249643,-0.5472594,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Amplitude,-0.72649411,-0.31719283,7.2835899e-06,1.9119424e-05,True
+1C,Total_Power_ms2,Total power,Spearman correlation with group; partial given mean heart rate,-0.67944319,-0.58955007,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Amplitude,-0.74395011,-0.37852366,8.9725767e-07,4.7106027e-06,True
+1C,VLF_LF_Ratio,VLF/LF ratio,Spearman correlation with group; partial given mean heart rate,0.53123604,0.56914683,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Spectral distribution,0.36218558,0.74215339,2.5552817e-06,1.0732183e-05,True
+1C,LF_HF_Ratio,LF/HF ratio,Spearman correlation with group; partial given mean heart rate,-0.1636053,-0.34400814,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Spectral distribution,-0.57669109,-0.076333768,0.0076350055,0.010689008,True
+1C,PSD_Beta,"Slope, uncorrected",Spearman correlation with group; partial given mean heart rate,0.57743047,0.6344197,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Spectral distribution,0.45272837,0.78441829,6.8432077e-08,7.185368e-07,True
+1C,PSD_Beta_NoMayer,"Slope, 0.07–0.13 Hz excised",Spearman correlation with group; partial given mean heart rate,0.55240849,0.61879435,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Spectral distribution,0.44484937,0.76813313,1.7554456e-07,1.2288119e-06,True
+1C,DFA_Alpha,"DFA α, full range",Spearman correlation with group; partial given mean heart rate,0.4119004,0.39489871,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Fractal scaling (DFA),0.14464938,0.61059908,0.0019666052,0.003441559,True
+1C,DFA_Alpha1,DFA α₁,Spearman correlation with group; partial given mean heart rate,-0.10393749,-0.35363266,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Fractal scaling (DFA),-0.5758305,-0.090857171,0.0060037312,0.0090055968,True
+1C,DFA_Alpha2,DFA α₂,Spearman correlation with group; partial given mean heart rate,0.52161219,0.55119945,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Fractal scaling (DFA),0.34291744,0.72805674,6.0648255e-06,1.9119424e-05,True
+1C,MSE_Mean,Multiscale entropy,Spearman correlation with group; partial given mean heart rate,-0.42729855,-0.36431928,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Entropy,-0.57717165,-0.11194618,0.00455805,0.0073630039,True
+1C,SampEn,Sample entropy,Spearman correlation with group; partial given mean heart rate,-0.29448954,-0.08967178,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Entropy,-0.36503452,0.19793507,0.49941699,0.58265315,False
+1C,ApEn,Approximate entropy,Spearman correlation with group; partial given mean heart rate,-0.33490967,-0.15182867,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Entropy,-0.42467615,0.12809769,0.25099524,0.32943125,False
+1C,PermEn,Permutation entropy,Spearman correlation with group; partial given mean heart rate,0.34645828,0.54889302,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Entropy,0.32504931,0.70412727,6.7529641e-06,1.9119424e-05,True
+1C,RQA_DET,Determinism,Spearman correlation with group; partial given mean heart rate,0.25791894,-0.02840543,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Recurrence,-0.30357021,0.2545319,0.83088945,0.86277041,False
+1C,RQA_LAM,Laminarity,Spearman correlation with group; partial given mean heart rate,0.19440159,-0.13409742,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Recurrence,-0.3954103,0.1545089,0.31126763,0.38450707,False
+1C,RNA_ClusteringCoeff,Network clustering,Spearman correlation with group; partial given mean heart rate,0.13665855,0.022991946,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Recurrence,-0.29500581,0.29771433,0.86277041,0.86277041,False
+1C,RNA_Transitivity,Network transitivity,Spearman correlation with group; partial given mean heart rate,0.25214464,0.023226679,HR_Adjusted_Comparison.csv; HR_Adjusted_Bootstrap.csv,Recurrence,-0.27168882,0.31408386,0.86138312,0.86277041,False

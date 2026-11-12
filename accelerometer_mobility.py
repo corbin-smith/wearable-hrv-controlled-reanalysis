@@ -1,17 +1,4 @@
-"""accelerometer_mobility.py: movement control from the Polar H10 accelerometer.
-
-1. Computes one mobility value per subject (mean gravity-removed acceleration magnitude, milli-g)
-   over the same window as the HRV measures.
-2. Compares mobility between groups.
-3. Refits the slope and VLF/LF group contrasts with mobility, heart rate and HF power as covariates.
-4. Detects walking bouts, writes per-subject movement-free beat masks (outputs/accelerometer/
-   stationary_masks/) and an activity-structure report.
-
-Mobility follows the definition of Ksiazek et al. (gravity removed by subtracting a time-smoothed copy
-of each axis); this is an independent implementation that shares no code with theirs (GPL-3.0).
-Inputs: the per-subject results CSVs, the R-R folders (to place the window in clock time) and the
-accelerometer CSVs. Usage: python accelerometer_mobility.py
-"""
+"""accelerometer_mobility.py: movement control from the Polar H10 accelerometer."""
 
 import os
 import re
@@ -19,31 +6,24 @@ import time
 import numpy as np
 import pandas as pd
 from scipy.ndimage import gaussian_filter1d
-from scipy.stats import spearmanr, mannwhitneyu
+from scipy.stats import spearmanr, mannwhitneyu, rankdata, t as t_dist
 
 
-# ---- Configuration (edit paths only if your folder names differ) ----
 def _first_existing(candidates, default=None):
-    """Return the first path that exists, else a sensible default."""
     for c in candidates:
         if c and os.path.exists(c):
             return c
     return default if default is not None else candidates[0]
 
-
-# R-R interval folders.
 CONTROL_RR_DIR = _first_existing(["Control ECGs"], default="Control ECGs")
 PSYCH_RR_DIR   = _first_existing(["Psychiatric ECGs"], default="Psychiatric ECGs")
 
-# Accelerometer folder: accelerometer_anonymized_data.zip unzips to one folder holding both
-# control_N.csv and treatment_N.csv. Several common folder names are accepted.
 ACC_DIR = _first_existing(
     ["Accelerometer ECGs", "accelerometer_anonymized_data", "Accelerometer",
      "ACC ECGs"],
     default="Accelerometer ECGs",
 )
 
-# Per-subject results CSVs.
 HEALTHY_CSV = _first_existing([
     os.path.join("outputs", "healthy_hrvacc", "ecg_results_HealthyACC.csv"),
     "ecg_results_HealthyACC.csv",
@@ -55,47 +35,33 @@ PSYCH_CSV = _first_existing([
 
 OUTPUT_DIR = os.path.join("outputs", "accelerometer")
 
-# Analysis window constants come from pipeline.py.
 from pipeline import (SKIP_SECONDS as RR_SKIP_SECONDS,
                       ANALYSIS_SECONDS as RR_ANALYSIS_SECONDS)
 
-# Gravity-removal smoothing timescale (s): slower drift is treated as gravity and posture.
-# 10 s matches the dataset authors' setting.
 GRAVITY_TIME_CONSTANT_S = 10.0
 
-# Quality guards.
-MIN_ACC_SAMPLES_IN_WINDOW = 500     # need at least this many ACC samples
-MIN_WINDOW_COVERAGE       = 0.50    # need >=50% of the window covered by ACC
+MIN_ACC_SAMPLES_IN_WINDOW = 500
+MIN_WINDOW_COVERAGE       = 0.50
 
-# Sensitivity check: refit the covariate models on subjects with at least this accelerometer coverage.
 SENSITIVITY_MIN_COVERAGE  = 0.80
 
-# Reuse mobility_coefficients.csv if it exists; set True to recompute from the accelerometer files.
 FORCE_RECOMPUTE = False
 
 QC_COLUMN = "QC_Overall_Pass"
 
 
-# ---- Time handling ----
 def _seconds_of_day(timestamps):
-    """Convert 'Phone timestamp' strings (time of day only, e.g. '13:00:17.196000') to seconds since midnight.
-
-    Calendar dates were removed from the release, so a backward jump of about 24 h (a recording crossing
-    midnight) is corrected by adding 24 h after it; R-R and accelerometer streams get the same fix.
-    """
     t = pd.to_datetime(timestamps, format="%H:%M:%S.%f", errors="coerce")
-    if t.isna().any():                        # fall back for odd formats
+    if t.isna().any():
         t = t.fillna(pd.to_datetime(timestamps, errors="coerce"))
     secs = (t.dt.hour * 3600 + t.dt.minute * 60
             + t.dt.second + t.dt.microsecond / 1e6).to_numpy(dtype=float)
-    for w in np.where(np.diff(secs) < -43200.0)[0]:   # >12 h backward = midnight
+    for w in np.where(np.diff(secs) < -43200.0)[0]:
         secs[w + 1:] += 86400.0
     return secs
 
 
-# ---- Loaders ----
 def _rr_path_for(record_id):
-    """Map a Record_ID (e.g. 'control_16') to its R-R CSV path."""
     rid = str(record_id)
     if rid.startswith("treatment"):
         return os.path.join(PSYCH_RR_DIR, f"{rid}.csv")
@@ -109,17 +75,11 @@ def _rr_path_for(record_id):
 
 
 def _acc_path_for(record_id):
-    """Map a Record_ID to its accelerometer CSV path (same filename stem)."""
     cand = os.path.join(ACC_DIR, f"{record_id}.csv")
     return cand if os.path.exists(cand) else None
 
 
 def _rr_window_bounds(record_id):
-    """Clock-time span of the analysis window for one subject, from the R-R file.
-
-    Reproduces the pipeline window (skip 600 s of beat time, take 1800 s) and reads the timestamps at
-    its two ends. Returns (start_seconds_of_day, end_seconds_of_day) or None.
-    """
     path = _rr_path_for(record_id)
     if path is None:
         return None
@@ -140,7 +100,7 @@ def _rr_window_bounds(record_id):
     if len(rr_ms) < 50:
         return None
 
-    cum = np.cumsum(rr_ms / 1000.0)               # beat time from first beat (s)
+    cum = np.cumsum(rr_ms / 1000.0)
     i_start = int(np.searchsorted(cum, RR_SKIP_SECONDS))
     i_end   = int(np.searchsorted(cum, RR_SKIP_SECONDS + RR_ANALYSIS_SECONDS))
     i_start = min(i_start, len(clock) - 1)
@@ -151,7 +111,6 @@ def _rr_window_bounds(record_id):
 
 
 def _load_acc(record_id):
-    """Load one accelerometer CSV as columns t (seconds of day), X, Y, Z (milli-g); None if missing or malformed."""
     path = _acc_path_for(record_id)
     if path is None:
         return None
@@ -174,14 +133,7 @@ def _load_acc(record_id):
     return out if len(out) else None
 
 
-# ---- Mobility ----
 def compute_mobility(acc, t_start, t_end, gravity_tc_s=GRAVITY_TIME_CONSTANT_S):
-    """Mobility coefficient over [t_start, t_end] (seconds of day).
-
-    Samples in the window; gravity and posture estimated per axis with a Gaussian smoother and
-    subtracted; 3-D magnitude of the remainder averaged over the window.
-    Returns (mobility_mg, n_samples_used, coverage_fraction); mobility_mg is NaN if data are too sparse.
-    """
     w = acc[(acc["t"] >= t_start) & (acc["t"] <= t_end)]
     n = len(w)
     span = max(t_end - t_start, 1e-9)
@@ -190,12 +142,12 @@ def compute_mobility(acc, t_start, t_end, gravity_tc_s=GRAVITY_TIME_CONSTANT_S):
 
     tt = w["t"].to_numpy()
     dt = np.median(np.diff(tt))
-    fs = 1.0 / dt if dt > 0 else 100.0            # samples per second
+    fs = 1.0 / dt if dt > 0 else 100.0
     coverage = min(n / (span * fs), 1.0)
     if coverage < MIN_WINDOW_COVERAGE:
         return np.nan, n, float(coverage)
 
-    sigma = max(gravity_tc_s * fs, 1.0)           # smoothing width in samples
+    sigma = max(gravity_tc_s * fs, 1.0)
     x, y, z = w["X"].to_numpy(), w["Y"].to_numpy(), w["Z"].to_numpy()
     xe = gaussian_filter1d(x, sigma, mode="nearest")
     ye = gaussian_filter1d(y, sigma, mode="nearest")
@@ -205,7 +157,6 @@ def compute_mobility(acc, t_start, t_end, gravity_tc_s=GRAVITY_TIME_CONSTANT_S):
 
 
 def build_mobility_table(record_ids):
-    """Compute mobility for every subject; return a DataFrame and warnings."""
     rows, warnings = [], []
     for rid in record_ids:
         bounds = _rr_window_bounds(rid)
@@ -230,9 +181,7 @@ def build_mobility_table(record_ids):
     return pd.DataFrame(rows).set_index("Record_ID"), warnings
 
 
-# ---- Statistics ----
 def rank_biserial(a, b):
-    """Mann-Whitney U test and rank-biserial r for groups a and b (r > 0: a tends to be larger)."""
     a = np.asarray(a, float); b = np.asarray(b, float)
     U, p = mannwhitneyu(a, b, alternative="two-sided")
     r = 2.0 * U / (len(a) * len(b)) - 1.0
@@ -240,28 +189,58 @@ def rank_biserial(a, b):
 
 
 def partial_spearman(df, target_col, outcome_col, covar_cols):
-    """Partial Spearman correlation of target and outcome given covariates, as in comparison.py:
-    both regressed on the covariates by OLS, residuals Spearman-correlated (plain Spearman without covariates).
-    """
-    t = df[target_col].to_numpy(dtype=float)
-    o = df[outcome_col].to_numpy(dtype=float)
-    if covar_cols:
-        Z = df[covar_cols].to_numpy(dtype=float)
-        Z_des = np.column_stack([np.ones(len(Z)), Z])
+    t = rankdata(df[target_col].to_numpy(dtype=float))
+    o = rankdata(df[outcome_col].to_numpy(dtype=float))
+    k = len(covar_cols) if covar_cols else 0
+    if k:
+        Z = np.column_stack([np.ones(len(t))] +
+                            [rankdata(df[c].to_numpy(dtype=float)) for c in covar_cols])
 
         def ols_resid(y):
-            coef, _, _, _ = np.linalg.lstsq(Z_des, y, rcond=None)
-            return y - Z_des @ coef
+            coef, _, _, _ = np.linalg.lstsq(Z, y, rcond=None)
+            return y - Z @ coef
 
-        r, p = spearmanr(ols_resid(t), ols_resid(o))
-    else:
-        r, p = spearmanr(t, o)
-    return float(r), float(p)
+        t, o = ols_resid(t), ols_resid(o)
+    if np.std(t) == 0 or np.std(o) == 0:
+        return float("nan"), float("nan")
+    r = float(np.corrcoef(t, o)[0, 1])
+    dof = len(t) - 2 - k
+    if dof <= 0 or abs(r) >= 1.0:
+        return r, float("nan")
+    p = float(2.0 * t_dist.sf(abs(r * np.sqrt(dof / (1.0 - r ** 2))), dof))
+    return r, p
+
+LOG_COVARIATES = ("HF_Power_ms2", "HRV_RMSSD")
 
 
-# ---- Main analysis ----
+def partial_pearson_log(df, target_col, outcome_col, covar_cols):
+    t = df[target_col].to_numpy(dtype=float)
+    if np.all(t > 0):
+        t = np.log(t)
+    o = df[outcome_col].to_numpy(dtype=float)
+    k = len(covar_cols) if covar_cols else 0
+    if k:
+        cols = []
+        for c in covar_cols:
+            v = df[c].to_numpy(dtype=float)
+            cols.append(np.log(v) if (c in LOG_COVARIATES and np.all(v > 0)) else v)
+        Z = np.column_stack([np.ones(len(t))] + cols)
+
+        def ols_resid(y):
+            coef, _, _, _ = np.linalg.lstsq(Z, y, rcond=None)
+            return y - Z @ coef
+
+        t, o = ols_resid(t), ols_resid(o)
+    if np.std(t) == 0 or np.std(o) == 0:
+        return float("nan"), float("nan")
+    r = float(np.corrcoef(t, o)[0, 1])
+    dof = len(t) - 2 - k
+    if dof <= 0 or abs(r) >= 1.0:
+        return r, float("nan")
+    return r, float(2.0 * t_dist.sf(abs(r * np.sqrt(dof / (1.0 - r ** 2))), dof))
+
+
 def _load_results():
-    """Load and merge the two per-subject results CSVs; add Group (0/1)."""
     frames = []
     for path, group in [(HEALTHY_CSV, 0), (PSYCH_CSV, 1)]:
         if path is None or not os.path.exists(path):
@@ -285,7 +264,6 @@ def run_activity_analysis():
           f"({int((results['Group'] == 0).sum())} control, "
           f"{int((results['Group'] == 1).sum())} patient).")
 
-    # 1) Mobility for every subject
     mob_path = os.path.join(OUTPUT_DIR, "mobility_coefficients.csv")
     if os.path.exists(mob_path) and not FORCE_RECOMPUTE:
         print("  Reusing cached mobility_coefficients.csv "
@@ -297,8 +275,6 @@ def run_activity_analysis():
         for w in warnings:
             print(f"    [!] {w}")
 
-    # Drop columns the mobility table also supplies (merge_mobility.py copies mobility_mg into the
-    # results files), so the join cannot collide; the mobility table is authoritative.
     overlap = [c for c in mob.columns if c in results.columns]
     if overlap:
         print(f"  Note: results CSV already carries {overlap}; using the values "
@@ -309,7 +285,6 @@ def run_activity_analysis():
     usable = df[df["mobility_mg"].notna()].copy()
     print(f"  Mobility computed for {len(usable)} / {len(df)} subjects.")
 
-    # 2) Do the groups differ in physical activity?
     c = usable.loc[usable["Group"] == 0, "mobility_mg"]
     p = usable.loc[usable["Group"] == 1, "mobility_mg"]
     r_mob, p_mob, _ = rank_biserial(c.values, p.values)
@@ -326,19 +301,14 @@ def run_activity_analysis():
     pd.DataFrame(grp_rows).to_csv(
         os.path.join(OUTPUT_DIR, "Mobility_Group_Comparison.csv"), index=False)
 
-    # 3) Group contrasts under covariate control: mobility (activity), HF power and mean heart rate
-    # (vagal and rate), and all three together.
     need = ["PSD_Beta", "Group", "mobility_mg", "HF_Power_ms2", "HRV_MeanHR"]
     missing = [c for c in need if c not in usable.columns]
     cov = usable.dropna(
         subset=[c for c in need if c in usable.columns and c != "Group"]).copy()
 
-    # Targets. The uncorrected slope rows come first and keep their labels, which figures.py looks up;
-    # the excised slope and the VLF/LF ratio follow.
     COVARIATE_TARGETS = ["PSD_Beta", "PSD_Beta_NoMayer", "VLF_LF_Ratio"]
 
     def covariate_table(frame):
-        """Run the covariate models for each target on `frame`."""
         rows = []
 
         def add(target, label, covars):
@@ -349,8 +319,11 @@ def run_activity_analysis():
                 return
             sub = frame.dropna(subset=[target])
             r, pv = partial_spearman(sub, target, "Group", covars)
+            r_lin, p_lin = partial_pearson_log(sub, target, "Group", covars)
             rows.append({"Analysis": label, "partial_r": round(r, 3),
-                         "p": round(pv, 5), "n": len(sub), "note": ""})
+                         "p": round(pv, 5), "n": len(sub),
+                         "partial_r_linear_log": round(r_lin, 3),
+                         "p_linear_log": round(p_lin, 5), "note": ""})
 
         for t in COVARIATE_TARGETS:
             add(t, f"{t} ~ Group (unadjusted)", [])
@@ -364,12 +337,10 @@ def run_activity_analysis():
                 ["mobility_mg", "HF_Power_ms2", "HRV_MeanHR"])
         return pd.DataFrame(rows)
 
-    # Main table: all subjects with usable mobility.
     cov_df = covariate_table(cov)
     cov_df.to_csv(os.path.join(OUTPUT_DIR, "Beta_Activity_Covariate.csv"),
                   index=False)
 
-    # Sensitivity table: subjects with adequate accelerometer coverage only.
     keep = cov["coverage"] >= SENSITIVITY_MIN_COVERAGE
     excluded = sorted(cov.index[~keep].tolist())
     cov_sens = cov[keep]
@@ -378,7 +349,6 @@ def run_activity_analysis():
         os.path.join(OUTPUT_DIR, "Beta_Activity_Covariate_Sensitivity.csv"),
         index=False)
 
-    # 4) Console summary
     print("\n  --- Mobility (group comparison) ---")
     print(f"    control median {grp_rows[0]['Control_median']} mg vs "
           f"patient median {grp_rows[0]['Patient_median']} mg; "
@@ -399,33 +369,18 @@ def run_activity_analysis():
         print(f"\n  [!] Result columns not found, some models skipped: {missing}")
     print(f"\n  Saved 4 files to {OUTPUT_DIR}/")
 
-
-# ---- Ambulation excision ----
-# The window contains one instructed walk for every subject. This section detects walking bouts from
-# the accelerometer and writes, per subject, the beats outside them, so the measures can be
-# recomputed on movement-free segments (stationary_reanalysis.py).
-
-AMBULATION_SMOOTH_S   = 15.0   # smoothing applied to the motion trace
-AMBULATION_MIN_BOUT_S = 20.0   # bouts shorter than this are not excised
-# Padding is asymmetric: 30 s before a bout covers anticipatory movement; 180 s after covers
-# heart-rate recovery. Records that fall below STATIONARY_MIN_BEATS drop out, and the retained N is
-# reported.
+AMBULATION_SMOOTH_S   = 15.0
+AMBULATION_MIN_BOUT_S = 20.0
 AMBULATION_PAD_PRE_S  = 30.0
 AMBULATION_PAD_POST_S = 180.0
-# Kept for callers that still pass it.
 AMBULATION_PAD_S      = AMBULATION_PAD_PRE_S
-# Optional absolute motion threshold for the non-bout restlessness measure. Left at None: the group
-# comparison uses the threshold-free NonBout_Motion_Median and NonBout_Motion_Variance. A number here
-# adds NonBout_Pct_Above_AbsThreshold as a descriptive field only.
 RESTLESSNESS_ABS_THRESHOLD = None
-# Bout-detection sensitivity sweep: threshold multipliers and minimum bout durations.
 BOUT_THRESHOLD_SWEEP  = (2.0, 2.5, 3.0)
 BOUT_MIN_LEN_SWEEP    = (10.0, 20.0, 30.0)
-STATIONARY_MIN_BEATS  = 240    # matches the pipeline QC floor
+STATIONARY_MIN_BEATS  = 240
 
 
 def motion_trace(acc, t_start, t_end, gravity_tc_s=GRAVITY_TIME_CONSTANT_S):
-    """Per-sample motion magnitude over the analysis window (times, motion)."""
     w = acc[(acc["t"] >= t_start) & (acc["t"] <= t_end)]
     if len(w) < MIN_ACC_SAMPLES_IN_WINDOW:
         return None, None
@@ -443,10 +398,6 @@ def motion_trace(acc, t_start, t_end, gravity_tc_s=GRAVITY_TIME_CONSTANT_S):
 
 
 def detect_ambulation(tt, motion, threshold_mult=2.5, min_bout_s=None):
-    """Flag ambulation bouts where smoothed motion exceeds threshold_mult times the subject's own median.
-
-    The threshold is relative to each subject. Returns a boolean mask over tt.
-    """
     if tt is None or motion is None or len(tt) < 10:
         return None
     min_bout_s = AMBULATION_MIN_BOUT_S if min_bout_s is None else min_bout_s
@@ -468,7 +419,6 @@ def detect_ambulation(tt, motion, threshold_mult=2.5, min_bout_s=None):
             while j < len(flag) and flag[j]:
                 j += 1
             if (j - i) >= min_len:
-                # Asymmetric guard: short before the bout, long after (heart-rate recovery).
                 out[max(0, i - pad_pre):min(len(flag), j + pad_post)] = True
             i = j
         else:
@@ -477,10 +427,6 @@ def detect_ambulation(tt, motion, threshold_mult=2.5, min_bout_s=None):
 
 
 def acquisition_specification(acc=None, rr_times=None):
-    """Accelerometer and synchronization details needed to reimplement this analysis, read from the data
-    and the code. Properties not recoverable from the exported files (sensor dynamic range, device-side
-    filtering) are recorded as unknown.
-    """
     spec = {
         "gravity_removal": "per-axis Gaussian high-pass: each axis minus a "
                            "Gaussian-smoothed copy of itself",
@@ -516,7 +462,6 @@ def acquisition_specification(acc=None, rr_times=None):
             spec["sampling_rate_hz_median"] = (1.0 / dt if dt > 0 else np.nan)
             spec["n_samples"] = int(len(tt))
             spec["trace_duration_s"] = float(tt[-1] - tt[0])
-            # Sampling-rate dropouts are reported, since a gap looks like stillness.
             spec["sampling_interval_s_max"] = float(np.max(np.diff(tt)))
             spec["largest_gap_s"] = float(np.max(np.diff(tt)) - dt)
         except Exception:
@@ -532,7 +477,6 @@ def acquisition_specification(acc=None, rr_times=None):
 
 
 def write_acquisition_specification(output_dir, spec):
-    """Write the acquisition specification as a two-column CSV."""
     import csv
     path = os.path.join(output_dir, "Acquisition_Specification.csv")
     with open(path, "w", newline="", encoding="utf-8") as f:
@@ -545,16 +489,6 @@ def write_acquisition_specification(output_dir, spec):
 
 
 def nonbout_restlessness(tt, motion, bout_mask, abs_threshold=None):
-    """Absolute motor activity outside detected ambulation bouts.
-
-    The bout detector thresholds each subject against their own median, so continuous restlessness is
-    absorbed into that subject's baseline. Background movement (for example akathisia in medicated
-    patients) is therefore measured separately on an absolute scale.
-
-    Returns, on non-bout samples: median and variance of motion, the fraction above a common absolute
-    threshold (if set), and the subject's own median motion. The chest-mounted sensor registers torso
-    movement better than limb movement, so a null here is weak evidence.
-    """
     if tt is None or motion is None:
         return {}
     m = np.asarray(motion, dtype=float)
@@ -582,13 +516,7 @@ def nonbout_restlessness(tt, motion, bout_mask, abs_threshold=None):
     return out
 
 
-# Not called from this module: it needs cleaned R-R intervals aligned to the bout ends written in
-# Activity_Structure.csv, which the cohort scripts hold.
 def heart_rate_recovery(rr_times, rr_clean, bout_end_t, window_s=300.0):
-    """Heart-rate recovery after an ambulation bout, as a decay time constant (s).
-
-    Fits an exponential decay to the heart-rate trace after the bout; returns {} when there are too few beats.
-    """
     try:
         t = np.asarray(rr_times, dtype=float)
         rr = np.asarray(rr_clean, dtype=float)
@@ -598,9 +526,6 @@ def heart_rate_recovery(rr_times, rr_clean, bout_end_t, window_s=300.0):
         ts = t[sel] - bout_end_t
         hr = 60.0 / rr[sel]
 
-        # HR(t) = hr_inf + A * exp(-t / tau), fitted by nonlinear least squares with all three parameters
-        # estimated jointly (log-linearizing after estimating the asymptote biases tau toward about 70 s on
-        # synthetic decays).
         def _decay(tv, hr_inf, amp, tau):
             return hr_inf + amp * np.exp(-tv / tau)
 
@@ -616,7 +541,6 @@ def heart_rate_recovery(rr_times, rr_clean, bout_end_t, window_s=300.0):
             hr_inf, _amp, tau = float(popt[0]), float(popt[1]), float(popt[2])
             method = "nonlinear_lsq"
         except Exception:
-            # Fallback on the part of the curve well above the noise floor; biased low for long time constants.
             amp = hr - hr_inf
             a0 = float(np.max(amp[:5])) if len(amp) >= 5 else np.nan
             ok = amp > max(0.1, 0.2 * a0) if np.isfinite(a0) else amp > 0.1
@@ -632,7 +556,6 @@ def heart_rate_recovery(rr_times, rr_clean, bout_end_t, window_s=300.0):
             "HR_Recovery_Asymptote_bpm": float(hr_inf),
             "HR_Recovery_Start_bpm": float(hr[0]),
             "HR_Recovery_N_Beats": int(sel.sum()),
-            # Fallback values are flagged, since they are biased low for slow recoveries.
             "HR_Recovery_Method": method,
         }
     except Exception:
@@ -640,10 +563,6 @@ def heart_rate_recovery(rr_times, rr_clean, bout_end_t, window_s=300.0):
 
 
 def stationary_beat_mask(record_id):
-    """Boolean mask over the beats in a subject's window, True outside any detected ambulation bout.
-
-    Returns (mask, stats_dict) or (None, reason_string).
-    """
     bounds = _rr_window_bounds(record_id)
     acc = _load_acc(record_id)
     if bounds is None:
@@ -658,7 +577,6 @@ def stationary_beat_mask(record_id):
     if amb is None:
         return None, "ambulation detection failed"
 
-    # The R-R window comes from the read already made in _rr_window_bounds().
     path = _rr_path_for(record_id)
     if path is None:
         return None, "R-R file not found"
@@ -677,7 +595,6 @@ def stationary_beat_mask(record_id):
     in_window = (clock >= t0) & (clock <= t1)
     beat_clock = clock[in_window]
 
-    # Nearest accelerometer sample for each beat.
     idx = np.clip(np.searchsorted(tt, beat_clock), 0, len(tt) - 1)
     beat_ambulatory = amb[idx]
     mask = ~beat_ambulatory
@@ -694,10 +611,6 @@ def stationary_beat_mask(record_id):
 
 
 def activity_structure_report(record_ids, output_dir=OUTPUT_DIR):
-    """Characterize the ambulation structure of each subject's window and compare it between groups.
-
-    Per subject: N_bouts, Total_ambul_s and First_bout_s (onset of the first bout from window start).
-    """
     rows, problems = [], []
     pat = re.compile(r"^(control|treatment)_\d+$")
     ids = [r for r in record_ids if pat.match(str(r))]
@@ -720,12 +633,9 @@ def activity_structure_report(record_ids, output_dir=OUTPUT_DIR):
                 problems.append(f"{rid}: ambulation detection failed")
                 continue
 
-            # Non-bout restlessness, computed here while the trace and bout mask are in scope (see
-            # nonbout_restlessness).
             _rest = nonbout_restlessness(tt, motion, mask,
                                          abs_threshold=RESTLESSNESS_ABS_THRESHOLD)
 
-            # Count contiguous runs and locate the first.
             padded = np.concatenate(([False], mask, [False]))
             d = np.diff(padded.astype(np.int8))
             starts = np.flatnonzero(d == 1)
@@ -736,9 +646,6 @@ def activity_structure_report(record_ids, output_dir=OUTPUT_DIR):
                 "Record_ID": rid,
                 "Group": "control" if str(rid).startswith("control") else "patient",
                 "N_bouts": int(len(starts)),
-                # Total_ambul_s is flagged samples times the sample interval; Pct_window_ambul is the fraction of
-                # accelerometer samples flagged, whose denominator is the actual trace duration. Both denominators
-                # are recorded.
                 "Total_ambul_s": float(mask.sum() * dt) if np.isfinite(dt) else np.nan,
                 "Pct_window_ambul": float(100.0 * mask.mean()),
                 "Trace_Duration_s": (float(len(mask) * dt)
@@ -752,7 +659,6 @@ def activity_structure_report(record_ids, output_dir=OUTPUT_DIR):
                 "Longest_bout_s": (float((ends - starts).max() * dt)
                                    if len(starts) and np.isfinite(dt) else np.nan),
             }
-            # Merge the non-bout restlessness fields into the same row.
             _row.update(_rest)
             rows.append(_row)
         except Exception as exc:
@@ -769,10 +675,8 @@ def activity_structure_report(record_ids, output_dir=OUTPUT_DIR):
     path = os.path.join(output_dir, "Activity_Structure.csv")
     df.to_csv(path, index=False, float_format="%.4f")
 
-    # Group comparison of each quantity.
     from scipy.stats import mannwhitneyu
     summary = []
-    # Group comparison of the non-bout restlessness quantities.
     for col in ("N_bouts", "Total_ambul_s", "Pct_window_ambul",
                 "First_bout_s", "Longest_bout_s",
                 "NonBout_Motion_Median", "NonBout_Motion_Variance",
@@ -800,7 +704,6 @@ def activity_structure_report(record_ids, output_dir=OUTPUT_DIR):
     for _, r in sm.iterrows():
         print(f"  {r['Quantity']:<20}{r['Control_mean']:>12.2f}"
               f"{r['Patient_mean']:>12.2f}{r['r_effect']:>9.3f}{r['p_raw']:>10.4f}")
-    # The verdict needs both groups; with one cohort only, a message is printed instead.
     if sm.empty or "p_raw" not in sm.columns:
         n_ctrl = int((df.Group == "control").sum())
         n_pat = int((df.Group == "patient").sum())
@@ -823,16 +726,10 @@ def activity_structure_report(record_ids, output_dir=OUTPUT_DIR):
 
 
 def build_stationary_segments(record_ids, output_dir=OUTPUT_DIR):
-    """Write each subject's stationary beat mask (.npy) and a summary table.
-
-    Subjects with fewer than STATIONARY_MIN_BEATS stationary beats are flagged Usable=False and excluded
-    from the stationary reanalysis.
-    """
     os.makedirs(output_dir, exist_ok=True)
     mask_dir = os.path.join(output_dir, "stationary_masks")
     os.makedirs(mask_dir, exist_ok=True)
 
-    # Skip the appended cohort summary rows (HealthyACC_Mean and so on).
     import re as _re
     _pat = _re.compile(r"^(control|treatment)_\d+$")
     dropped = [r for r in record_ids if not _pat.match(str(r))]
@@ -848,7 +745,6 @@ def build_stationary_segments(record_ids, output_dir=OUTPUT_DIR):
           f"accelerometer recording, so expect roughly 2-20 s per subject "
           f"depending on file size.")
     for i, rid in enumerate(record_ids, 1):
-        # Print progress before each subject, with a flush.
         elapsed = time.time() - t_start
         eta = (elapsed / (i - 1) * (total - i + 1)) if i > 1 else float("nan")
         print(f"    [{i:>3}/{total}] {rid:<16} "
@@ -879,12 +775,10 @@ def build_stationary_segments(record_ids, output_dir=OUTPUT_DIR):
     return tab, problems
 
 
-# ---- Entry point ----
 if __name__ == "__main__":
     print("[accelerometer] activity-confound analysis")
     results = run_activity_analysis()
 
-    # Enumerate subjects once, from the results CSVs, for both downstream analyses.
     print("\n[accelerometer] enumerating subjects")
     try:
         res = _load_results()
@@ -898,8 +792,6 @@ if __name__ == "__main__":
         print("\n[accelerometer] activity structure characterisation")
         activity_structure_report(ids)
 
-    # -- Acquisition and synchronization specification --
-    # Read from the code and the data; properties not recoverable from the files are recorded as unknown.
     if ids:
         print("\n[accelerometer] acquisition specification")
         try:

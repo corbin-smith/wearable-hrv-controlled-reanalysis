@@ -1,22 +1,11 @@
-"""patient_metadata.py: parse the subject-level metadata released with HRV-ACC version 2.
-
-patient_data_summary.csv is semicolon-delimited, its ICD field can contain commas (comorbid codes),
-and some copies end every line with a comma; the parser handles all three and validates the result.
-
-Fields: ID (maps to record "treatment_<ID>"), gender (W = woman, M = man), age (years),
-ICD (ICD-10 codes, primary first: F20 schizophrenia, F31 bipolar affective disorder, F19 and F19.2
-other psychoactive substance use and dependence, F13.2 sedative or hypnotic dependence), quetiapine.
-
-The medication field records quetiapine only; patients marked "no" received other medication.
-control_data_summary.csv has ID, gender and age, and is parsed by parse_control_metadata().
-"""
+"""patient_metadata.py: parse the subject-level metadata released with HRV-ACC version 2."""
 import os
 
 import numpy as np
 import pandas as pd
 
 PATIENT_METADATA_FILE = "patient_data_summary.csv"
-CONTROL_METADATA_FILE = "control_data_summary.csv"   # not yet released
+CONTROL_METADATA_FILE = "control_data_summary.csv"
 
 ICD_LABELS = {
     "F20":   "schizophrenia",
@@ -35,11 +24,6 @@ def _clean(token):
 
 
 def parse_control_metadata(path=CONTROL_METADATA_FILE):
-    """Parse the control metadata file (ID;gender;age).
-
-    Returns a DataFrame indexed by record_id ("control_2", ...), with empty diagnosis and medication
-    columns so that the two cohorts concatenate cleanly. A change in format raises an error.
-    """
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"control metadata not found at {path}. Download the updated "
@@ -82,10 +66,6 @@ def parse_control_metadata(path=CONTROL_METADATA_FILE):
 
 
 def parse_metadata_file(path=PATIENT_METADATA_FILE):
-    """Parse the patient metadata file into a DataFrame indexed by record_id ("treatment_1", ...).
-
-    Raises on any malformed line instead of returning partial data.
-    """
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"patient metadata not found at {path}. Download the updated "
@@ -110,7 +90,6 @@ def parse_metadata_file(path=PATIENT_METADATA_FILE):
         gender = _clean(parts[1]).upper()
         age = _clean(parts[2])
         quet = _clean(parts[-1]).lower()
-        # Everything between age and quetiapine is the ICD field.
         icd_raw = ";".join(parts[3:-1])
         codes = [c.strip() for c in _clean(icd_raw).split(",") if c.strip()]
         if not codes:
@@ -134,7 +113,6 @@ def parse_metadata_file(path=PATIENT_METADATA_FILE):
 
     df = pd.DataFrame(rows).set_index("record_id")
 
-    # -- Validation --
     if df.index.duplicated().any():
         raise ValueError("duplicate patient IDs in metadata")
     bad_sex = set(df["Sex"]) - {"F", "M"}
@@ -150,10 +128,6 @@ def parse_metadata_file(path=PATIENT_METADATA_FILE):
 
 def attach_metadata(results_df, metadata=None, path=None, cohort="patient",
                     verbose=True):
-    """Merge metadata columns onto a results DataFrame indexed by record_id.
-
-    Rows without metadata (such as appended cohort summary rows) receive NaN.
-    """
     if metadata is None:
         if cohort == "control":
             metadata = parse_control_metadata(path or CONTROL_METADATA_FILE)
@@ -173,19 +147,16 @@ def attach_metadata(results_df, metadata=None, path=None, cohort="patient",
 
 def diagnosis_ids(metadata=None, diagnosis="schizophrenia",
                   path=PATIENT_METADATA_FILE):
-    """Record IDs for one diagnostic group."""
     if metadata is None:
         metadata = parse_metadata_file(path)
     return list(metadata.index[metadata["Diagnosis"] == diagnosis])
 
 
 def control_metadata_available(path=CONTROL_METADATA_FILE):
-    """True if control demographics have been released."""
     return os.path.exists(path)
 
 
 def summarise(metadata=None, path=PATIENT_METADATA_FILE):
-    """Print a cohort description."""
     if metadata is None:
         metadata = parse_metadata_file(path)
     n = len(metadata)

@@ -1,13 +1,4 @@
-"""comparison.py: group statistics, sensitivity analyses and summary figures.
-
-Runs two comparisons: HRV-ACC controls against patients (primary) and MIT-BIH controls against
-patients, plus the comparison of the two control cohorts. Mann-Whitney U tests with rank-biserial r
-and Benjamini-Hochberg correction within named families; heart-rate-adjusted partial correlations;
-resolution, estimator, surrogate, covariate, subgroup and medication analyses; bootstrap intervals;
-summary figures. Writes outputs/comparison/<comparison>/.
-
-Usage: python comparison.py   (after the cohort scripts, rna_controls.py and merge_mobility.py)
-"""
+"""comparison.py: group statistics, sensitivity analyses and summary figures."""
 
 import os
 import warnings
@@ -28,37 +19,24 @@ from pipeline import (
     plot_radar_comparison,
     RADAR_METRICS, RADAR_LABELS,
     PSD_BETA_R2_THRESHOLD,
-    # Imported from pipeline.py so the table labels match the constants the pipeline applied.
     QUANT_TARGET_RATIO, QUANT_TARGET_SWEEP, QUANT_STEP_S,
-    # The amplitude and spectral measures re-quantized to the 7.8 ms grid.
     REQUANT_AMPLITUDE_SPECTRAL,
 )
 
 warnings.filterwarnings("ignore")
 
-
-# ---- Configuration ----
-
-# -- Cohort results files --
-# MIT-BIH NSR controls (external cohort).
 MITBIH_HEALTHY_CSV = os.path.join("outputs", "healthy",
                                   "ecg_results_Healthy.csv")
-# HRV-ACC controls, the primary control group (written by healthy_hrvacc.py).
 HRVACC_HEALTHY_CSV = os.path.join("outputs", "healthy_hrvacc",
                                   "ecg_results_HealthyACC.csv")
-# Default control path.
 HEALTHY_CSV    = MITBIH_HEALTHY_CSV
 PSYCH_CSV      = os.path.join("outputs", "psychiatric",
                                "ecg_results_Psychiatric.csv")
 OUTPUT_DIR     = os.path.join("outputs", "comparison")
 
-
-# Radar-chart reference frame: run_comparison() computes it from the control cohort it is given
-# (see "Radar reference" in run_comparison); there are no hard-coded reference values.
 HEALTHY_MEAN = None
 HEALTHY_SD   = None
 
-# Full measure battery for group comparison (excludes QC columns and surrogate internals).
 METRIC_BATTERY = [
     "HRV_MeanNN", "HRV_SDNN", "HRV_RMSSD", "HRV_pNN50", "HRV_MeanHR",
     "HRV_SD1", "HRV_SD2", "HRV_SD1SD2",
@@ -66,35 +44,19 @@ METRIC_BATTERY = [
     "PSD_Beta",
     "SampEn", "ApEn", "PermEn", "MSE_Mean",
     "DFA_Alpha", "DFA_Alpha1", "DFA_Alpha2",
-    # MFDFA  — multifractal extension of DFA (Kantelhardt et al. 2002)
     "MFDFA_Width", "MFDFA_H_Mean", "MFDFA_Asymmetry", "MFDFA_H2",
     "RQA_REC", "RQA_DET", "RQA_LAM",
-    # RNA — recurrence network analysis (Marwan et al. 2009)
     "RNA_MeanDegree", "RNA_ClusteringCoeff", "RNA_Transitivity",
 ]
 
-# -- Correction families --
-# Three families are corrected separately: the primary measures, MFDFA and recurrence networks. The
-# deterministic quantities (RQA_REC, RNA_MeanDegree) and MFDFA_Asymmetry (undefined under positive q)
-# are reported but belong to no family. The sizes asserted in _family_size_selftest() are authoritative.
 MFDFA_FAMILY = ["MFDFA_Width", "MFDFA_H_Mean", "MFDFA_H2"]
-MFDFA_UNDEFINED = ["MFDFA_Asymmetry"]          # reported as not computable
+MFDFA_UNDEFINED = ["MFDFA_Asymmetry"]
 
-# -- Deterministic quantities: excluded from every family --
-# RQA_REC and RNA_MeanDegree equal the target recurrence rate for every subject by construction; they
-# are normalization checks, not hypothesis tests.
 DETERMINISTIC_CHECKS = ["RQA_REC", "RNA_MeanDegree"]
-# Measures for which a percentage difference is not reported because the reference is near the
-# floor (pNN50). Absolute differences and effect sizes are still reported.
 PCT_DIFF_SUPPRESSED = ["HRV_pNN50"]
-# The slope's fitted band in Hz as resolved by the Welch settings (lowest bin 0.0156 Hz at
-# nperseg = 512), used by the scale-band correspondence table.
 BETA_BAND_FOR_REPORT = (0.0156, 0.15)
 RQA_TARGET_RATE = 0.10
 RNA_FAMILY   = ["RNA_ClusteringCoeff", "RNA_Transitivity"]
-# Statistically redundant measures, excluded from the primary family: ApEn correlates with SampEn at
-# r = 0.98 and is the length-dependent member of the pair. ApEn is still computed and reported outside
-# the family.
 STATISTICALLY_REDUNDANT = ["ApEn"]
 
 PRIMARY_METRICS = [m for m in METRIC_BATTERY
@@ -102,17 +64,10 @@ PRIMARY_METRICS = [m for m in METRIC_BATTERY
                    + DETERMINISTIC_CHECKS + STATISTICALLY_REDUNDANT
                    + ["RNA_MeanDegree"]]
 
-# Definitionally collinear measures (SD1 = RMSSD/sqrt(2); SD2 from SDNN and SD1; MeanHR = 60/MeanNN).
-# Both the full-family and the non-redundant corrections are reported.
 COLLINEAR_DUPLICATES = ["HRV_SD1", "HRV_SD2", "HRV_MeanHR"]
 NONREDUNDANT_PRIMARY = [m for m in PRIMARY_METRICS
                         if m not in COLLINEAR_DUPLICATES]
 
-# -- Heart-rate-adjusted family --
-# Its own correction family. Excluded: HRV_MeanHR and HRV_MeanNN (the covariate and its reciprocal),
-# HRV_SD1 (RMSSD/sqrt(2)), HRV_SD2 and HRV_SD1SD2 (functions of SDNN and RMSSD), HRV_pNN50 (floor-
-# limited in patients). Added beyond the primary family: VLF_Power_ms2, VLF_LF_Ratio, PSD_Beta_NoMayer,
-# ApEn, RNA_ClusteringCoeff and RNA_Transitivity.
 HR_ADJUSTMENT_COVARIATE = "HRV_MeanHR"
 HR_ADJUSTED_FAMILY = [
     "HRV_RMSSD", "HRV_SDNN",
@@ -122,17 +77,12 @@ HR_ADJUSTED_FAMILY = [
     "MSE_Mean", "SampEn", "ApEn", "PermEn",
     "RQA_DET", "RQA_LAM", "RNA_ClusteringCoeff", "RNA_Transitivity",
 ]
-# Amplitude measures normalized by mean NN (Sacha, 2014): SDs and RMSSD by mean NN, band powers by
-# its square.
 MEANNN_NORMALISED = [("HRV_RMSSD", 1), ("HRV_SDNN", 1),
                      ("LF_Power_ms2", 2), ("HF_Power_ms2", 2),
                      ("VLF_Power_ms2", 2), ("Total_Power_ms2", 2)]
 
-# Schizophrenia subject list, used only by the superseded schizophrenia_subgroup_analysis(); diagnosis
-# now comes from the metadata columns. Leave empty.
 SCHIZOPHRENIA_RECORD_IDS = []
 
-# Display names for figures
 METRIC_LABELS = {
     "HRV_MeanNN":     "Mean NN (ms)",
     "HRV_SDNN":       "SDNN (ms)",
@@ -157,34 +107,28 @@ METRIC_LABELS = {
     "RQA_REC":        "RQA Recurrence",
     "RQA_DET":        "RQA Determinism",
     "RQA_LAM":        "RQA Laminarity",
-    # MFDFA
     "MFDFA_Width":     "MFDFA \u0394h (width)",
     "MFDFA_H_Mean":    "MFDFA H\u0305 (mean)",
     "MFDFA_Asymmetry": "MFDFA Asymmetry",
     "MFDFA_H2":        "MFDFA H(q=2)",
-    # RNA
     "RNA_MeanDegree":      "RNA Mean Degree",
     "RNA_ClusteringCoeff": "RNA Clustering Coeff",
     "RNA_Transitivity":    "RNA Transitivity",
 }
 
-# Significance threshold after correction
 ALPHA = 0.05
 
-# Colors
 C_HEALTHY  = "steelblue"
 C_PSYCH    = "firebrick"
 
-# -- MIT-BIH demographics --
-# Age and sex in record order (16265 ... 19830); sex coding 0 = male, 1 = female.
 HEALTHY_DEMOGRAPHICS = {
-    "16265": {"Age": 32, "Sex": 0},   # male
-    "16272": {"Age": 20, "Sex": 1},   # female
+    "16265": {"Age": 32, "Sex": 0},
+    "16272": {"Age": 20, "Sex": 1},
     "16273": {"Age": 28, "Sex": 1},
     "16420": {"Age": 38, "Sex": 1},
-    "16483": {"Age": 42, "Sex": 0},   # male
+    "16483": {"Age": 42, "Sex": 0},
     "16539": {"Age": 35, "Sex": 1},
-    "16773": {"Age": 26, "Sex": 0},   # male
+    "16773": {"Age": 26, "Sex": 0},
     "16786": {"Age": 32, "Sex": 1},
     "16795": {"Age": 20, "Sex": 1},
     "17052": {"Age": 45, "Sex": 1},
@@ -192,21 +136,16 @@ HEALTHY_DEMOGRAPHICS = {
     "18177": {"Age": 26, "Sex": 1},
     "18184": {"Age": 34, "Sex": 1},
     "19088": {"Age": 41, "Sex": 1},
-    "19090": {"Age": 45, "Sex": 0},   # male
-    "19093": {"Age": 34, "Sex": 0},   # male
+    "19090": {"Age": 45, "Sex": 0},
+    "19093": {"Age": 34, "Sex": 0},
     "19140": {"Age": 38, "Sex": 1},
     "19830": {"Age": 50, "Sex": 1},
 }
-# MIT-BIH: mean age 34.3 yr, range 20-50; 13 F, 5 M
 
 
 def _add_healthy_demographics(df_h, demographics=None):
-    """Attach Age and Sex to the control DataFrame from HEALTHY_DEMOGRAPHICS (MIT-BIH IDs).
-    Rows not in the dict receive NaN.
-    """
     df = df_h.copy()
 
-    # Age and Sex already present come from the released metadata and are kept.
     if ("Age" in df.columns and "Sex" in df.columns
             and pd.to_numeric(df["Age"], errors="coerce").notna().any()):
         if demographics is None:
@@ -215,7 +154,6 @@ def _add_healthy_demographics(df_h, demographics=None):
                   f"control subjects.")
             return df
 
-    # HEALTHY_DEMOGRAPHICS holds MIT-BIH record IDs; HRV-ACC IDs do not match, which is announced.
     if demographics is None:
         demographics = HEALTHY_DEMOGRAPHICS
         _keys = {str(i).split("/")[-1].split("\\")[-1] for i in df_h.index}
@@ -227,7 +165,6 @@ def _add_healthy_demographics(df_h, demographics=None):
                   "omitting it.")
     ages, sexes = [], []
     for idx in df.index:
-        # The index may be the bare record ID or contain it as a suffix.
         key = str(idx).split("/")[-1].split("\\")[-1]
         demo = demographics.get(key, {})
         ages.append(demo.get("Age", np.nan))
@@ -237,22 +174,15 @@ def _add_healthy_demographics(df_h, demographics=None):
     return df
 
 
-# ---- Step 1: data loading ----
-
 def load_cohorts(healthy_csv, psych_csv):
-    """Load both cohort CSVs, drop the appended summary rows, and return per-subject DataFrames."""
     def _load(path, label):
         df = pd.read_csv(path, index_col=0)
-        # Drop summary rows appended by run_analysis().
         summary_pattern = df.index.str.contains(
             r'^(Cohort_|Healthy_|HealthyACC_|Psychiatric_)', regex=True, na=False
         )
         df = df[~summary_pattern].copy()
-        # Convert a column to numeric only if every non-null value converts (pandas 3 removed
-        # errors='ignore').
         for col in df.columns:
             converted = pd.to_numeric(df[col], errors='coerce')
-            # Text columns such as Record_Start_Clock stay as strings.
             if converted.notna().sum() == df[col].notna().sum():
                 df[col] = converted
         print(f"  Loaded {label}: {len(df)} subjects, {len(df.columns)} columns")
@@ -263,50 +193,39 @@ def load_cohorts(healthy_csv, psych_csv):
     return df_h, df_p
 
 
-# ---- Step 2: statistical comparison ----
-
 def rank_biserial_r(u_stat, n1, n2):
-    """Rank-biserial correlation from Mann-Whitney U statistic."""
     return 1 - (2 * u_stat) / (n1 * n2)
 
 
 def benjamini_hochberg(p_values):
-    """Benjamini-Hochberg FDR correction. Returns adjusted p values in the input order."""
     p = np.asarray(p_values, dtype=float)
     n = p.size
     if n == 0:
         return p
-    order  = np.argsort(p)                 # positions, ascending by p
+    order  = np.argsort(p)
     ranked = p[order]
     adj    = ranked * n / np.arange(1, n + 1)
-    adj    = np.minimum.accumulate(adj[::-1])[::-1]   # enforce monotonicity
+    adj    = np.minimum.accumulate(adj[::-1])[::-1]
     out    = np.empty(n, dtype=float)
     out[order] = np.minimum(adj, 1.0)
     return out
 
 
 def _bh_selftest():
-    """Self-check at import: correct ranks and order independence."""
     p = np.array([0.18577, 0.00023, 0.34029, 0.00081])
     expected = np.array([0.24769, 0.00092, 0.34029, 0.00162])
     got = benjamini_hochberg(p)
     assert np.allclose(got, expected, atol=1e-4), \
         f"BH self-test failed: {got} != {expected}"
-    # Shuffling the input must permute the output identically.
     idx = np.array([2, 0, 3, 1])
     assert np.allclose(benjamini_hochberg(p[idx]), expected[idx], atol=1e-4), \
         "BH self-test failed: result is order-dependent"
-    # Adjusted p can never fall below raw p.
     assert np.all(got >= p - 1e-12), "BH self-test failed: adjusted p < raw p"
-
 
 _bh_selftest()
 
 
 def _family_size_selftest():
-    """Assert the correction-family sizes; figures.py asserts the same values, so the two files cannot drift."""
-    # Expected sizes are derived from the battery and the exclusion lists, so only a divergence between
-    # this file and figures.py fails.
     _expected_primary = len([m for m in METRIC_BATTERY
                              if m not in MFDFA_FAMILY + RNA_FAMILY
                              + MFDFA_UNDEFINED + DETERMINISTIC_CHECKS
@@ -323,7 +242,6 @@ def _family_size_selftest():
     assert len(NONREDUNDANT_PRIMARY) == _expected_nonredundant, (
         f"non-redundant family is {len(NONREDUNDANT_PRIMARY)}, derivation "
         f"says {_expected_nonredundant}")
-    # Report the family sizes used.
     print(f"  [family sizes] primary {len(PRIMARY_METRICS)}, "
           f"non-redundant {len(NONREDUNDANT_PRIMARY)}, "
           f"MFDFA {len(MFDFA_FAMILY)}, RNA {len(RNA_FAMILY)}")
@@ -338,30 +256,20 @@ def _family_size_selftest():
         "the heart-rate covariate cannot be a member of its own family")
     print(f"  [family sizes] heart-rate-adjusted {len(HR_ADJUSTED_FAMILY)}")
 
-
 _family_size_selftest()
 
 
 def minimum_detectable_effect(n1, n2, alpha=0.05, power=0.80):
-    """The smallest effect this sample could detect with 80% power at alpha = 0.05 (depends only on N)."""
     z_a = norm.ppf(1 - alpha / 2)
     z_b = norm.ppf(power)
     d_min = (z_a + z_b) * np.sqrt(1.0 / n1 + 1.0 / n2)
 
-    # Converted to the rank-biserial scale used in the tables: for two normals d SDs apart,
-    # P(X > Y) = Phi(d / sqrt(2)) and r_rank = 2 * P(X > Y) - 1 (0.391 at 30 per group). The point-biserial
-    # value d / sqrt(d^2 + 4) is also returned.
     r_min_point = d_min / np.sqrt(d_min ** 2 + 4.0)
     r_min_rank = 2.0 * norm.cdf(d_min / np.sqrt(2.0)) - 1.0
     return float(d_min), float(r_min_rank), float(r_min_point)
 
 
 def run_group_comparison(df_h, df_p, metrics, family_label="primary"):
-    """Mann-Whitney U test for each measure.
-
-    Returns a DataFrame with group means, SDs, medians and IQRs, Pct_Diff, U_stat, p_raw, r_effect,
-    p_adj and Significant.
-    """
     rows = []
     for m in metrics:
         if m not in df_h.columns or m not in df_p.columns:
@@ -376,12 +284,10 @@ def run_group_comparison(df_h, df_p, metrics, family_label="primary"):
         h_mean   = np.mean(h_vals)
         p_mean   = np.mean(p_vals)
 
-        # Medians and IQRs: the location estimate consistent with the rank-based tests.
         h_med, p_med = float(np.median(h_vals)), float(np.median(p_vals))
         h_q1, h_q3 = np.percentile(h_vals, [25, 75])
         p_q1, p_q3 = np.percentile(p_vals, [25, 75])
 
-        # Percentage difference from medians; withheld for floor-limited measures (pNN50).
         _floor_limited = m in PCT_DIFF_SUPPRESSED
         if _floor_limited or h_med == 0:
             pct_diff = np.nan
@@ -414,7 +320,6 @@ def run_group_comparison(df_h, df_p, metrics, family_label="primary"):
 
     results = pd.DataFrame(rows).set_index("Metric")
 
-    # BH within this family only; the family is named in the output and raw p is kept beside adjusted p.
     p_adj = benjamini_hochberg(results["p_raw"].values)
     results["p_adj"]        = p_adj
     results["Significant"]  = p_adj < ALPHA
@@ -425,20 +330,13 @@ def run_group_comparison(df_h, df_p, metrics, family_label="primary"):
     return results
 
 
-# ---- Step 3: group summary table ----
-
 def save_summary_table(stats, output_dir):
-    """Save the full statistical results as a CSV and print a console summary.
-
-    Bootstrap intervals are attached later by attach_bootstrap_intervals(), once the bootstrap exists.
-    """
     out = stats.copy()
     out.index = [METRIC_LABELS.get(m, m) for m in out.index]
     path = os.path.join(output_dir, "group_comparison_stats.csv")
     out.to_csv(path, float_format="%.6f")
     print(f"  Stats table     → {path}")
 
-    # Console summary
     print(f"\n{'='*80}")
     print(f"  GROUP COMPARISON  (α={ALPHA}, BH-FDR corrected)")
     print(f"{'='*80}")
@@ -461,10 +359,7 @@ def save_summary_table(stats, output_dir):
               f"p_adj={stats.loc[m,'p_adj']:.4f}")
 
 
-# ---- Step 4: box plots (all measures) ----
-
 def _single_boxplot(ax, df_h, df_p, metric, stats_row):
-    """Draw one grouped box plot with jittered data points on ax."""
     h_vals = pd.to_numeric(df_h[metric], errors='coerce').dropna().values
     p_vals = pd.to_numeric(df_p[metric], errors='coerce').dropna().values
 
@@ -480,7 +375,6 @@ def _single_boxplot(ax, df_h, df_p, metric, stats_row):
     bp['boxes'][0].set_facecolor(C_HEALTHY); bp['boxes'][0].set_alpha(0.5)
     bp['boxes'][1].set_facecolor(C_PSYCH);   bp['boxes'][1].set_alpha(0.5)
 
-    # Jittered individual points
     rng = np.random.default_rng(seed=0)
     for vals, pos, col in [(h_vals, 1, C_HEALTHY), (p_vals, 2, C_PSYCH)]:
         jitter = rng.uniform(-0.12, 0.12, len(vals))
@@ -493,7 +387,6 @@ def _single_boxplot(ax, df_h, df_p, metric, stats_row):
     ax.tick_params(axis='y', labelsize=7)
     ax.grid(True, axis='y', alpha=0.3)
 
-    # Annotate p_adj and significance
     sig_str = (f"r={stats_row['r_effect']:.2f}\n"
                f"p={stats_row['p_adj']:.3f}"
                + (" ★" if stats_row["Significant"] else ""))
@@ -503,7 +396,6 @@ def _single_boxplot(ax, df_h, df_p, metric, stats_row):
 
 
 def plot_all_boxplots(df_h, df_p, stats, output_dir, healthy_label="Healthy"):
-    """One box plot per measure, significant measures with red titles."""
     metrics = [m for m in stats.index if m in df_h.columns and m in df_p.columns]
     n       = len(metrics)
     ncols   = 5
@@ -536,7 +428,6 @@ def plot_all_boxplots(df_h, df_p, stats, output_dir, healthy_label="Healthy"):
 
 
 def plot_significant_boxplots(df_h, df_p, stats, output_dir, healthy_label="Healthy"):
-    """Box plots for the significant measures only."""
     sig_metrics = stats.index[stats["Significant"]].tolist()
     if not sig_metrics:
         print("  No significant metrics — significant boxplot figure skipped.")
@@ -579,7 +470,6 @@ def plot_significant_boxplots(df_h, df_p, stats, output_dir, healthy_label="Heal
         ax.set_xticklabels(["Healthy", "Psychiatric"], fontsize=9)
         ax.grid(True, axis='y', alpha=0.3)
 
-        # Bracket + significance annotation
         y_max  = max(np.nanmax(h_vals), np.nanmax(p_vals))
         y_range = y_max - min(np.nanmin(h_vals), np.nanmin(p_vals))
         y_br   = y_max + y_range * 0.07
@@ -610,12 +500,7 @@ def plot_significant_boxplots(df_h, df_p, stats, output_dir, healthy_label="Heal
     print(f"  Box plots (sig) → {path}")
 
 
-# ---- Step 5: effect-size bar chart ----
-
 def plot_effect_sizes(stats, output_dir, healthy_label="Healthy"):
-    """Rank-biserial r for all measures, sorted by magnitude, significant ones colored, with dashed lines
-    at |r| = 0.3 and 0.5.
-    """
     df = stats[["r_effect", "Significant"]].copy()
     df["abs_r"] = df["r_effect"].abs()
     df = df.sort_values("abs_r", ascending=True)
@@ -658,10 +543,7 @@ def plot_effect_sizes(stats, output_dir, healthy_label="Healthy"):
     print(f"  Effect sizes    → {path}")
 
 
-# ---- Step 6: violin plots ----
-
 def plot_violin_comparison(df_h, df_p, stats, output_dir, healthy_label="Healthy"):
-    """Violin plots for the five radar measures, significant measures annotated."""
     metrics = [m for m in RADAR_METRICS
                if m in df_h.columns and m in df_p.columns]
     n     = len(metrics)
@@ -708,19 +590,13 @@ def plot_violin_comparison(df_h, df_p, stats, output_dir, healthy_label="Healthy
     print(f"  Violin plots    → {path}")
 
 
-# ---- Step 7: z-score heatmap (per subject, all measures) ----
-
 def plot_zscore_heatmap(df_h, df_p, output_dir, healthy_label="Healthy"):
-    """Heatmap with one row per subject and one column per measure, z-scored on the control cohort;
-    controls above, patients below.
-    """
     metrics = [m for m in METRIC_BATTERY
                if m in df_h.columns and m in df_p.columns]
 
     h_sub = df_h[metrics].apply(pd.to_numeric, errors='coerce')
     p_sub = df_p[metrics].apply(pd.to_numeric, errors='coerce')
 
-    # Z-score on control cohort parameters.
     h_mean = h_sub.mean()
     h_std  = h_sub.std(ddof=1).replace(0, 1)
 
@@ -728,7 +604,7 @@ def plot_zscore_heatmap(df_h, df_p, output_dir, healthy_label="Healthy"):
     p_z = (p_sub - h_mean) / h_std
 
     combined = pd.concat([h_z, p_z], axis=0)
-    combined = combined.clip(-3, 3)      # clip extreme outliers for display
+    combined = combined.clip(-3, 3)
 
     n_h   = len(h_z)
     n_p   = len(p_z)
@@ -747,7 +623,6 @@ def plot_zscore_heatmap(df_h, df_p, output_dir, healthy_label="Healthy"):
         list(h_z.index) + list(p_z.index), fontsize=7
     )
 
-    # Group separator line
     ax.axhline(n_h - 0.5, color='black', lw=2.5)
     ax.text(-0.5, n_h / 2 - 0.5, healthy_label, va='center',
             ha='right', fontsize=9, color=C_HEALTHY, fontweight='bold',
@@ -768,12 +643,7 @@ def plot_zscore_heatmap(df_h, df_p, output_dir, healthy_label="Healthy"):
     print(f"  Z-score heatmap → {path}")
 
 
-# ---- Step 8: surrogate nonlinearity summary ----
-
 def surrogate_summary(df_h, df_p, output_dir, healthy_label="Healthy"):
-    """Fraction of subjects in each cohort with a significant IAAFT surrogate test for SampEn, DFA_Alpha1
-    and MSE_Mean, as a table and bar chart.
-    """
     surr_metrics = ["SampEn", "DFA_Alpha1", "MSE_Mean"]
     rows = []
     for m in surr_metrics:
@@ -804,7 +674,6 @@ def surrogate_summary(df_h, df_p, output_dir, healthy_label="Healthy"):
     print(surr_df[["Healthy_Sig","Healthy_N","Healthy_Pct",
                    "Psych_Sig","Psych_N","Psych_Pct"]].to_string())
 
-    # Bar chart
     x    = np.arange(len(surr_df))
     w    = 0.35
     fig, ax = plt.subplots(figsize=(7, 4))
@@ -830,18 +699,8 @@ def surrogate_summary(df_h, df_p, output_dir, healthy_label="Healthy"):
     print(f"  Surrogate bar   → {path_fig}")
 
 
-# ---- Step 9a: slope covariate analysis ----
-
 def psd_beta_covariate_analysis(df_h, df_p, output_dir,
                                 demographics=None, healthy_label="Healthy"):
-    """Partial Spearman correlations of the uncorrected slope with group, unadjusted and controlling for
-    mean heart rate, RMSSD, or both (both residualized on the covariates by OLS, then Spearman), and,
-    within the control cohort, the slope's association with age and sex.
-
-    Writes PSD_Beta_Covariate_Analysis.csv and .png. The incremental-AUC analysis is in
-    nested_classifier.py.
-    """
-    # -- Combined dataset --
     dh = df_h.copy(); dh["Group"] = 0
     dp = df_p.copy(); dp["Group"] = 1
     combined = pd.concat([dh, dp], axis=0)
@@ -855,52 +714,36 @@ def psd_beta_covariate_analysis(df_h, df_p, output_dir,
         print("  Covariate analysis: insufficient data — skipped.")
         return
 
-    # -- Partial Spearman helper --
     def partial_spearman(target_col, covar_cols, outcome_col, df):
-        """Partial Spearman r between target and outcome given covariates (OLS residuals, then Spearman)."""
-        t = df[target_col].values.astype(float)
-        o = df[outcome_col].values.astype(float)
-        Z = df[covar_cols].values.astype(float)
-        Z_des = np.column_stack([np.ones(len(Z)), Z])
-
-        def ols_resid(y):
-            coef, _, _, _ = np.linalg.lstsq(Z_des, y, rcond=None)
-            return y - Z_des @ coef
-
-        r, p = spearmanr(ols_resid(t), ols_resid(o))
+        r, p = globals()["partial_spearman"](
+            df[target_col].values.astype(float), df[outcome_col].values.astype(float),
+            [df[c].values.astype(float) for c in covar_cols])
         return float(r), float(p)
 
     rows = []
 
-    # Unadjusted
     r0, p0 = spearmanr(cdf["PSD_Beta"], cdf["Group"])
     rows.append({"Analysis": "PSD_Beta ~ Group (unadjusted)",
                  "r_or_AUC": r0, "p": p0})
 
-    # Controlling for MeanHR alone
     r1, p1 = partial_spearman("PSD_Beta", ["HRV_MeanHR"], "Group", cdf)
     rows.append({"Analysis": "PSD_Beta ~ Group | MeanHR",
                  "r_or_AUC": r1, "p": p1})
 
-    # Controlling for RMSSD alone
     r2, p2 = partial_spearman("PSD_Beta", ["HRV_RMSSD"], "Group", cdf)
     rows.append({"Analysis": "PSD_Beta ~ Group | RMSSD",
                  "r_or_AUC": r2, "p": p2})
 
-    # Controlling for MeanHR and RMSSD jointly
     r3, p3 = partial_spearman("PSD_Beta", ["HRV_MeanHR", "HRV_RMSSD"],
                                "Group", cdf)
     rows.append({"Analysis": "PSD_Beta ~ Group | MeanHR + RMSSD",
                  "r_or_AUC": r3, "p": p3})
 
-    # The incremental-AUC analysis is only in nested_classifier.py (C = 1.0, with a bootstrap interval on
-    # the increment).
     rows.append({"Analysis": "LOO-AUC incremental test (see "
                              "nested_classifier.py, Classification_Summary_"
                              "NestedCV.csv)",
                  "r_or_AUC": np.nan, "p": np.nan})
 
-    # -- Within the control cohort: age and sex --
     h_demo = _add_healthy_demographics(df_h, demographics=demographics)
     for c in ["PSD_Beta", "Age", "Sex"]:
         h_demo[c] = pd.to_numeric(h_demo[c], errors='coerce')
@@ -923,7 +766,6 @@ def psd_beta_covariate_analysis(df_h, df_p, output_dir,
                 "r_or_AUC": float(r_sex), "p": float(p_sex)
             })
 
-    # -- Save CSV --
     covar_df = pd.DataFrame(rows)
     csv_path = os.path.join(output_dir, "PSD_Beta_Covariate_Analysis.csv")
     covar_df.to_csv(csv_path, index=False, float_format="%.6f")
@@ -936,7 +778,6 @@ def psd_beta_covariate_analysis(df_h, df_p, output_dir,
         print(f"  {row['Analysis']:<55} {row['r_or_AUC']:>8.4f} {p_str:>8}")
     print(f"  Saved → {csv_path}")
 
-    # -- Figure --
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
     fig.suptitle(
         "PSD β Covariate Analysis — Addressing Reviewer Concerns\n"
@@ -944,7 +785,6 @@ def psd_beta_covariate_analysis(df_h, df_p, output_dir,
         fontsize=10
     )
 
-    # Panel A: partial correlations
     corr_rows = [r for r in rows
                  if "~" in r["Analysis"] and "LOO" not in r["Analysis"]]
     ax = axes[0]
@@ -968,7 +808,6 @@ def psd_beta_covariate_analysis(df_h, df_p, output_dir,
     ax.set_title("Partial / Bivariate Correlations\n(red = p < 0.05)", fontsize=9)
     ax.grid(axis='x', alpha=0.3)
 
-    # Panel B: incremental AUC
     auc_rows = [r for r in rows if "LOO-AUC" in r["Analysis"]]
     ax = axes[1]
     a_labels = [r["Analysis"].replace("LOO-AUC: ", "") for r in auc_rows]
@@ -992,18 +831,7 @@ def psd_beta_covariate_analysis(df_h, df_p, output_dir,
     print(f"  Covariate plot  → {fig_path}")
 
 
-# ═══════════════════════════════════════════════════════════════
-# STEP 9b — PSD BETA FREQUENCY-RANGE & PREPROCESSING SENSITIVITY
-#            (Category 2, Analysis 2 — enhanced version of step 9)
-# ═══════════════════════════════════════════════════════════════
-
 def psd_beta_range_sensitivity(df_h, df_p, stats, output_dir):
-    """Slope group difference across fitting ranges and interpolation methods.
-
-    Writes PSD_Beta_Range_Sensitivity.csv (r, p, significance per variant) and .png; also runs the
-    R2-filter sensitivity. Prints a note if the pipeline columns are missing.
-    """
-    # Display label -> column name
     variants = {
         "Primary\n(0.01–0.15 Hz,\ncubic)":    "PSD_Beta",
         "Wide VLF–LF\n(0.003–0.15 Hz,\ncubic)": "PSD_Beta_Wide",
@@ -1011,7 +839,6 @@ def psd_beta_range_sensitivity(df_h, df_p, stats, output_dir):
         "Linear interp\n(0.01–0.15 Hz,\nlinear)": "PSD_Beta_Linear",
     }
 
-    # Columns actually present
     available = {lbl: col for lbl, col in variants.items()
                  if col in df_h.columns and col in df_p.columns}
 
@@ -1020,7 +847,6 @@ def psd_beta_range_sensitivity(df_h, df_p, stats, output_dir):
               "  → Re-run healthy_hrvacc.py and psych_hrvacc.py with the updated\n"
               "    pipeline.py to populate PSD_Beta_Wide / Full / Linear\n"
               "    columns, then re-run comparison.py.")
-        # Still run the R2-filter sensitivity
         psd_beta_sensitivity(df_h, df_p, stats, output_dir)
         return
 
@@ -1059,7 +885,6 @@ def psd_beta_range_sensitivity(df_h, df_p, stats, output_dir):
               f" {row['r_effect']:>6.3f} {row['p_raw']:>8.4f}")
     print(f"  Saved → {csv_path}")
 
-    # Figure: r across variants
     labels = [r["Variant"].replace(" ", "\n") for r in rows]
     r_vals = [r["r_effect"] for r in rows]
     colors = [C_PSYCH if r["p_raw"] < 0.05 else "lightsteelblue" for r in rows]
@@ -1085,14 +910,10 @@ def psd_beta_range_sensitivity(df_h, df_p, stats, output_dir):
     plt.close()
     print(f"  Range sensitivity plot → {fig_path}")
 
-    # R2-filter sensitivity
     psd_beta_sensitivity(df_h, df_p, stats, output_dir)
 
 
-# ---- Step 9: slope R2-filter sensitivity ----
-
 def psd_beta_sensitivity(df_h, df_p, stats, output_dir):
-    """Rerun the group comparison on subjects with PSD_Beta_R2 >= PSD_BETA_R2_THRESHOLD in both groups."""
     if "PSD_Beta_R2" not in df_h.columns or "PSD_Beta_R2" not in df_p.columns:
         print("  PSD beta sensitivity: PSD_Beta_R2 missing — skipped.")
         return
@@ -1114,7 +935,6 @@ def psd_beta_sensitivity(df_h, df_p, stats, output_dir):
                                       [m for m in METRIC_BATTERY
                                        if m in h_filt.columns])
 
-    # Side-by-side comparison for the slope and radar measures
     compare_metrics = [m for m in ["PSD_Beta"] + RADAR_METRICS
                        if m in stats.index and m in stats_filt.index]
 
@@ -1138,29 +958,11 @@ def psd_beta_sensitivity(df_h, df_p, stats, output_dir):
     print(sens_df.to_string())
 
 
-# ---- Step 10: classification (superseded) ----
-
 def classification_analysis(df_h, df_p, stats, output_dir):
-    """Superseded; not called by run_comparison() and not reported.
-
-    Features are selected on the full sample before leave-one-out scoring, so the AUC is optimistic.
-    nested_classifier.py selects inside each fold. Output goes to
-    Classification_Summary_LEAKY_DO_NOT_REPORT.csv.
-    """
     warnings.warn(
         "classification_analysis() is leaky (feature selection sees all "
         "subjects) and must not be reported. Use nested_classifier.py.",
         DeprecationWarning, stacklevel=2)
-    """
-    Leave-one-out logistic regression on the significant metrics.
-    Reports accuracy, sensitivity, specificity, and AUC.
-    ROC curves saved for each significant metric individually and
-    for the multi-metric classifier.
-
-    Framed explicitly as EXPLORATORY — sample size is too small
-    for a definitive classifier. Used to estimate effect size and
-    direction for powering the full study.
-    """
     sig_metrics = [m for m in stats.index[stats["Significant"]]
                    if m in df_h.columns and m in df_p.columns]
 
@@ -1168,16 +970,14 @@ def classification_analysis(df_h, df_p, stats, output_dir):
         print("  Classification: no significant metrics — skipped.")
         return
 
-    # Combined dataset
     all_df  = pd.concat([df_h, df_p], axis=0)
-    labels  = np.array([0] * len(df_h) + [1] * len(df_p))  # 0=H, 1=P
+    labels  = np.array([0] * len(df_h) + [1] * len(df_p))
 
     X_full  = all_df[sig_metrics].apply(pd.to_numeric, errors='coerce')
     valid   = X_full.dropna()
     y_valid = labels[valid.index.isin(all_df.index) &
                      np.array([i < len(all_df) for i in range(len(all_df))])]
 
-    # Re-align labels to valid rows
     valid_idx = [i for i, idx in enumerate(all_df.index) if idx in valid.index]
     y_valid   = labels[valid_idx]
 
@@ -1185,7 +985,6 @@ def classification_analysis(df_h, df_p, stats, output_dir):
         print("  Classification: insufficient data after dropna — skipped.")
         return
 
-    # -- Multi-measure leave-one-out classifier --
     scaler = StandardScaler()
     X_sc   = scaler.fit_transform(valid.values)
     loo    = LeaveOneOut()
@@ -1214,7 +1013,6 @@ def classification_analysis(df_h, df_p, stats, output_dir):
           f"Sensitivity={sens:.3f}  Specificity={spec:.3f}")
     print(f"  NOTE: N={len(valid)} subjects — exploratory only.")
 
-    # Save classifier summary
     clf_summary = pd.DataFrame([{
         "N_subjects":   len(valid),
         "N_features":   len(sig_metrics),
@@ -1229,7 +1027,6 @@ def classification_analysis(df_h, df_p, stats, output_dir):
         os.path.join(output_dir, "Classification_Summary_LEAKY_DO_NOT_REPORT.csv"), index=False
     )
 
-    # -- ROC figure --
     ncols = min(len(sig_metrics) + 1, 4)
     nrows = int(np.ceil((len(sig_metrics) + 1) / ncols))
     fig, axes = plt.subplots(nrows, ncols,
@@ -1237,7 +1034,6 @@ def classification_analysis(df_h, df_p, stats, output_dir):
                              squeeze=False)
     axes_flat = axes.flatten()
 
-    # Panel 0: multi-measure
     fpr, tpr, _ = roc_curve(y_valid, y_prob)
     axes_flat[0].plot(fpr, tpr, color='purple', lw=2,
                       label=f"Multi-metric AUC={auc:.3f}")
@@ -1246,7 +1042,6 @@ def classification_analysis(df_h, df_p, stats, output_dir):
     axes_flat[0].set_xlabel("FPR"); axes_flat[0].set_ylabel("TPR")
     axes_flat[0].legend(fontsize=7); axes_flat[0].grid(True, alpha=0.3)
 
-    # Individual measure ROC curves
     for i, metric in enumerate(sig_metrics, start=1):
         h_vals = pd.to_numeric(df_h[metric], errors='coerce').dropna().values
         p_vals = pd.to_numeric(df_p[metric], errors='coerce').dropna().values
@@ -1282,23 +1077,16 @@ def classification_analysis(df_h, df_p, stats, output_dir):
     print(f"  ROC curves      → {path}")
 
 
-# ---- Step 11: power analysis (superseded) ----
-
 def power_analysis(stats, output_dir, healthy_label="Healthy",
                    healthy_n=None, psych_n=None):
-    """Superseded; not called by run_comparison() and not reported.
-
-    Computes power at the observed effect size, which restates the p value. minimum_detectable_effect()
-    is used instead.
-    """
     warnings.warn(
         "power_analysis() is deprecated and must not be used for the "
         "manuscript: post-hoc power at the observed effect size is circular. "
         "Use report_minimum_detectable_effect() instead.",
         DeprecationWarning, stacklevel=2)
 
-    z_alpha = norm.ppf(1 - 0.05 / 2)   # 1.96
-    z_beta  = norm.ppf(0.80)            # 0.842
+    z_alpha = norm.ppf(1 - 0.05 / 2)
+    z_beta  = norm.ppf(0.80)
 
     rows = []
     for metric, row in stats.iterrows():
@@ -1335,7 +1123,6 @@ def power_analysis(stats, output_dir, healthy_label="Healthy",
         print(f"  {metric:<26} {row['r_effect']:>6.3f} "
               f"{row['Cohen_d_est']:>7.3f} {n_str:>8} {t_str:>8} {sig:>4}")
 
-    # Bar chart: N per group for each measure
     valid_pw = power_df.dropna(subset=["N_per_group"]).copy()
     valid_pw = valid_pw.sort_values("N_per_group", ascending=False)
     colors   = [C_PSYCH if s else "lightsteelblue"
@@ -1368,15 +1155,7 @@ def power_analysis(stats, output_dir, healthy_label="Healthy",
     print(f"  Power analysis  → {path_fig}")
 
 
-# ---- Step 10b: measure intercorrelation table ----
-
 def metric_intercorrelation_table(df_h, df_p, stats, output_dir, healthy_label="Healthy"):
-    """Pairwise Spearman correlations among the significant measures within each cohort, with pairs
-    |r| > 0.7 flagged, showing which measures are near-redundant.
-
-    Writes Metric_Intercorrelation_Healthy.csv, Metric_Intercorrelation_Psychiatric.csv,
-    Metric_Intercorrelation_HighPairs.csv and Metric_Intercorrelation.png.
-    """
     sig_metrics = [m for m in stats.index[stats["Significant"]]
                    if m in df_h.columns and m in df_p.columns]
 
@@ -1389,16 +1168,11 @@ def metric_intercorrelation_table(df_h, df_p, stats, output_dir, healthy_label="
     h_sub  = df_h[sig_metrics].apply(pd.to_numeric, errors='coerce')
     p_sub  = df_p[sig_metrics].apply(pd.to_numeric, errors='coerce')
 
-    # Spearman correlation matrices
     h_corr = h_sub.corr(method='spearman')
     p_corr = p_sub.corr(method='spearman')
 
-    # Save numeric tables
     h_corr.index = h_corr.columns = labels
     p_corr.index = p_corr.columns = labels
-    # Four decimals, so a near-1 correlation (SDNN and SD2) is not printed as 1.000. SD2 is not
-    # proportional to SDNN by definition (SD2 = sqrt(2*SDNN^2 - SD1^2)); their near-perfect correlation
-    # here is empirical.
     h_corr.to_csv(os.path.join(output_dir,
                                 "Metric_Intercorrelation_Healthy.csv"),
                   float_format="%.4f")
@@ -1406,7 +1180,6 @@ def metric_intercorrelation_table(df_h, df_p, stats, output_dir, healthy_label="
                                 "Metric_Intercorrelation_Psychiatric.csv"),
                   float_format="%.4f")
 
-    # Flag high-correlation pairs in both cohorts
     high_pairs = []
     for i, m1 in enumerate(sig_metrics):
         for j, m2 in enumerate(sig_metrics):
@@ -1433,7 +1206,6 @@ def metric_intercorrelation_table(df_h, df_p, stats, output_dir, healthy_label="
         print(hp_df.to_string(index=False))
         print(f"  Saved → {hp_path}")
 
-    # -- Side-by-side heatmap --
     n = len(sig_metrics)
     fig, axes = plt.subplots(1, 2, figsize=(max(14, n * 0.8 * 2), max(6, n * 0.7)))
     for ax, corr_m, title, n_sub in zip(
@@ -1470,16 +1242,10 @@ def metric_intercorrelation_table(df_h, df_p, stats, output_dir, healthy_label="
     print(f"  Intercorrelation heatmap → {fig_path}")
 
 
-# ---- Step 12: within-group correlation heatmaps ----
-
 def plot_within_group_correlations(df_h, df_p, output_dir, stats=None, healthy_label="Healthy"):
-    """Side-by-side Pearson correlation heatmaps: all significant measures (sorted by |r|) if stats is
-    given, otherwise the five radar measures.
-    """
     if stats is not None:
         sig = [m for m in stats.index[stats["Significant"]]
                if m in df_h.columns and m in df_p.columns]
-        # Sort by |r|, descending
         sig = sorted(sig,
                      key=lambda m: abs(stats.loc[m, "r_effect"]),
                      reverse=True)
@@ -1493,7 +1259,7 @@ def plot_within_group_correlations(df_h, df_p, output_dir, stats=None, healthy_l
     p_corr  = df_p[metrics].apply(pd.to_numeric, errors='coerce').corr()
 
     n = len(metrics)
-    cell_w = max(0.55, 7.0 / n)   # scale figure width with metric count
+    cell_w = max(0.55, 7.0 / n)
     fig, axes = plt.subplots(1, 2, figsize=(n * cell_w * 2 + 2, max(5, n * 0.55)))
 
     for ax, corr, title, n_sub in zip(
@@ -1530,27 +1296,14 @@ def plot_within_group_correlations(df_h, df_p, output_dir, stats=None, healthy_l
     plt.close()
     print(f"  Corr structure  → {path}")
 
+C_MITBIH = "teal"
+C_HRVACC = "steelblue"
 
-# ---- Additional analyses: parametric tests, distribution diagnostics, bootstrap intervals,
-# control-against-control comparison, TOST equivalence, three-group tests, cross-control convergence ----
-
-# Colors for the two-control and three-group figures
-C_MITBIH = "teal"        # MIT-BIH NSR healthy (supplemental control)
-C_HRVACC = "steelblue"   # HRV-ACC healthy (primary, recording-matched control)
-
-
-# -- HRV-ACC control demographics (optional mapping; per-subject values come from the metadata file) --
-# Format: {"control_2": {"Age": int, "Sex": 0/1}, ...} (Sex: 0 = male, 1 = female).
 HRVACC_HEALTHY_DEMOGRAPHICS = {
 }
 
 
 def _cohens_d_ci(x_ref, x_other):
-    """Cohen's d, Hedges' g (small-sample corrected) and an approximate 95% CI for d.
-
-    d = (mean_other - mean_ref) / pooled SD, so positive d means x_other is higher (patients, when called
-    with ref = controls). Returns (d, g, ci_low, ci_high); NaNs if the pooled SD is zero.
-    """
     x_ref = np.asarray(x_ref, dtype=float)
     x_other = np.asarray(x_other, dtype=float)
     n1, n2 = len(x_ref), len(x_other)
@@ -1566,14 +1319,7 @@ def _cohens_d_ci(x_ref, x_other):
     return float(d), float(g), float(d - 1.96 * se), float(d + 1.96 * se)
 
 
-# ---- Step 13: parametric comparison (Welch t and Cohen's d) ----
-
 def run_parametric_comparison(df_h, df_p, metrics):
-    """Welch's t test per measure, with Cohen's d, Hedges' g and an approximate 95% CI for d, BH-corrected,
-    alongside the Mann-Whitney table. Positive t or d = higher in patients.
-    """
-    # pNN50 is zero-inflated with a floor at zero, so it is excluded here and reported with rank
-    # statistics only (see pnn50_floor_report).
     PARAMETRIC_EXCLUDE = {"HRV_pNN50"}
 
     rows = []
@@ -1586,8 +1332,8 @@ def run_parametric_comparison(df_h, df_p, metrics):
         p = pd.to_numeric(df_p[m], errors='coerce').dropna().values
         if len(h) < 3 or len(p) < 3:
             continue
-        t_stat, p_raw = ttest_ind(p, h, equal_var=False)   # Welch
-        d, g, lo, hi = _cohens_d_ci(h, p)                   # ref=h, other=p
+        t_stat, p_raw = ttest_ind(p, h, equal_var=False)
+        d, g, lo, hi = _cohens_d_ci(h, p)
         rows.append({
             "Metric":       m,
             "Healthy_Mean": float(np.mean(h)),
@@ -1612,7 +1358,6 @@ def run_parametric_comparison(df_h, df_p, metrics):
 
 
 def save_parametric_table(par_stats, output_dir, healthy_label="Healthy"):
-    """Save the parametric results table and print a console summary."""
     if par_stats is None or par_stats.empty:
         print("  Parametric comparison: no metrics — skipped.")
         return
@@ -1635,9 +1380,6 @@ def save_parametric_table(par_stats, output_dir, healthy_label="Healthy"):
 
 
 def plot_cohens_d_forest(par_stats, output_dir, healthy_label="Healthy"):
-    """Forest plot of Cohen's d with analytic 95% CIs, sorted by |d|, significant measures in red, guides
-    at |d| = 0.2, 0.5 and 0.8.
-    """
     if par_stats is None or par_stats.empty:
         return
     df = par_stats.copy()
@@ -1673,14 +1415,8 @@ def plot_cohens_d_forest(par_stats, output_dir, healthy_label="Healthy"):
     print(f"  Cohen's d forest → {path}")
 
 
-# ---- Step 14: distribution diagnostics (normality and variance) ----
-
 def distribution_diagnostics(df_h, df_p, metrics, output_dir,
                              healthy_label="Healthy"):
-    """Shapiro-Wilk normality within each group and Levene's test for equal variances, per measure.
-
-    Writes Distribution_Diagnostics.csv and Distribution_Diagnostics_Levene.png.
-    """
     rows = []
     for m in metrics:
         if m not in df_h.columns or m not in df_p.columns:
@@ -1729,7 +1465,6 @@ def distribution_diagnostics(df_h, df_p, metrics, output_dir,
               f"{('yes' if r['Equal_Variance'] else 'no'):>6}")
     print(f"  Saved → {path}")
 
-    # Levene p figure
     fig, ax = plt.subplots(figsize=(8, max(4, len(diag) * 0.38)))
     yv = np.arange(len(diag))
     levp = diag["Levene_p"].fillna(1.0).values
@@ -1752,16 +1487,9 @@ def distribution_diagnostics(df_h, df_p, metrics, output_dir,
     return diag
 
 
-# ---- Step 15: bootstrap effect-size intervals ----
-
 def bootstrap_effect_sizes(df_h, df_p, metrics, output_dir,
                            healthy_label="Healthy",
                            n_boot=2000, seed=0):
-    """Percentile bootstrap 95% CIs for rank-biserial r and Cohen's d per measure (subjects resampled
-    within group).
-
-    Writes Bootstrap_Effect_Sizes.csv and Bootstrap_r_Forest.png.
-    """
     rng = np.random.default_rng(seed)
     rows = []
     for m in metrics:
@@ -1828,7 +1556,6 @@ def bootstrap_effect_sizes(df_h, df_p, metrics, output_dir,
               f"{ci:>17} {flag:>5}")
     print(f"  Saved → {path}")
 
-    # Forest plot of r with bootstrap CI
     df = boot.sort_values("r_effect")
     labels = [METRIC_LABELS.get(m, m) for m in df.index]
     colors = [C_PSYCH if e else "lightsteelblue" for e in df["r_CI_excl_0"]]
@@ -1855,17 +1582,9 @@ def bootstrap_effect_sizes(df_h, df_p, metrics, output_dir,
     return boot
 
 
-# ---- Step 16: control against control ----
-
 def control_vs_control_analysis(df_a, df_b, metrics, output_dir,
                                 label_a="MIT-BIH NSR",
                                 label_b="HRV-ACC Control"):
-    """Compare the two control cohorts directly (Mann-Whitney with BH, Welch t, Cohen's d with CI,
-    Levene), measuring how much each measure moves between cohorts that differ in device, resolution,
-    setting, era and age.
-
-    Writes Control_vs_Control_Stats.csv and Control_vs_Control_AbsD.png; returns the per-measure DataFrame.
-    """
     rows = []
     for m in metrics:
         if m not in df_a.columns or m not in df_b.columns:
@@ -1880,7 +1599,7 @@ def control_vs_control_analysis(df_a, df_b, metrics, output_dir,
         except ValueError:
             u, p_mwu, r = np.nan, np.nan, np.nan
         t_stat, p_t = ttest_ind(b, a, equal_var=False)
-        d, g, lo, hi = _cohens_d_ci(a, b)             # ref=A, other=B
+        d, g, lo, hi = _cohens_d_ci(a, b)
         try:
             _, p_lev = levene(a, b)
             p_lev = float(p_lev)
@@ -1932,7 +1651,6 @@ def control_vs_control_analysis(df_a, df_b, metrics, output_dir,
           f"(these carry a recording/device confound).")
     print(f"  Saved → {path}")
 
-    # |Cohen's d| bar chart
     df = cvc.copy()
     df["abs_d"] = df["Cohen_d"].abs()
     df = df.sort_values("abs_d", ascending=True)
@@ -1957,17 +1675,9 @@ def control_vs_control_analysis(df_a, df_b, metrics, output_dir,
     return cvc
 
 
-# ---- Step 17: TOST equivalence between control cohorts ----
-
 def tost_equivalence(df_a, df_b, metrics, output_dir,
                      bound_d=0.5, alpha=0.05,
                      label_a="MIT-BIH NSR", label_b="HRV-ACC Control"):
-    """Two one-sided tests for equivalence of the two control cohorts on each measure, with margin bound_d
-    (default 0.5 SD). A significant TOST means equivalence within +/-bound_d; a non-significant
-    difference test is not evidence of equivalence.
-
-    Writes Control_Equivalence_TOST.csv.
-    """
     rows = []
     for m in metrics:
         if m not in df_a.columns or m not in df_b.columns:
@@ -1984,10 +1694,10 @@ def tost_equivalence(df_a, df_b, metrics, output_dir,
         diff  = np.mean(b) - np.mean(a)
         se    = sp * np.sqrt(1.0 / n1 + 1.0 / n2)
         dof   = n1 + n2 - 2
-        bound = bound_d * sp                       # equivalence margin (raw)
-        t_low  = (diff + bound) / se               # H0: diff <= -bound
+        bound = bound_d * sp
+        t_low  = (diff + bound) / se
         p_low  = 1 - t_dist.cdf(t_low, dof)
-        t_high = (diff - bound) / se               # H0: diff >= +bound
+        t_high = (diff - bound) / se
         p_high = t_dist.cdf(t_high, dof)
         p_tost = max(p_low, p_high)
         rows.append({
@@ -2021,12 +1731,7 @@ def tost_equivalence(df_a, df_b, metrics, output_dir,
     return tost
 
 
-# ---- Step 18: three-group tests (Kruskal-Wallis and Dunn post hoc) ----
-
 def _dunn_posthoc(groups):
-    """Dunn's post-hoc test (tie-corrected) for k independent groups. Returns (i, j, z, p_raw) for each pair
-    i < j (two-sided, normal approximation); BH correction is done by the caller.
-    """
     all_data = np.concatenate(groups)
     N = len(all_data)
     ranks = rankdata(all_data)
@@ -2049,11 +1754,6 @@ def _dunn_posthoc(groups):
 
 
 def three_group_analysis(df_mitbih, df_hrvacc, df_psych, metrics, output_dir):
-    """Kruskal-Wallis across the three groups per measure (BH-corrected), with Dunn's post-hoc pairwise
-    comparisons (BH across all post-hoc tests) for significant measures.
-
-    Writes ThreeGroup_KruskalWallis.csv, ThreeGroup_Dunn_Posthoc.csv and ThreeGroup_Boxplots.png.
-    """
     group_labels = ["MIT-BIH", "HRV-ACC", "Psychiatric"]
     kw_rows, dunn_rows = [], []
     for m in metrics:
@@ -2108,7 +1808,6 @@ def three_group_analysis(df_mitbih, df_hrvacc, df_psych, metrics, output_dir):
     if not dunn.empty:
         print(f"  Dunn table → {dunn_path}")
 
-    # Three-group box plots for the radar measures
     rmetrics = [m for m in RADAR_METRICS
                 if all(m in d.columns for d in (df_mitbih, df_hrvacc, df_psych))]
     if rmetrics:
@@ -2148,14 +1847,7 @@ def three_group_analysis(df_mitbih, df_hrvacc, df_psych, metrics, output_dir):
         print(f"  Three-group boxplots → {fig_path}")
 
 
-# ---- Step 19: cross-control convergence ----
-
 def cross_control_convergence(stats_hrvacc, stats_mitbih, output_dir):
-    """Merge the two control-against-patient tables by measure and flag effects significant after correction
-    in both, in the same direction.
-
-    Writes CrossControl_Convergence.csv and CrossControl_r_vs_r.png.
-    """
     common = [m for m in stats_hrvacc.index if m in stats_mitbih.index]
     rows = []
     for m in common:
@@ -2198,7 +1890,6 @@ def cross_control_convergence(stats_hrvacc, stats_mitbih, output_dir):
           f"controls in the same direction.")
     print(f"  Saved → {path}")
 
-    # r against r scatter
     fig, ax = plt.subplots(figsize=(7, 7))
     for m, row in conv.iterrows():
         col = C_PSYCH if row["Robust"] else "lightsteelblue"
@@ -2227,9 +1918,6 @@ def cross_control_convergence(stats_hrvacc, stats_mitbih, output_dir):
 
 
 def effect_vs_confound(stats_hrvacc, cvc, output_dir):
-    """Scatter of each measure's control-cohort difference (|Cohen's d|, x) against its patient effect
-    (|r| against HRV-ACC controls, y). Writes EffectVsConfound.png.
-    """
     if stats_hrvacc is None or cvc is None or cvc.empty:
         return
     common = [m for m in stats_hrvacc.index if m in cvc.index]
@@ -2237,8 +1925,8 @@ def effect_vs_confound(stats_hrvacc, cvc, output_dir):
         return
     fig, ax = plt.subplots(figsize=(7.5, 6))
     for m in common:
-        x = abs(float(cvc.loc[m, "Cohen_d"]))            # confound magnitude
-        y = abs(float(stats_hrvacc.loc[m, "r_effect"]))  # illness effect
+        x = abs(float(cvc.loc[m, "Cohen_d"]))
+        y = abs(float(stats_hrvacc.loc[m, "r_effect"]))
         sig = bool(stats_hrvacc.loc[m, "Significant"])
         col = C_PSYCH if sig else "lightsteelblue"
         ax.scatter(x, y, s=60, color=col, edgecolor='white', zorder=3)
@@ -2260,17 +1948,10 @@ def effect_vs_confound(stats_hrvacc, cvc, output_dir):
     plt.close()
     print(f"  Effect-vs-confound  → {fig_path}")
 
-
-# ---- MFDFA group comparison ----
-
-# MFDFA_Asymmetry is undefined under positive-q estimation and is not in the family.
 _MFDFA_COLS = ["MFDFA_Width", "MFDFA_H_Mean", "MFDFA_H2"]
 
-def mfdfa_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
-    """Mann-Whitney comparison of the MFDFA scalars between cohorts.
 
-    Writes MFDFA_Group_Comparison.csv and MFDFA_Group_Comparison.png.
-    """
+def mfdfa_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
     present = [m for m in _MFDFA_COLS
                if m in df_h.columns and m in df_p.columns]
     if not present:
@@ -2307,12 +1988,10 @@ def mfdfa_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
     res["p_adj"]       = p_adj
     res["Significant"] = p_adj < ALPHA
 
-    # -- Save CSV --
     csv_path = os.path.join(output_dir, "MFDFA_Group_Comparison.csv")
     res.to_csv(csv_path, float_format="%.6f")
     print(f"  MFDFA stats      → {csv_path}")
 
-    # -- Console summary --
     print(f"\n{'='*72}")
     print(f"  MFDFA GROUP COMPARISON — {healthy_label} vs Psychiatric")
     print(f"{'='*72}")
@@ -2326,10 +2005,9 @@ def mfdfa_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
               f"{row['Pct_Diff']:>7.1f} {row['r_effect']:>6.3f} "
               f"{row['p_raw']:>8.4f} {row['p_adj']:>8.4f} {sig:>4}")
 
-    # -- Figure: box and strip plots --
     n     = len(rows)
     ncols = min(n, 4)
-    nrows = -(-n // ncols)   # ceiling division
+    nrows = -(-n // ncols)
     fig, axes = plt.subplots(nrows, ncols,
                               figsize=(ncols * 3.5, nrows * 4.2),
                               squeeze=False)
@@ -2380,18 +2058,10 @@ def mfdfa_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
     print(f"  MFDFA figure     → {fig_path}")
     return res
 
-
-# ---- Recurrence network group comparison ----
-
-# Recurrence-network measures in the correction family. RNA_MeanDegree equals the target recurrence
-# rate by construction and is reported by deterministic_checks() outside any correction.
 _RNA_COLS = ["RNA_ClusteringCoeff", "RNA_Transitivity"]
 
-def rna_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
-    """Mann-Whitney comparison of the recurrence-network measures.
 
-    Writes RNA_Group_Comparison.csv and RNA_Group_Comparison.png.
-    """
+def rna_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
     present = [m for m in _RNA_COLS
                if m in df_h.columns and m in df_p.columns]
     if not present:
@@ -2428,12 +2098,10 @@ def rna_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
     res["p_adj"]       = p_adj
     res["Significant"] = p_adj < ALPHA
 
-    # -- Save CSV --
     csv_path = os.path.join(output_dir, "RNA_Group_Comparison.csv")
     res.to_csv(csv_path, float_format="%.6f")
     print(f"  RNA stats        → {csv_path}")
 
-    # -- Console summary --
     print(f"\n{'='*72}")
     print(f"  RNA GROUP COMPARISON — {healthy_label} vs Psychiatric")
     print(f"{'='*72}")
@@ -2447,7 +2115,6 @@ def rna_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
               f"{row['Pct_Diff']:>7.1f} {row['r_effect']:>6.3f} "
               f"{row['p_raw']:>8.4f} {row['p_adj']:>8.4f} {sig:>4}")
 
-    # -- Figure --
     n   = len(rows)
     fig, axes = plt.subplots(1, n, figsize=(n * 3.8, 4.8), squeeze=False)
     rng = np.random.default_rng(seed=1)
@@ -2494,8 +2161,6 @@ def rna_group_comparison(df_h, df_p, output_dir, healthy_label="Healthy"):
     return res
 
 
-# ---- Main orchestrator (one control-against-patient comparison) ----
-
 def run_comparison(healthy_csv=HEALTHY_CSV,
                    psych_csv=PSYCH_CSV,
                    output_dir=OUTPUT_DIR,
@@ -2503,36 +2168,22 @@ def run_comparison(healthy_csv=HEALTHY_CSV,
                    demographics=None,
                    cohort_m=None,
                    cohort_s=None):
-    """Full battery for one control cohort against the patients.
-
-    Parameters
-    ----------
-    healthy_label        : str, used in figure titles (e.g. "HRV-ACC Control")
-    demographics         : dict {id: {"Age":, "Sex":}} for the within-control covariate analysis
-                           (None: MIT-BIH default)
-    cohort_m / cohort_s  : optional radar reference; if None, computed from this control cohort
-
-    Returns (df_h, df_p, stats, par_stats).
-    """
     os.makedirs(output_dir, exist_ok=True)
     print(f"\n{'='*65}")
     print(f"  COMPARISON ANALYSIS — {healthy_label} vs Psychiatric")
     print(f"{'='*65}")
 
-    # -- Load data --
     df_h, df_p = load_cohorts(healthy_csv, psych_csv)
 
     available = [m for m in METRIC_BATTERY
                  if m in df_h.columns and m in df_p.columns]
 
-    # Radar reference: computed from this control cohort unless supplied.
     if cohort_m is None or cohort_s is None:
         rmetrics = [m for m in RADAR_METRICS if m in df_h.columns]
         rsub = df_h[rmetrics].apply(pd.to_numeric, errors='coerce')
         cohort_m = rsub.mean()
         cohort_s = rsub.std(ddof=1).replace(0, 1)
 
-    # -- 1. Group statistics (Mann-Whitney U) --
     print("\n[1] Group comparison statistics (Mann-Whitney U)...")
     primary = [m for m in PRIMARY_METRICS if m in available]
     stats = run_group_comparison(df_h, df_p, primary, family_label="primary")
@@ -2540,65 +2191,50 @@ def run_comparison(healthy_csv=HEALTHY_CSV,
     print(f"  Primary FDR family: {len(primary)} metrics "
           f"(MFDFA and RNA corrected separately below).")
 
-    # -- 2. Comparison radar chart --
     print("\n[2] Comparison radar chart...")
     plot_radar_comparison(df_h, df_p, output_dir=output_dir,
                           cohort_m=cohort_m, cohort_s=cohort_s)
 
-    # -- 3. Box plots, all measures --
     print("\n[3] Box plots (all metrics)...")
     plot_all_boxplots(df_h, df_p, stats, output_dir, healthy_label=healthy_label)
 
-    # -- 4. Box plots, significant only --
     print("\n[4] Box plots (significant metrics)...")
     plot_significant_boxplots(df_h, df_p, stats, output_dir,
                               healthy_label=healthy_label)
 
-    # -- 5. Effect-size bar chart --
     print("\n[5] Effect size chart...")
     plot_effect_sizes(stats, output_dir, healthy_label=healthy_label)
 
-    # -- 6. Violin plots (radar measures) --
     print("\n[6] Violin plots...")
     plot_violin_comparison(df_h, df_p, stats, output_dir,
                            healthy_label=healthy_label)
 
-    # -- 7. Z-score heatmap --
     print("\n[7] Z-score heatmap...")
     plot_zscore_heatmap(df_h, df_p, output_dir, healthy_label=healthy_label)
 
-    # -- 8. Surrogate nonlinearity summary --
     print("\n[8] Surrogate summary...")
     surrogate_summary(df_h, df_p, output_dir, healthy_label=healthy_label)
 
-    # -- 9a. Slope covariate analysis --
     print("\n[9a] PSD β covariate analysis (age, sex, MeanHR, RMSSD)...")
     psd_beta_covariate_analysis(df_h, df_p, output_dir,
                                 demographics=demographics,
                                 healthy_label=healthy_label)
 
-    # -- 9b. Slope range and preprocessing sensitivity --
     print("\n[9b] PSD β frequency-range & interpolation sensitivity...")
     psd_beta_range_sensitivity(df_h, df_p, stats, output_dir)
 
-    # -- 10. Within-group correlation structure --
     print("\n[10] Within-group correlations (all significant metrics)...")
     plot_within_group_correlations(df_h, df_p, output_dir, stats=stats,
                                    healthy_label=healthy_label)
 
-    # -- 10b. Full measure intercorrelation table --
     print("\n[10b] Metric intercorrelation table (significant metrics)...")
     metric_intercorrelation_table(df_h, df_p, stats, output_dir,
                                   healthy_label=healthy_label)
 
-    # -- 11. Classification: done by nested_classifier.py, not here --
-    # classification_analysis() selects features on the full sample, so it is not called.
     print("\n[11] Classification: delegated to nested_classifier.py "
           "(leaky in-module version intentionally NOT run).")
 
-    # -- 11b. How the corrections and partial correlations are defined --
     print("\n[11b] Correction-family inventory...")
-    # The heart-rate-adjusted family is sized from the columns present, with the analysis's own helper.
     _hr_members = hr_family_available(df_h, df_p)
     report_correction_family_inventory(output_dir, extra_families=[{
         "Family": "hr_adjusted",
@@ -2607,17 +2243,14 @@ def run_comparison(healthy_csv=HEALTHY_CSV,
         "Members": "; ".join(_hr_members),
         "Used_In": "heart-rate-adjusted comparison (HR_Adjusted_Comparison.csv)",
         "Note": "partial Spearman with group, adjusted for mean heart rate "
-                "(regress then rank); model-form and mean-NN sensitivities "
+                "(rank, then regress); model-form and mean-NN sensitivities "
                 "are reported beside it and are not corrected"}])
     print("\n[11c] Partial-correlation method...")
-    report_partial_correlation_method(output_dir)
+    report_partial_correlation_method(output_dir, df_h, df_p)
 
-    # -- 12. Minimum detectable effect --
     print("\n[12] Minimum detectable effect...")
     report_minimum_detectable_effect(len(df_h), len(df_p), output_dir)
 
-    # -- 12b. Detection floors for every subgroup contrast --
-    # Sizes are derived from the data where available.
     _sub_sizes = [("Main comparison", len(df_h), len(df_p))]
     if "Diagnosis" in df_p.columns:
         _n_sz = int((df_p["Diagnosis"] == "schizophrenia").sum())
@@ -2639,123 +2272,89 @@ def run_comparison(healthy_csv=HEALTHY_CSV,
     print("\n[12b] Detection floors for subgroup contrasts...")
     report_subgroup_detectable_effects(_sub_sizes, output_dir)
 
-    # -- 13. Parametric comparison (Welch t and Cohen's d) --
     print("\n[13] Parametric comparison (Welch t-test + Cohen's d)...")
-    # Same family as the primary table, so the two tables differ only by test (Mann-Whitney against Welch).
     par_stats = run_parametric_comparison(df_h, df_p, primary)
     save_parametric_table(par_stats, output_dir, healthy_label=healthy_label)
     plot_cohens_d_forest(par_stats, output_dir, healthy_label=healthy_label)
 
-    # -- 14. Distribution diagnostics (Shapiro-Wilk and Levene) --
     print("\n[14] Distribution diagnostics (normality + variance)...")
     distribution_diagnostics(df_h, df_p, primary, output_dir,
                              healthy_label=healthy_label)
 
-    # -- 15. Bootstrap effect-size CIs --
     print("\n[15] Bootstrap effect-size confidence intervals...")
     _boot_result = bootstrap_effect_sizes(df_h, df_p, primary, output_dir,
                            healthy_label=healthy_label)
 
-    # -- 15b. Attach the bootstrap intervals to the primary table --
-    # Done here, after the bootstrap exists (the summary table is written at step 1).
     print("\n[15b] Attaching bootstrap intervals to the primary table...")
     attach_bootstrap_intervals(output_dir)
 
-    # -- 16. MFDFA group comparison --
     print("\n[16] MFDFA group comparison (multifractal singularity spectrum)...")
     mfdfa_group_comparison(df_h, df_p, output_dir, healthy_label=healthy_label)
 
-    # -- 17. Recurrence network group comparison --
     print("\n[17] Recurrence network group comparison (attractor topology)...")
     rna_group_comparison(df_h, df_p, output_dir, healthy_label=healthy_label)
 
-    # -- 17a. Manuscript table and test provenance --
     print("\n[17a] Manuscript Table 1 and test implementation record...")
     write_manuscript_table1(stats, output_dir, healthy_label=healthy_label)
     write_test_implementation(output_dir)
     ambulatory_fraction_test(output_dir)
 
-    # -- 17b. Deterministic normalization checks (no correction) --
     print("\n[17b] Deterministic normalisation checks (reported outside FDR)...")
     deterministic_checks(df_h, df_p, output_dir)
 
-    # -- 17c. Slope band sweep --
     print("\n[17c] Spectral exponent across fitted bands...")
     beta_band_sweep_comparison(df_h, df_p, output_dir)
 
-    # -- 17d. Stationarity and entropy tolerance --
     print("\n[17d] Stationarity diagnostics...")
     stationarity_report(df_h, df_p, output_dir)
     print("\n[17e] Entropy tolerance sensitivity...")
     entropy_tolerance_report(df_h, df_p, output_dir)
 
-    # -- 18. Mayer-wave control --
     print("\n[18] Mayer-wave control: beta with the 0.1 Hz resonance removed...")
     mayer_wave_analysis(df_h, df_p, output_dir, healthy_label=healthy_label)
 
-    # -- 19. Quantization (resolution) control --
     print("\n[19] Quantization control (dither + matched coarsening)...")
     quantization_sensitivity(df_h, df_p, output_dir)
 
-    # -- 19b. Embedding sensitivity --
     print("\n[19b] Selected-embedding sensitivity...")
     report_embedding_sensitivity(df_h, df_p, output_dir)
 
-    # -- 19c. MSE scale-retention audit --
     print("\n[19c] MSE scale-retention audit...")
     report_mse_scale_audit(df_h, df_p, output_dir)
 
-    # -- 20. Surrogate-normalized entropy --
     print("\n[20] Surrogate-normalised entropy comparison...")
     surrogate_normalized_entropy(df_h, df_p, output_dir)
 
-    # -- 20b. Surrogate distributions and the direction of each subject's deviation --
     print("\n[20b] Surrogate distribution summary...")
     report_surrogate_distributions(df_h, df_p, output_dir)
 
-    # -- 21. beta = 2*alpha - 1 consistency --
     print("\n[21] Internal consistency: beta against 2*alpha2 - 1...")
     beta_dfa_consistency(df_h, df_p, output_dir)
 
-    # -- 21b. Frequency band covered by each beat-scale range --
-    # The slope is fitted in Hz and DFA in beats, and the conversion depends on heart period.
     print("\n[21b] Scale-to-frequency band correspondence...")
     report_scale_band_correspondence(df_h, df_p, output_dir)
 
-    # -- 22. Non-redundant correction family --
     print("\n[22] FDR re-run excluding definitionally collinear metrics...")
     nonredundant_family_comparison(df_h, df_p, output_dir)
 
-    # -- 22b. Effective number of independent tests (sensitivity only; the primary correction stays BH
-    # at the nominal size) --
     print("\n[22b] Effective number of independent tests (Li-Ji)...")
     report_effective_number_of_tests(df_h, df_p, PRIMARY_METRICS, output_dir)
 
-    # -- 22c. Individuals in clinically recognizable ranges, counted from per-subject values --
     print("\n[22c] Clinical-range counts...")
     report_clinical_range_counts(df_h, df_p, output_dir)
 
-    # -- 22d. Quantization noise floor in the fitted band --
     print("\n[22d] Quantization noise floor...")
     report_quantization_noise_floor(df_h, df_p, output_dir)
 
-    # report_excluded_subjects() is not called here: this module reads results files, which contain only
-    # included subjects.
-
-    # -- 23. Series length and respiratory covariates --
     print("\n[23] Series length + respiratory frequency checks...")
     length_and_respiration_checks(df_h, df_p, output_dir)
 
-    # -- 24. pNN50 floor effect --
     print("\n[24] pNN50 floor-effect report...")
     pnn50_floor_report(df_h, df_p, output_dir)
 
-    # -- 25. Subject-level metadata analyses --
-    # Diagnosis, age, sex, comorbidity and quetiapine, from the released metadata.
     print("\n[25] Subject-level metadata analyses...")
     run_metadata_analyses(df_h, df_p, output_dir)
 
-    # -- 26-28. Heart-rate adjustment, VLF decomposition, amplitude and spectral measures on the 7.8 ms grid --
     print("\n[26] Heart-rate-adjusted comparison (own correction family)...")
     hr_adjusted_comparison(df_h, df_p, output_dir)
     print("\n[26b] Amplitude normalised by mean NN...")
@@ -2771,21 +2370,13 @@ def run_comparison(healthy_csv=HEALTHY_CSV,
     return df_h, df_p, stats, par_stats
 
 
-# ---- Cross-control orchestrator (needs all three cohorts) ----
-
 def run_cross_control_analysis(df_mitbih, df_hrvacc, df_psych,
                                stats_hrvacc, stats_mitbih, output_dir):
-    """Analyses that need both control cohorts and the patients: control against control, TOST equivalence,
-    three-group Kruskal-Wallis with Dunn post hoc, cross-control convergence, and the effect-against-
-    confound scatter.
-    """
     os.makedirs(output_dir, exist_ok=True)
     print(f"\n{'='*65}")
     print(f"  CROSS-CONTROL & THREE-GROUP ANALYSES")
     print(f"{'='*65}")
 
-    # Quantities fixed by construction (RQA_REC, RNA_MeanDegree) are excluded here too (their SDs are
-    # zero). Family sizes: control against control 27, Kruskal-Wallis 27, Dunn 81 pairs.
     metrics = [m for m in METRIC_BATTERY
                if m not in DETERMINISTIC_CHECKS
                and m in df_mitbih.columns
@@ -2811,9 +2402,6 @@ def run_cross_control_analysis(df_mitbih, df_hrvacc, df_psych,
     print("\n[X4] Cross-control convergence...")
     cross_control_convergence(stats_hrvacc, stats_mitbih, output_dir)
 
-    # -- Age-adjusted cross-cohort comparison --
-    # The MIT-BIH cohort is younger and the slope depends on age. Skipped with a message if MIT-BIH ages are
-    # unavailable.
     print("\n[cross] Age-adjusted cross-device comparison...")
     age_adjusted_cross_device(df_hrvacc, df_mitbih, df_psych, output_dir)
 
@@ -2825,12 +2413,7 @@ def run_cross_control_analysis(df_mitbih, df_hrvacc, df_psych,
     print(f"{'='*65}")
 
 
-# ---- Entry point ----
-
-# ---- Additional analyses ----
-
 def _ols_residuals(y, X):
-    """Residuals of y after least-squares regression on the columns of X."""
     y = np.asarray(y, dtype=float)
     X = np.asarray(X, dtype=float)
     if X.ndim == 1:
@@ -2841,31 +2424,82 @@ def _ols_residuals(y, X):
 
 
 def partial_spearman(target, outcome, covariates):
-    """Partial Spearman correlation: regress both variables on the covariates by OLS, then Spearman-
-    correlate the residuals (regress, then rank).
-    """
     t = np.asarray(target, dtype=float)
     o = np.asarray(outcome, dtype=float)
-    C = np.column_stack([np.asarray(c, dtype=float) for c in covariates])
-    ok = np.isfinite(t) & np.isfinite(o) & np.all(np.isfinite(C), axis=1)
-    if ok.sum() < 6:
+    covs = [np.asarray(c, dtype=float) for c in covariates]
+    ok = np.isfinite(t) & np.isfinite(o)
+    for c in covs:
+        ok &= np.isfinite(c)
+    n = int(ok.sum())
+    if n < 6:
         return np.nan, np.nan
-    return spearmanr(_ols_residuals(t[ok], C[ok]), _ols_residuals(o[ok], C[ok]))
+    rt, ro = rankdata(t[ok]), rankdata(o[ok])
+    if covs:
+        R = np.column_stack([rankdata(c[ok]) for c in covs])
+        rt, ro = _ols_residuals(rt, R), _ols_residuals(ro, R)
+    if np.std(rt) == 0 or np.std(ro) == 0:
+        return np.nan, np.nan
+    r = float(np.corrcoef(rt, ro)[0, 1])
+    return r, _pearson_partial_p(r, n, len(covs))
 
 
-# Mann-Whitney configuration, set explicitly: two-sided, with continuity correction, so the reported
-# p does not depend on the SciPy default.
+def partial_pearson(target, outcome, covariates):
+    t = np.asarray(target, dtype=float)
+    o = np.asarray(outcome, dtype=float)
+    covs = [np.asarray(c, dtype=float) for c in covariates]
+    ok = np.isfinite(t) & np.isfinite(o)
+    for c in covs:
+        ok &= np.isfinite(c)
+    n = int(ok.sum())
+    if n < 6:
+        return np.nan, np.nan
+    a, b = t[ok], o[ok]
+    if covs:
+        C = np.column_stack([c[ok] for c in covs])
+        a, b = _ols_residuals(a, C), _ols_residuals(b, C)
+    if np.std(a) == 0 or np.std(b) == 0:
+        return np.nan, np.nan
+    r = float(np.corrcoef(a, b)[0, 1])
+    return r, _pearson_partial_p(r, n, len(covs))
+
+
+def group_coefficient(y, g, covariates=()):
+    y = np.asarray(y, dtype=float)
+    g = np.asarray(g, dtype=float)
+    covs = [np.asarray(c, dtype=float) for c in covariates]
+    ok = np.isfinite(y) & np.isfinite(g)
+    for c in covs:
+        ok &= np.isfinite(c)
+    n = int(ok.sum())
+    k = 2 + len(covs)
+    nan = {"b": np.nan, "se": np.nan, "lo": np.nan, "hi": np.nan, "p": np.nan, "n": n}
+    if n - k < 3:
+        return nan
+    X = np.column_stack([np.ones(n), g[ok]] + [c[ok] for c in covs])
+    beta, *_ = np.linalg.lstsq(X, y[ok], rcond=None)
+    resid = y[ok] - X @ beta
+    dof = n - k
+    try:
+        cov_b = np.linalg.inv(X.T @ X) * float(resid @ resid) / dof
+    except np.linalg.LinAlgError:
+        return nan
+    se = float(np.sqrt(cov_b[1, 1]))
+    b = float(beta[1])
+    if not np.isfinite(se) or se == 0:
+        return nan
+    crit = float(t_dist.ppf(0.975, dof))
+    return {"b": b, "se": se, "lo": b - crit * se, "hi": b + crit * se,
+            "p": float(2.0 * t_dist.sf(abs(b / se), dof)), "n": n}
+
 MWU_USE_CONTINUITY = True
 MWU_METHOD = "auto"
 
 
 def _mw(h_vals, p_vals):
-    """Mann-Whitney U with rank-biserial r; returns (r, p, n_h, n_p)."""
     h = pd.to_numeric(pd.Series(h_vals), errors="coerce").dropna().values
     p = pd.to_numeric(pd.Series(p_vals), errors="coerce").dropna().values
     if len(h) < 3 or len(p) < 3:
         return np.nan, np.nan, len(h), len(p)
-    # Continuity setting passed explicitly.
     u, pv = mannwhitneyu(h, p, alternative="two-sided",
                          use_continuity=MWU_USE_CONTINUITY,
                          method=MWU_METHOD)
@@ -2873,10 +2507,6 @@ def _mw(h_vals, p_vals):
 
 
 def _num_col(df, name):
-    """Numeric Series for a column, or None if the column is absent or empty.
-
-    pd.to_numeric(df.get(name)) returns NaN, not None, for a missing column, so the check is explicit.
-    """
     if df is None or name not in getattr(df, "columns", []):
         return None
     s = pd.to_numeric(df[name], errors="coerce")
@@ -2884,13 +2514,6 @@ def _num_col(df, name):
 
 
 def report_scale_band_correspondence(df_h, df_p, output_dir):
-    """Frequency band covered by each DFA beat-scale range, per group.
-
-    A scale of n beats corresponds to about 1 / (n * meanNN) Hz, and mean heart period differs between
-    groups, so the same beat scales cover a higher band in patients. Group differences in alpha2, and in
-    the beta = 2*alpha - 1 residual, therefore partly reflect a band shift. Reports the overlap of the
-    slope's fitted band with each group's alpha bands.
-    """
     rows = []
     for label, df in (("Healthy", df_h), ("Psychiatric", df_p)):
         nn = _num_col(df, "HRV_MeanNN")
@@ -2898,12 +2521,11 @@ def report_scale_band_correspondence(df_h, df_p, output_dir):
             hr = _num_col(df, "HRV_MeanHR")
             if hr is None or hr.notna().sum() == 0:
                 continue
-            nn = 60.0 / hr                      # seconds per beat
+            nn = 60.0 / hr
         else:
             nn = nn / 1000.0 if float(nn.mean()) > 10 else nn
         mean_nn = float(nn.mean())
         for tag, lo_b, hi_b in (("alpha1", 4, 16), ("alpha2", 16, 64)):
-            # n beats = n * meanNN seconds = 1 / (n * meanNN) Hz; the larger scale gives the lower frequency.
             f_hi = 1.0 / (lo_b * mean_nn)
             f_lo = 1.0 / (hi_b * mean_nn)
             rows.append({
@@ -2932,9 +2554,6 @@ def report_scale_band_correspondence(df_h, df_p, output_dir):
 
 
 def report_effective_number_of_tests(df_h, df_p, metrics, output_dir):
-    """Effective number of independent tests within a family (Li and Ji, 2005), from the full-precision
-    correlation matrix. A sensitivity analysis only; the primary correction is BH at the nominal size.
-    """
     cols = [m for m in metrics if m in df_h.columns and m in df_p.columns]
     pooled = pd.concat([
         df_h[cols].apply(pd.to_numeric, errors="coerce"),
@@ -2945,14 +2564,11 @@ def report_effective_number_of_tests(df_h, df_p, metrics, output_dir):
     try:
         eig = np.linalg.eigvalsh(corr)
         eig = np.clip(eig, 0.0, None)
-        # Li and Ji: each eigenvalue contributes its integer part plus a fractional term.
         m_eff = float(np.sum(
             (eig >= 1.0).astype(float) + (eig - np.floor(eig))))
     except Exception:
         m_eff = np.nan
     m_nominal = int(corr.shape[0])
-    # The estimator is discontinuous at integer eigenvalues (six near-identical variables give 2.00, not
-    # 1.00), so the leading eigenvalues are exported and the headline value is rounded to one decimal.
     try:
         _lead = np.sort(eig)[::-1][:5]
         _near_int = bool(np.any(np.abs(_lead - np.round(_lead)) < 0.01))
@@ -2981,31 +2597,72 @@ def report_effective_number_of_tests(df_h, df_p, metrics, output_dir):
     print(f"    nominal {m_nominal}, effective {m_eff:.2f}")
     return out
 
+NOISE_CHECK_MEASURES = ("HRV_RMSSD", "VLF_LF_Ratio", "SampEn")
+NOISE_CHECK_DRAWS = 2000
+NOISE_CHECK_SEED = 1234
 
-def report_partial_correlation_method(output_dir):
-    """Record how the partial correlations are computed: both raw variables regressed on the covariates by
-    OLS, then the Spearman correlation of the residuals (regress, then rank; not rank, then regress).
-    """
+
+def _regress_then_rank(target, outcome, covariate):
+    return float(spearmanr(_ols_residuals(target, covariate), _ols_residuals(outcome, covariate))[0])
+
+
+def report_partial_correlation_method(output_dir, df_h=None, df_p=None):
     out = pd.DataFrame([{
         "Quantity": "partial Spearman correlation",
-        "Method": "regress-then-rank (OLS residuals of raw values, "
-                  "then Spearman of residuals)",
+        "Method": "rank-then-regress (target, group indicator and covariates "
+                  "ranked; covariate ranks regressed out by OLS with an "
+                  "intercept; Pearson correlation of the residuals)",
         "Intercept_Included": True,
-        "Alternative_Not_Used": "rank-then-regress (residualise ranks)",
+        "P_Value": "t distribution, n - 2 - k degrees of freedom",
+        "Alternative_Not_Used": "regress-then-rank (OLS residuals of raw "
+                                "values, then Spearman), used in version 2.0.1",
         "Equivalent": False,
-        "Note": "the two differ when the covariate relationship is monotone "
-                "but nonlinear; this choice must be stated in the Methods",
+        "Note": "with a two-valued group indicator, regress-then-rank orders "
+                "subjects within each group by the covariate and shrinks the "
+                "estimate even for a noise covariate; rank-then-regress does "
+                "not, and its unadjusted value is Spearman's rho",
     }])
     path = os.path.join(output_dir, "Partial_Correlation_Method.csv")
     out.to_csv(path, index=False)
     print(f"  Partial-correlation method → {path}")
+    if df_h is None or df_p is None:
+        return out
+    g = np.concatenate([np.zeros(len(df_h)), np.ones(len(df_p))])
+    rng = np.random.default_rng(NOISE_CHECK_SEED)
+    noise = rng.normal(size=(NOISE_CHECK_DRAWS, len(g)))
+    rows = []
+    for m in NOISE_CHECK_MEASURES:
+        if m not in df_h.columns or m not in df_p.columns:
+            continue
+        y = _stack(df_h, df_p, m)
+        ok = np.isfinite(y)
+        r_u = float(spearmanr(y[ok], g[ok])[0])
+        a = np.array([partial_spearman(y[ok], g[ok], [z[ok]])[0] for z in noise])
+        b = np.array([_regress_then_rank(y[ok], g[ok], z[ok]) for z in noise])
+        rows.append({
+            "Metric": m, "N": int(ok.sum()), "r_unadjusted": r_u,
+            "rank_then_regress_mean": float(a.mean()),
+            "rank_then_regress_lo": float(np.percentile(a, 2.5)),
+            "rank_then_regress_hi": float(np.percentile(a, 97.5)),
+            "regress_then_rank_mean": float(b.mean()),
+            "regress_then_rank_lo": float(np.percentile(b, 2.5)),
+            "regress_then_rank_hi": float(np.percentile(b, 97.5)),
+            "regress_then_rank_shrinkage_pct": float(100.0 * (1.0 - b.mean() / r_u)) if r_u else np.nan,
+            "N_Draws": NOISE_CHECK_DRAWS, "Seed": NOISE_CHECK_SEED,
+        })
+    chk = pd.DataFrame(rows)
+    cpath = os.path.join(output_dir, "Partial_Correlation_Noise_Check.csv")
+    chk.to_csv(cpath, index=False, float_format="%.6g")
+    for _, rw in chk.iterrows():
+        print(f"    noise covariate, {rw['Metric']}: unadjusted {rw['r_unadjusted']:+.3f}; "
+              f"rank-then-regress mean {rw['rank_then_regress_mean']:+.3f}; "
+              f"regress-then-rank mean {rw['regress_then_rank_mean']:+.3f}")
+        if abs(rw["rank_then_regress_mean"] - rw["r_unadjusted"]) > 0.01:
+            raise RuntimeError(f"partial_spearman drifts under a noise covariate for {rw['Metric']}")
     return out
 
 
 def report_surrogate_distributions(df_h, df_p, output_dir):
-    """Group summary of the IAAFT surrogate distributions (SURR_<metric>_Mean and _SD), and the direction of
-    each subject's deviation (the test is two-sided, so above and below are counted separately).
-    """
     rows = []
     for metric in ("SampEn", "DFA_Alpha1", "MSE_Mean"):
         for gname, df in (("Healthy", df_h), ("Psychiatric", df_p)):
@@ -3046,10 +2703,6 @@ def report_surrogate_distributions(df_h, df_p, output_dir):
 
 
 def report_embedding_sensitivity(df_h, df_p, output_dir):
-    """Selected-embedding check: the per-subject mutual-information delay and false-nearest-neighbour
-    dimension by group, and the RQA group contrast at the selected embedding beside the contrast at the
-    primary embedding (dim = 2, delay = 1).
-    """
     rows = []
     for col in ("Embed_Delay_MI", "Embed_Dim_FNN"):
         h = _num_col(df_h, col)
@@ -3087,11 +2740,6 @@ def report_embedding_sensitivity(df_h, df_p, output_dir):
 
 
 def report_mse_scale_audit(df_h, df_p, output_dir):
-    """Whether the multiscale entropy result depends on unequal scale retention.
-
-    Subjects with fewer beats retain fewer scales, and beat count follows heart rate. Compares MSE_Mean
-    with MSE_Mean_CommonScales, averaged over a scale set fixed in advance and common to every subject.
-    """
     rows = []
     for col, label in (("MSE_Mean", "all_retained_scales"),
                        ("MSE_Mean_CommonScales", "common_scale_set")):
@@ -3131,28 +2779,20 @@ def report_mse_scale_audit(df_h, df_p, output_dir):
 
 def report_quantization_noise_floor(df_h, df_p, output_dir,
                                     steps_s=None):
-    """Power from quantization error relative to signal power inside the fitted spectral band.
-
-    Uniform quantization at step q adds approximately white noise of variance q^2 / 12. Reported for the
-    Polar step, the MIT-BIH step and any additional steps supplied.
-    """
     if steps_s is None:
-        # QUANT_STEP_S is the measured 1 ms grid; the nominal Bluetooth unit is kept as a reference row.
         steps_s = [("Polar H10", QUANT_STEP_S),
                    ("MIT-BIH", 1.0 / 128.0),
                    ("BLE nominal", 1.0 / 1024.0)]
     rows = []
     for gname, df in (("Healthy", df_h), ("Psychiatric", df_p)):
-        # Signal power in the fitted band, converted from the stored ms^2 to s^2.
         lf = _num_col(df, "LF_Power_ms2")
         if lf is None:
             continue
         sig_power_s2 = float(lf.mean()) * 1e-6
         band_width_hz = BETA_BAND_FOR_REPORT[1] - BETA_BAND_FOR_REPORT[0]
         for label, q in steps_s:
-            # White quantization noise: variance q^2/12 over the Nyquist band of the interpolated series (2 Hz).
             noise_var_s2 = (q ** 2) / 12.0
-            noise_psd = noise_var_s2 / 2.0           # per Hz, over 0 to 2 Hz
+            noise_psd = noise_var_s2 / 2.0
             noise_in_band = noise_psd * band_width_hz
             rows.append({
                 "Group": gname, "Acquisition": label,
@@ -3178,11 +2818,6 @@ def report_quantization_noise_floor(df_h, df_p, output_dir,
 
 
 def report_clinical_range_counts(df_h, df_p, output_dir):
-    """Number of subjects in clinically recognizable ranges, counted from per-subject values.
-
-    These are 30-minute mixed-activity windows that include an instructed walk, not resting recordings,
-    so the counts describe this window and cannot be compared with resting normative ranges.
-    """
     thresholds = [
         ("HRV_MeanHR", "mean HR > 100 bpm", lambda s: s > 100),
         ("HRV_MeanHR", "mean HR > 110 bpm", lambda s: s > 110),
@@ -3220,10 +2855,6 @@ def report_clinical_range_counts(df_h, df_p, output_dir):
 
 
 def report_excluded_subjects(exclusions, output_dir):
-    """Which subjects were excluded, and the criterion each failed.
-
-    exclusions : list of (cohort, record_id, criterion, value)
-    """
     if not exclusions:
         print("  No exclusions recorded.")
         return None
@@ -3239,9 +2870,6 @@ def report_excluded_subjects(exclusions, output_dir):
 
 
 def attach_bootstrap_intervals(output_dir):
-    """Add the bootstrap effect-size intervals to the primary table. Call after bootstrap_effect_sizes();
-    both are indexed by display label. Raises if the merge yields no intervals.
-    """
     stats_path = os.path.join(output_dir, "group_comparison_stats.csv")
     boot_path = os.path.join(output_dir, "Bootstrap_Effect_Sizes.csv")
     if not os.path.exists(stats_path):
@@ -3275,9 +2903,6 @@ def attach_bootstrap_intervals(output_dir):
 
 
 def report_correction_family_inventory(output_dir, extra_families=None):
-    """One table naming every multiple-comparison family and its size. "Dynamic" sizes depend on the
-    columns present and are filled in by the callers; fixed sizes come from the module constants.
-    """
     fams = [
         {"Family": "primary",
          "N_Tests": len(PRIMARY_METRICS),
@@ -3337,10 +2962,6 @@ def report_correction_family_inventory(output_dir, extra_families=None):
 
 def report_subgroup_detectable_effects(subgroup_sizes, output_dir,
                                        power=0.80):
-    """Detection floor (80% power) for every subgroup contrast the paper draws a conclusion from.
-
-    subgroup_sizes : list of (label, n_group_a, n_group_b)
-    """
     rows = []
     for label, n_a, n_b in subgroup_sizes:
         if min(n_a, n_b) < 2:
@@ -3369,7 +2990,6 @@ def report_subgroup_detectable_effects(subgroup_sizes, output_dir,
 
 
 def report_minimum_detectable_effect(n_h, n_p, output_dir):
-    """Minimum detectable effect for the main comparison (replaces post-hoc power)."""
     rows = []
     for power in (0.80, 0.90):
         d_min, r_rank, r_point = minimum_detectable_effect(n_h, n_p,
@@ -3377,7 +2997,6 @@ def report_minimum_detectable_effect(n_h, n_p, output_dir):
         rows.append({"Power": power, "Alpha": ALPHA,
                      "N_Healthy": n_h, "N_Psych": n_p,
                      "Min_Detectable_d": round(d_min, 3),
-                     # Min_Detectable_r is the rank-biserial floor; the point-biserial value is kept beside it.
                      "Min_Detectable_r": round(r_rank, 3),
                      "Min_Detectable_r_pointbiserial": round(r_point, 3)})
     df = pd.DataFrame(rows)
@@ -3392,13 +3011,6 @@ def report_minimum_detectable_effect(n_h, n_p, output_dir):
 
 
 def mayer_wave_analysis(df_h, df_p, output_dir, healthy_label="Healthy"):
-    """Slope group difference under every slope estimator, side by side.
-
-    The fitting band contains the baroreflex (Mayer-wave) resonance near 0.1 Hz, which flattens the fitted
-    slope where it is prominent. On synthetic 1/f signals differing only in 0.1 Hz peak amplitude,
-    linear-bin OLS produced a spurious group difference of +0.13 to +0.22, while the band-excised fit and
-    the explicit peak model produced essentially none.
-    """
     variants = [
         ("PSD_Beta",             "Legacy: linear-bin OLS, 0.01-0.15 Hz"),
         ("PSD_Beta_LogBin",      "Log-binned OLS (equal leverage across band)"),
@@ -3420,8 +3032,6 @@ def mayer_wave_analysis(df_h, df_p, output_dir, healthy_label="Healthy"):
                      "Healthy_Mean": hm, "Psych_Mean": pm,
                      "Abs_Diff": pm - hm, "r_effect": r, "p_raw": pv,
                      "N_Healthy": nh, "N_Psych": npat})
-    # The peak model sometimes converges onto a parameter bound, where it absorbs band curvature and
-    # inflates the exponent, so the comparison is repeated on fits that did not reach a bound.
     if ("Specparam_At_Bound" in df_h.columns and
             "PSD_Beta_Specparam" in df_h.columns):
         def _clean(d):
@@ -3452,7 +3062,6 @@ def mayer_wave_analysis(df_h, df_p, output_dir, healthy_label="Healthy"):
               f"{rw['Psych_Mean']:>9.3f}{rw['Abs_Diff']:>8.3f}"
               f"{rw['r_effect']:>8.3f}{rw['p_raw']:>10.4g}")
 
-    # Summary line
     try:
         base = out.loc[out["Estimator"] == "PSD_Beta", "r_effect"].values[0]
         for ctrl in ("PSD_Beta_NoMayer", "PSD_Beta_Specparam"):
@@ -3466,15 +3075,6 @@ def mayer_wave_analysis(df_h, df_p, output_dir, healthy_label="Healthy"):
 
 
 def quantization_sensitivity(df_h, df_p, output_dir):
-    """Group differences in the entropy and recurrence measures under the resolution controls.
-
-    The Polar H10 export is on a 1.000 ms grid while RMSSD is about half as large in patients, so the
-    step-to-amplitude ratio roughly doubles between groups. Coarser effective resolution increases exact
-    matches, lowering sample and approximate entropy and raising determinism. Each measure is compared as
-    observed, with dither at the quantization step, and with both groups coarsened to a common
-    step/RMSSD ratio.
-    """
-    # Recurrence-network measures are included when rna_controls.py has merged its columns.
     pairs = [("SampEn", "SampEn_Dither", "SampEn_MatchedQuant"),
              ("ApEn",   "ApEn_Dither",   "ApEn_MatchedQuant"),
              ("PermEn", "PermEn_Dither", "PermEn_MatchedQuant"),
@@ -3484,18 +3084,15 @@ def quantization_sensitivity(df_h, df_p, output_dir):
               "RNA_ClusteringCoeff_MatchedQuant"),
              ("RNA_Transitivity", "RNA_Transitivity_Dither",
               "RNA_Transitivity_MatchedQuant"),
-             # Multiscale entropy under dither and matched coarsening.
              ("MSE_Mean", "MSE_Mean_Dither", "MSE_Mean_MatchedQuant")]
     rows = []
     for observed, dither, matched in pairs:
-        # The label carries the primary matched target ratio (QUANT_TARGET_RATIO).
         _matched_label = f"matched_quant_r{int(round(QUANT_TARGET_RATIO*1000)):03d}"
         for label, col in (("observed", observed), ("dither", dither),
                            (_matched_label, matched)):
             if col not in df_h.columns or col not in df_p.columns:
                 continue
             r, pv, _, _ = _mw(df_h[col], df_p[col])
-            # U is recorded too, since two conditions can give the same rank-biserial r.
             _hv = pd.to_numeric(df_h[col], errors="coerce").dropna()
             _pv_ = pd.to_numeric(df_p[col], errors="coerce").dropna()
             try:
@@ -3508,12 +3105,8 @@ def quantization_sensitivity(df_h, df_p, output_dir):
                          "U_stat": _u,
                          "N_Healthy": int(len(_hv)),
                          "N_Psych": int(len(_pv_))})
-    # Sweep of alternative coarsening targets. A target matches only subjects whose observed step/RMSSD
-    # ratio is below it, so each target is evaluated on the subsample it matches, with the retained N
-    # reported.
     ratio_h = _num_col(df_h, "Quant_Step_Over_RMSSD")
     ratio_p = _num_col(df_p, "Quant_Step_Over_RMSSD")
-    # Targets and tags derived from QUANT_TARGET_SWEEP as in the pipeline.
     _sweep = [(f"MQ{int(round(t * 100)):02d}", float(t))
               for t in QUANT_TARGET_SWEEP]
     for tag, target in _sweep:
@@ -3526,12 +3119,10 @@ def quantization_sensitivity(df_h, df_p, output_dir):
             col = f"{base}_{tag}"
             if col not in df_h.columns or col not in df_p.columns:
                 continue
-            # (a) all subjects, including unmatched ones
             r_all, p_all, _, _ = _mw(df_h[col], df_p[col])
             rows.append({"Metric": base, "Condition": f"matched_{tag}_allsubj",
                          "Column": col, "r_effect": r_all, "p_raw": p_all,
                          "N_Healthy": int(len(df_h)), "N_Psych": int(len(df_p))})
-            # (a2) observed values on the same subsample, separating subject loss from the coarsening.
             if keep_h.sum() >= 5 and keep_p.sum() >= 5 and base in df_h.columns:
                 r_o, p_o, _, _ = _mw(df_h.loc[keep_h.values, base],
                                      df_p.loc[keep_p.values, base])
@@ -3541,7 +3132,6 @@ def quantization_sensitivity(df_h, df_p, output_dir):
                              "N_Healthy": int(keep_h.sum()),
                              "N_Psych": int(keep_p.sum())})
 
-            # (b) matched subsample only
             if keep_h.sum() >= 5 and keep_p.sum() >= 5:
                 r_m, p_m, _, _ = _mw(df_h.loc[keep_h.values, col],
                                      df_p.loc[keep_p.values, col])
@@ -3551,7 +3141,6 @@ def quantization_sensitivity(df_h, df_p, output_dir):
                              "N_Healthy": int(keep_h.sum()),
                              "N_Psych": int(keep_p.sum())})
 
-    # The step-to-RMSSD ratio
     if "Quant_Step_Over_RMSSD" in df_h.columns:
         r, pv, _, _ = _mw(df_h["Quant_Step_Over_RMSSD"],
                           df_p["Quant_Step_Over_RMSSD"])
@@ -3562,8 +3151,6 @@ def quantization_sensitivity(df_h, df_p, output_dir):
         r, pv, _, _ = _mw(df_h["Ordinal_Tie_Rate"], df_p["Ordinal_Tie_Rate"])
         rows.append({"Metric": "Ordinal_Tie_Rate", "Condition": "observed",
                      "Column": "Ordinal_Tie_Rate", "r_effect": r, "p_raw": pv})
-    # Tie rate under each control condition, with group medians, to show whether matched coarsening
-    # equalized the tie burden.
     _matched_lab = f"matched_quant_r{int(round(QUANT_TARGET_RATIO*1000)):03d}"
     for label, col in ([("dither", "Ordinal_Tie_Rate_Dither"),
                         (_matched_lab, "Ordinal_Tie_Rate_MatchedQuant")]
@@ -3580,7 +3167,6 @@ def quantization_sensitivity(df_h, df_p, output_dir):
                      "Psych_Median": float(pd.to_numeric(
                          df_p[col], errors="coerce").median())})
 
-    # The smallest sweep target exceeding the pooled maximum observed ratio (matches every subject).
     if "Quant_Step_Over_RMSSD" in df_h.columns:
         pooled_max = float(max(
             pd.to_numeric(df_h["Quant_Step_Over_RMSSD"], errors="coerce").max(),
@@ -3617,11 +3203,6 @@ def quantization_sensitivity(df_h, df_p, output_dir):
 
 
 def surrogate_normalized_entropy(df_h, df_p, output_dir):
-    """Group comparison of surrogate Z-scores for the entropy measures.
-
-    IAAFT surrogates preserve the amplitude distribution and linear autocorrelation, so a difference that
-    survives on Z-scores exceeds what those predict.
-    """
     rows = []
     for metric in ("SampEn", "DFA_Alpha1", "MSE_Mean"):
         raw_col = metric
@@ -3648,14 +3229,9 @@ def surrogate_normalized_entropy(df_h, df_p, output_dir):
 
 
 def beta_dfa_consistency(df_h, df_p, output_dir):
-    """Check beta = 2*alpha - 1 (exact for stationary fractional Gaussian noise) per subject.
-
-    A group-dependent departure means that group's spectra are less well described by a single power law.
-    """
     if "PSD_Beta" not in df_h.columns or "DFA_Alpha2" not in df_h.columns:
         print("  beta/alpha consistency skipped: columns absent.")
         return None
-    # The identity is checked against every available DFA exponent, and disagreement between them is reported.
     rows = []
     _alpha_cols = [c for c in ("DFA_Alpha1", "DFA_Alpha2", "DFA_Alpha")
                    if c in df_h.columns and c in df_p.columns]
@@ -3679,7 +3255,6 @@ def beta_dfa_consistency(df_h, df_p, output_dir):
                          "Comparison_Type": "identity_by_exponent"})
 
     for label, df in (("Healthy", df_h), ("Psychiatric", df_p)):
-        # The baroreflex-excised slope.
         bcol = ("PSD_Beta_NoMayer" if "PSD_Beta_NoMayer" in df.columns
                 else "PSD_Beta")
         b = pd.to_numeric(df[bcol], errors="coerce")
@@ -3694,7 +3269,6 @@ def beta_dfa_consistency(df_h, df_p, output_dir):
                      "SD_Residual": float(resid.std(ddof=1)),
                      "Spearman_r": float(spearmanr(b[ok], pred[ok])[0])})
     out = pd.DataFrame(rows)
-    # Do the groups differ in their distance from the identity?
     _bc = "PSD_Beta_NoMayer" if "PSD_Beta_NoMayer" in df_h.columns else "PSD_Beta"
     rh = (pd.to_numeric(df_h[_bc], errors="coerce")
           - (2 * pd.to_numeric(df_h["DFA_Alpha2"], errors="coerce") - 1)).dropna()
@@ -3720,7 +3294,6 @@ def beta_dfa_consistency(df_h, df_p, output_dir):
 
 
 def nonredundant_family_comparison(df_h, df_p, output_dir):
-    """Correction rerun with the definitionally collinear measures removed."""
     metrics = [m for m in NONREDUNDANT_PRIMARY
                if m in df_h.columns and m in df_p.columns]
     if len(metrics) < 3:
@@ -3739,14 +3312,6 @@ def nonredundant_family_comparison(df_h, df_p, output_dir):
 
 
 def length_and_respiration_checks(df_h, df_p, output_dir):
-    """Series length and respiratory checks.
-
-    Series length: patients have higher heart rates and so contribute more beats in the same 1800 s
-    window; length affects DFA at long scales, entropy, MFDFA and recurrence. Tested directly and
-    partialled out of the key measures.
-    Respiration: a respiratory rate below 0.15 Hz moves RSA into the LF band; detection rate and, among
-    detected subjects, frequency are compared descriptively.
-    """
     rows = []
     for col in ("Num_RR", "Series_N", "Resp_Peak_Freq"):
         if col in df_h.columns and col in df_p.columns:
@@ -3756,8 +3321,6 @@ def length_and_respiration_checks(df_h, df_p, output_dir):
                          "Psych_Mean": pd.to_numeric(df_p[col], errors="coerce").mean(),
                          "r_effect": r, "p_raw": pv, "Role": "group difference"})
 
-    # Respiratory peak detection rate is compared between groups. Frequency is not used as a covariate,
-    # because a peak was resolvable in a minority of subjects; it stays descriptive.
     for col in ("Resp_Peak_Found",):
         if col in df_h.columns and col in df_p.columns:
             fh = df_h[col].astype(str).str.lower().eq("true")
@@ -3777,7 +3340,6 @@ def length_and_respiration_checks(df_h, df_p, output_dir):
                   f"{int(fh.sum())}/{len(fh)} controls vs "
                   f"{int(fp.sum())}/{len(fp)} patients (p={pv:.3f})")
 
-    # Frequency among detected subjects only (descriptive, not an adjustment).
     if "Resp_Peak_Freq" in df_h.columns and "Resp_Peak_Freq" in df_p.columns:
         hh = pd.to_numeric(df_h["Resp_Peak_Freq"], errors="coerce").dropna()
         pp = pd.to_numeric(df_p["Resp_Peak_Freq"], errors="coerce").dropna()
@@ -3792,9 +3354,6 @@ def length_and_respiration_checks(df_h, df_p, output_dir):
             print("    Respiratory frequency not compared: too few subjects "
                   "with a resolvable peak in at least one group.")
 
-    # -- Joint covariate model --
-    # Five covariates: age, sex, mobility, mean heart rate and HF power. Beat count is not included, since
-    # over the fixed 1800 s window it is 30 x mean heart rate (r = 0.999).
     joint = ["Age", "Sex", "mobility_mg", "HRV_MeanHR", "HF_Power_ms2"]
     have = [c for c in joint if c in df_h.columns and c in df_p.columns]
     _identity_cluster = {"Num_RR", "Series_N", "HRV_MeanHR", "HRV_MeanNN"}
@@ -3806,7 +3365,6 @@ def length_and_respiration_checks(df_h, df_p, output_dir):
             f"its reciprocal). Adjusting for more than one of them is adjusting "
             f"twice for one quantity and reporting it as independent controls.")
     if len(have) >= 4:
-        # The VLF/LF ratio as well as the slope.
         for tgt in ("PSD_Beta_NoMayer", "PSD_Beta", "PSD_Beta_low",
                     "VLF_LF_Ratio"):
             if tgt not in df_h.columns or tgt not in df_p.columns:
@@ -3835,8 +3393,6 @@ def length_and_respiration_checks(df_h, df_p, output_dir):
               f"covariates present ({have}). Merge accelerometer and metadata "
               f"columns into the results CSVs first.")
 
-    # Every length-sensitive measure (entropy, recurrence and network measures, MSE) is residualized on
-    # beat count here.
     targets = ["PSD_Beta", "PSD_Beta_NoMayer", "PSD_Beta_low", "DFA_Alpha2",
                "SampEn", "ApEn", "PermEn", "MSE_Mean",
                "RQA_DET", "RQA_LAM",
@@ -3869,9 +3425,6 @@ def length_and_respiration_checks(df_h, df_p, output_dir):
 
 
 def pnn50_floor_report(df_h, df_p, output_dir):
-    """pNN50 floor report: the proportion of subjects at or near zero, since pNN50 is zero-inflated in
-    patients and a standardized mean difference is not meaningful for it.
-    """
     if "HRV_pNN50" not in df_h.columns:
         print("  pNN50 report skipped: column absent.")
         return None
@@ -3896,10 +3449,6 @@ def pnn50_floor_report(df_h, df_p, output_dir):
 
 
 def schizophrenia_subgroup_analysis(df_h, df_p, output_dir):
-    """Superseded by diagnosis_subgroup_analysis(); kept for direct calls. Reruns the primary comparisons on
-    the schizophrenia patients only, using SCHIZOPHRENIA_RECORD_IDS or a Diagnosis column; skipped with a
-    message if neither exists.
-    """
     ids = list(SCHIZOPHRENIA_RECORD_IDS)
     sub = None
     if ids:
@@ -3938,35 +3487,24 @@ def schizophrenia_subgroup_analysis(df_h, df_p, output_dir):
               f"(change {rw['r_change']:+.3f})")
     return out
 
-# ---- Subject-level metadata analyses ----
-# From the released age, sex, ICD codes and quetiapine status (HRV-ACC version 2). The medication field
-# records quetiapine only, so a quetiapine contrast compares quetiapine with other agents, not medicated
-# with unmedicated. Quetiapine is concentrated in the bipolar subgroup (5 of 7 against 2 of 23).
-
 METADATA_COLUMNS = ["Age", "Sex", "Diagnosis", "ICD_Primary", "ICD_All",
                     "Comorbid_Codes", "Comorbid_Substance", "Quetiapine"]
 
-# Measures carried through every metadata analysis: those that survived the control battery, plus
-# two that did not, for comparison.
 METADATA_TARGETS = ["PSD_Beta_NoMayer", "PSD_Beta", "DFA_Alpha2", "DFA_Alpha",
                     "HRV_RMSSD", "HRV_MeanHR", "LF_Power_ms2", "HF_Power_ms2",
                     "MFDFA_Width", "MSE_Mean", "SampEn", "RQA_DET",
-                    # VLF measures included; no table here corrects across rows, so adding rows leaves other values unchanged.
                     "VLF_LF_Ratio", "VLF_Power_ms2"]
 
 
 def _has_metadata(df_p):
-    """Patient-specific metadata (diagnosis and medication) present."""
     return all(c in df_p.columns for c in ("Diagnosis", "Age", "Quetiapine"))
 
 
 def _has_demographics(df):
-    """Age and sex present."""
     return all(c in df.columns for c in ("Age", "Sex"))
 
 
 def _as_bool(series):
-    """Booleans survive a CSV round trip as the strings 'True'/'False'."""
     if series.dtype == bool:
         return series
     return series.astype(str).str.strip().str.lower().isin(
@@ -3974,7 +3512,6 @@ def _as_bool(series):
 
 
 def metadata_cohort_description(df_p, output_dir):
-    """Cohort description table."""
     if not _has_metadata(df_p):
         print("  Cohort description skipped: metadata columns absent.")
         return None
@@ -4005,10 +3542,6 @@ def metadata_cohort_description(df_p, output_dir):
 
 
 def diagnosis_subgroup_analysis(df_h, df_p, output_dir):
-    """Each diagnostic subgroup against the full control cohort, and schizophrenia against bipolar.
-
-    The bipolar subgroup (N = 7) is reported for completeness and is severely underpowered.
-    """
     if not _has_metadata(df_p):
         print("  Diagnosis subgroup analysis skipped: metadata absent.")
         return None
@@ -4034,7 +3567,6 @@ def diagnosis_subgroup_analysis(df_h, df_p, output_dir):
         if len(sz) >= 5 and len(bp) >= 5:
             r_sb, p_sb, _, _ = _mw(sz[m], bp[m])
             rec.update(r_sz_vs_bp=r_sb, p_sz_vs_bp=p_sb)
-        # Detection floors are written on the same row as the estimates they qualify.
         try:
             if len(bp) >= 5:
                 _, _r_bp_floor, _ = minimum_detectable_effect(len(df_h),
@@ -4069,12 +3601,6 @@ def diagnosis_subgroup_analysis(df_h, df_p, output_dir):
 
 
 def quetiapine_analysis(df_h, df_p, output_dir):
-    """Whether quetiapine exposure accounts for the group differences.
-
-    Reports (a) quetiapine against non-quetiapine patients; (b) each subset against the full control
-    cohort; (c) the group effect with quetiapine as a covariate. Patients marked "no" received other
-    agents, so this does not test medication as a whole.
-    """
     if not _has_metadata(df_p):
         print("  Quetiapine analysis skipped: metadata absent.")
         return None
@@ -4089,10 +3615,9 @@ def quetiapine_analysis(df_h, df_p, output_dir):
     for m in METADATA_TARGETS:
         if m not in df_h.columns or m not in df_p.columns:
             continue
-        r_w, p_w, _, _ = _mw(on[m], off[m])              # within patients
-        r_on, p_on, _, _ = _mw(df_h[m], on[m])           # exposed vs controls
-        r_off, p_off, _, _ = _mw(df_h[m], off[m])        # unexposed vs controls
-        # Group effect adjusted for quetiapine (controls coded 0, not exposed).
+        r_w, p_w, _, _ = _mw(on[m], off[m])
+        r_on, p_on, _, _ = _mw(df_h[m], on[m])
+        r_off, p_off, _, _ = _mw(df_h[m], off[m])
         vals = np.concatenate([pd.to_numeric(df_h[m], errors="coerce").values,
                                pd.to_numeric(df_p[m], errors="coerce").values])
         grp = np.concatenate([np.zeros(len(df_h)), np.ones(len(df_p))])
@@ -4121,7 +3646,6 @@ def quetiapine_analysis(df_h, df_p, output_dir):
 
 
 def comorbidity_analysis(df_h, df_p, output_dir):
-    """Sensitivity analysis excluding patients with a comorbid substance-use code (ICD F1x)."""
     if "Comorbid_Substance" not in df_p.columns:
         print("  Comorbidity analysis skipped: metadata absent.")
         return None
@@ -4156,7 +3680,6 @@ def comorbidity_analysis(df_h, df_p, output_dir):
 
 
 def age_sex_analysis(df_h, df_p, output_dir):
-    """Age and sex associations within the patient group."""
     if not _has_metadata(df_p):
         print("  Age/sex analysis skipped: metadata absent.")
         return None
@@ -4196,7 +3719,6 @@ def age_sex_analysis(df_h, df_p, output_dir):
 
 
 def demographic_matching_report(df_h, df_p, output_dir):
-    """Test whether the groups are matched on age and sex."""
     if "Age" not in df_h.columns or "Age" not in df_p.columns:
         print("  Demographic matching skipped: control metadata absent.")
         return None
@@ -4242,7 +3764,6 @@ def demographic_matching_report(df_h, df_p, output_dir):
 
 
 def age_sex_adjusted_comparison(df_h, df_p, output_dir):
-    """Group comparisons with age and sex as between-group covariates (partial Spearman throughout)."""
     if "Age" not in df_h.columns or "Age" not in df_p.columns:
         print("  Age/sex-adjusted comparison skipped: control metadata absent.")
         return None
@@ -4268,10 +3789,7 @@ def age_sex_adjusted_comparison(df_h, df_p, output_dir):
                      "r_adj_age": r_age, "p_adj_age": p_a,
                      "r_adj_sex": r_sex, "p_adj_sex": p_s,
                      "r_adj_age_sex": r_both, "p_adj_age_sex": p_b,
-                     # Baseline: the unadjusted partial correlation (same statistic as the adjusted one).
                      "r_unadj_partial": r_unadj_p,
-                     # Ratio of two estimates: descriptive only, with no interval; report the adjusted and unadjusted
-                     # correlations instead.
                      "pct_retained_age_sex": (100.0 * r_both / r_unadj_p
                                               if r_unadj_p not in (0, np.nan)
                                               else np.nan),
@@ -4291,7 +3809,6 @@ def age_sex_adjusted_comparison(df_h, df_p, output_dir):
 
 
 def age_association_both_groups(df_h, df_p, output_dir):
-    """Measure-age associations in each group separately and pooled."""
     if "Age" not in df_h.columns or "Age" not in df_p.columns:
         print("  Age association analysis skipped: control metadata absent.")
         return None
@@ -4331,7 +3848,6 @@ def age_association_both_groups(df_h, df_p, output_dir):
 
 
 def run_metadata_analyses(df_h, df_p, output_dir):
-    """Run every subject-level metadata analysis in one call."""
     print("\n" + "=" * 65)
     print("  SUBJECT-LEVEL METADATA ANALYSES")
     print("=" * 65)
@@ -4361,12 +3877,6 @@ def run_metadata_analyses(df_h, df_p, output_dir):
 
 def age_adjusted_cross_device(df_a, df_b, df_p, output_dir,
                               label_a="HRVACC_control", label_b="MITBIH_control"):
-    """Cross-cohort comparisons with age as a covariate.
-
-    The MIT-BIH cohort is younger than either HRV-ACC cohort (mean 34.3 against 43.2 and 41.4 years) and
-    the slope correlates with age within the controls. Needs Age in all three cohorts; skipped with a
-    message if MIT-BIH ages are unavailable.
-    """
     if any("Age" not in d.columns for d in (df_a, df_b, df_p)):
         print("  Age-adjusted cross-device analysis SKIPPED: MIT-BIH ages are "
               "not in the results CSV. Add them from the PhysioNet header "
@@ -4375,7 +3885,6 @@ def age_adjusted_cross_device(df_a, df_b, df_p, output_dir,
               "stated as a limitation.")
         return None
     rows = []
-    # VLF measures included.
     targets = ["PSD_Beta_NoMayer", "PSD_Beta", "PSD_Beta_low",
                "DFA_Alpha2", "HRV_RMSSD", "LF_Power_ms2",
                "VLF_Power_ms2", "VLF_LF_Ratio"]
@@ -4390,7 +3899,6 @@ def age_adjusted_cross_device(df_a, df_b, df_p, output_dir,
             a = np.concatenate([pd.to_numeric(d1["Age"], errors="coerce").values,
                                 pd.to_numeric(d2["Age"], errors="coerce").values])
             r_rb, p_rb, _, _ = _mw(d1[m], d2[m])
-            # Baseline: the unadjusted partial correlation on the same rows as the adjusted value.
             ok = np.isfinite(v) & np.isfinite(a)
             r_pu, p_pu = (spearmanr(v[ok], g[ok]) if ok.sum() >= 6
                           else (np.nan, np.nan))
@@ -4404,7 +3912,6 @@ def age_adjusted_cross_device(df_a, df_b, df_p, output_dir,
                          "p_partial_unadjusted": float(p_pu),
                          "r_partial_age_adjusted": r_a,
                          "p_partial_age_adjusted": p_a,
-                         # Ratio of two estimates: descriptive only.
                          "pct_retained": (100.0 * r_a / r_pu
                                           if np.isfinite(r_pu) and r_pu != 0
                                           else np.nan)})
@@ -4424,9 +3931,6 @@ def age_adjusted_cross_device(df_a, df_b, df_p, output_dir,
 
 
 def deterministic_checks(df_h, df_p, output_dir):
-    """Report the quantities fixed by construction (RQA_REC, RNA_MeanDegree, both equal to the target
-    recurrence rate) as checks of the thresholding and normalization, outside every correction family.
-    """
     rows = []
     for m in DETERMINISTIC_CHECKS + ["RNA_MeanDegree"]:
         if m not in df_h.columns or m not in df_p.columns:
@@ -4456,12 +3960,6 @@ def deterministic_checks(df_h, df_p, output_dir):
 
 
 def beta_band_sweep_comparison(df_h, df_p, output_dir):
-    """Slope group comparison across every fitted band.
-
-    The low band (nominal 0.01-0.07 Hz) lies below both the baroreflex resonance and any respiratory
-    contribution. In simulation, respiration at 0.150 Hz biases a full-band fit by -0.27 while the low-band
-    fit is unbiased for respiration from 0.150 to 0.400 Hz.
-    """
     tags = ["low", "verylow", "lowmid", "mayerexc", "nomayerx", "wideband"]
     rows = []
     for tag in tags:
@@ -4485,8 +3983,6 @@ def beta_band_sweep_comparison(df_h, df_p, output_dir):
     if not rows:
         print("  Band sweep skipped: PSD_Beta_<tag> columns absent. Re-run pipeline.py.")
         return None
-    # Bootstrap CIs on r. With five to seven bins the narrow-band estimates are noisy, so those rows show
-    # direction and significance rather than magnitude.
     rng = np.random.default_rng(20260817)
     for k, row in enumerate(rows):
         col = f"PSD_Beta_{row['Band']}"
@@ -4536,7 +4032,6 @@ def beta_band_sweep_comparison(df_h, df_p, output_dir):
 
 
 def stationarity_report(df_h, df_p, output_dir):
-    """Group comparison of the per-subject stationarity diagnostics."""
     rows = []
     for col in ("Stat_RA_p", "Stat_VarRatio", "Stat_ADF_p", "Stat_KPSS_p"):
         if col not in df_h.columns or col not in df_p.columns:
@@ -4565,7 +4060,6 @@ def stationarity_report(df_h, df_p, output_dir):
 
 
 def entropy_tolerance_report(df_h, df_p, output_dir):
-    """Sample entropy group comparison across the tolerance sweep."""
     rows = []
     for frac in (10, 15, 20, 25, 30, 35):
         col = f"SampEn_r{frac:02d}"
@@ -4590,9 +4084,6 @@ def entropy_tolerance_report(df_h, df_p, output_dir):
 
 
 def write_manuscript_table1(stats, output_dir, healthy_label="Healthy"):
-    """Write Table 1 as Markdown, generated from the statistics, with the control cohort and sample sizes
-    taken from the data.
-    """
     fam = stats
     if "FDR_Family" in stats.columns:
         prim = stats[stats["FDR_Family"].astype(str).str.lower().str.contains("primary")]
@@ -4618,7 +4109,6 @@ def write_manuscript_table1(stats, output_dir, healthy_label="Healthy"):
         "|---|---|---|---|---|---|---|---|",
     ]
     def _fmt(v):
-        """Fixed-point formatting with magnitude-appropriate precision (no scientific notation)."""
         if not np.isfinite(v):
             return "—"
         a = abs(v)
@@ -4654,7 +4144,6 @@ def write_manuscript_table1(stats, output_dir, healthy_label="Healthy"):
         f"are reported as normalisation checks rather than as tests, so they are "
         f"excluded from this family."]
     path = os.path.join(output_dir, "TABLE1_MANUSCRIPT.md")
-    # Explicit UTF-8 (the Windows default codepage cannot encode the Unicode minus sign).
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
     print(f"  Manuscript Table 1 -> {path}  ({len(fam)} rows, {n_sig} significant)")
@@ -4663,7 +4152,6 @@ def write_manuscript_table1(stats, output_dir, healthy_label="Healthy"):
 
 
 def write_test_implementation(output_dir):
-    """Record the exact test configuration (continuity and tie corrections)."""
     import scipy
     rows = [
         {"Item": "Primary test", "Value": "Mann-Whitney U, two-sided"},
@@ -4683,7 +4171,6 @@ def write_test_implementation(output_dir):
 
 
 def ambulatory_fraction_test(output_dir):
-    """Group comparison of the ambulatory beat fraction (per-subject fractions from accelerometer_mobility.py)."""
     src = os.path.join("outputs", "accelerometer", "Stationary_Segments.csv")
     if not os.path.exists(src):
         print("  Ambulatory fraction test skipped: Stationary_Segments.csv not "
@@ -4714,16 +4201,12 @@ def ambulatory_fraction_test(output_dir):
     return out
 
 
-# ---- Heart rate, VLF decomposition and the 7.8 ms grid ----
-
 def _stack(df_h, df_p, col):
-    """One column from both cohorts, controls first, as a float array."""
     return np.concatenate([pd.to_numeric(df_h[col], errors="coerce").values,
                            pd.to_numeric(df_p[col], errors="coerce").values])
 
 
 def _pearson_partial_p(r, n, k):
-    """Two-sided p for a Pearson (partial) correlation on n points with k covariates removed."""
     dof = n - 2 - k
     if not np.isfinite(r) or dof <= 0 or abs(r) >= 1.0:
         return np.nan
@@ -4732,24 +4215,46 @@ def _pearson_partial_p(r, n, k):
 
 
 def _rank_partial(y, g, x):
-    """Rank-based partial correlation: y, group and covariate replaced by ranks, the covariate regressed
-    out of both, residuals correlated (Pearson). Assumes only a monotone heart-rate relationship.
-    """
-    ok = np.isfinite(y) & np.isfinite(g) & np.isfinite(x)
-    if ok.sum() < 6:
+    return partial_spearman(y, g, [x])
+
+
+def _rank_quadratic_partial(y, g, rk_c):
+    ok = np.isfinite(y) & np.isfinite(g) & np.isfinite(rk_c)
+    n = int(ok.sum())
+    if n < 8:
         return np.nan, np.nan
-    ry, rg, rx = rankdata(y[ok]), rankdata(g[ok]), rankdata(x[ok])
-    a, b = _ols_residuals(ry, rx), _ols_residuals(rg, rx)
+    C = np.column_stack([rk_c[ok], rk_c[ok] ** 2])
+    a, b = _ols_residuals(rankdata(y[ok]), C), _ols_residuals(rankdata(g[ok]), C)
     if np.std(a) == 0 or np.std(b) == 0:
         return np.nan, np.nan
     r = float(np.corrcoef(a, b)[0, 1])
-    return r, _pearson_partial_p(r, int(ok.sum()), 1)
+    return r, _pearson_partial_p(r, n, 2)
+
+
+def group_coefficient_interaction_p(y, g, x):
+    y = np.asarray(y, dtype=float)
+    g = np.asarray(g, dtype=float)
+    x = np.asarray(x, dtype=float)
+    ok = np.isfinite(y) & np.isfinite(g) & np.isfinite(x)
+    n = int(ok.sum())
+    if n < 8:
+        return np.nan
+    xc = x[ok] - x[ok].mean()
+    X = np.column_stack([np.ones(n), g[ok], xc, g[ok] * xc])
+    beta, *_ = np.linalg.lstsq(X, y[ok], rcond=None)
+    resid = y[ok] - X @ beta
+    dof = n - 4
+    try:
+        cov_b = np.linalg.inv(X.T @ X) * float(resid @ resid) / dof
+    except np.linalg.LinAlgError:
+        return np.nan
+    se = float(np.sqrt(cov_b[3, 3]))
+    if not np.isfinite(se) or se == 0:
+        return np.nan
+    return float(2.0 * t_dist.sf(abs(beta[3] / se), dof))
 
 
 def hr_family_available(df_h, df_p):
-    """Members of HR_ADJUSTED_FAMILY testable in this pair of cohorts; used to size the family and to run
-    the tests.
-    """
     cov = HR_ADJUSTMENT_COVARIATE
     if cov not in df_h.columns or cov not in df_p.columns:
         return []
@@ -4765,21 +4270,6 @@ def hr_family_available(df_h, df_p):
 
 
 def hr_adjusted_comparison(df_h, df_p, output_dir):
-    """Group differences with mean heart rate held constant.
-
-    Over a fixed 1800 s window beat count is heart rate (r = 0.9995), so every length-sensitive measure is
-    also heart-rate-sensitive. Heart rate is plausibly downstream of group membership, so an adjusted
-    estimate is a decomposition (the part of a difference not carried linearly by heart rate), not an
-    effect with a confounder removed.
-
-    Method: partial Spearman correlation of each measure with group, mean heart rate regressed out of both
-    by OLS with an intercept, residuals rank-correlated (regress, then rank). The unadjusted baseline is
-    the same statistic without a covariate; rank-biserial r is shown for orientation only. The adjusted
-    tests form their own BH family (HR_ADJUSTED_FAMILY).
-
-    Model-form sensitivity (not corrected): heart rate as a quadratic, the measure log-transformed (against
-    heart rate, and against log mean NN), and a fully rank-based partial; plus adjustment for beat count.
-    """
     members = hr_family_available(df_h, df_p)
     if not members:
         print("  Heart-rate-adjusted comparison skipped: covariate or measures "
@@ -4803,22 +4293,30 @@ def hr_adjusted_comparison(df_h, df_p, output_dir):
         r_rb, p_rb, n_h, n_p = _mw(df_h[m], df_p[m])
         r_u, p_u = spearmanr(y[ok], g[ok])
         r_lin, p_lin = partial_spearman(y, g, [hr])
-        r_quad, p_quad = partial_spearman(y, g, [hr, hr ** 2])
+        rk_hr = np.full_like(hr, np.nan)
+        rk_hr[np.isfinite(hr)] = rankdata(hr[np.isfinite(hr)])
+        rk_c = rk_hr - np.nanmean(rk_hr)
+        r_quad, p_quad = _rank_quadratic_partial(y, g, rk_c)
         positive = bool(np.all(y[ok] > 0))
-        if positive:
-            ly = np.full_like(y, np.nan)
-            ly[ok] = np.log(y[ok])
-            r_logy, p_logy = partial_spearman(ly, g, [hr])
-            r_loglog, p_loglog = partial_spearman(ly, g, [np.log(nn)])
-        else:
-            r_logy = p_logy = r_loglog = p_loglog = np.nan
-        r_rank, p_rank = _rank_partial(y, g, hr)
+        ys = np.full_like(y, np.nan)
+        ys[ok] = np.log(y[ok]) if positive else y[ok]
+        r_logy, p_logy = partial_pearson(ys, g, [hr])
+        r_loglog, p_loglog = partial_pearson(ys, g, [np.log(nn)])
         if beats is not None:
             r_beats, p_beats = partial_spearman(y, g, [beats])
         else:
             r_beats = p_beats = np.nan
-        forms = {"linear": r_lin, "quadratic": r_quad, "log_measure": r_logy,
-                 "log_log_meanNN": r_loglog, "rank": r_rank}
+        b0 = group_coefficient(ys, g)
+        b1 = group_coefficient(ys, g, [hr])
+        b_int = group_coefficient_interaction_p(ys, g, hr)
+        rho_c = spearmanr(pd.to_numeric(df_h[m], errors="coerce"),
+                          pd.to_numeric(df_h[HR_ADJUSTMENT_COVARIATE], errors="coerce"),
+                          nan_policy="omit")
+        rho_p = spearmanr(pd.to_numeric(df_p[m], errors="coerce"),
+                          pd.to_numeric(df_p[HR_ADJUSTMENT_COVARIATE], errors="coerce"),
+                          nan_policy="omit")
+        forms = {"rank": r_lin, "rank_quadratic": r_quad, "linear_model": r_logy,
+                 "linear_model_log_meanNN": r_loglog}
         fin = {k: v for k, v in forms.items() if np.isfinite(v)}
         weakest = min(fin, key=lambda k: abs(fin[k])) if fin else None
         strongest = max(fin, key=lambda k: abs(fin[k])) if fin else None
@@ -4828,27 +4326,28 @@ def hr_adjusted_comparison(df_h, df_p, output_dir):
             "N_Healthy": n_h, "N_Psych": n_p,
             "Healthy_Median": float(hv.median()), "Psych_Median": float(pv_.median()),
             "Healthy_SD": float(hv.std(ddof=1)), "Psych_SD": float(pv_.std(ddof=1)),
-            # For orientation only; not comparable with the partials.
             "r_rank_biserial": r_rb, "p_rank_biserial": p_rb,
-            # Baseline: partial Spearman with no covariate.
             "r_partial_unadjusted": float(r_u), "p_partial_unadjusted": float(p_u),
-            # Primary adjusted estimate; p_raw and p_adj are for this test.
             "r_partial_HR": float(r_lin),
             "p_raw": float(p_lin),
-            # Ratio of two estimates: descriptive only, no interval.
-            "pct_retained": (100.0 * r_lin / r_u
-                             if np.isfinite(r_u) and r_u != 0 else np.nan),
-            "r_HR_quadratic": r_quad, "p_HR_quadratic": p_quad,
-            "r_HR_log_measure": r_logy, "p_HR_log_measure": p_logy,
-            "r_HR_log_log_meanNN": r_loglog, "p_HR_log_log_meanNN": p_loglog,
-            "r_HR_rank_based": r_rank, "p_HR_rank_based": p_rank,
+            "r_HR_rank_quadratic": r_quad, "p_HR_rank_quadratic": p_quad,
+            "Linear_Model_Scale": "log" if positive else "raw",
+            "r_HR_linear_model": r_logy, "p_HR_linear_model": p_logy,
+            "r_HR_linear_model_log_meanNN": r_loglog,
+            "p_HR_linear_model_log_meanNN": p_loglog,
             "Model_Form_Weakest": weakest,
             "r_Model_Form_Weakest": fin.get(weakest, np.nan) if weakest else np.nan,
             "Model_Form_Strongest": strongest,
             "r_Model_Form_Strongest": fin.get(strongest, np.nan) if strongest else np.nan,
-            "Log_Forms_Note": ("" if positive else
-                               "not computed: measure takes non-positive values"),
             "r_partial_beats": r_beats, "p_partial_beats": p_beats,
+            "b_unadjusted": b0["b"], "b_unadjusted_lo": b0["lo"], "b_unadjusted_hi": b0["hi"],
+            "p_b_unadjusted": b0["p"],
+            "b_HR": b1["b"], "b_HR_lo": b1["lo"], "b_HR_hi": b1["hi"], "p_b_HR": b1["p"],
+            "pct_b_retained": (100.0 * b1["b"] / b0["b"]
+                               if np.isfinite(b0["b"]) and b0["b"] != 0 else np.nan),
+            "p_group_x_HR_interaction": b_int,
+            "rho_HR_within_controls": float(rho_c[0]), "p_rho_HR_within_controls": float(rho_c[1]),
+            "rho_HR_within_patients": float(rho_p[0]), "p_rho_HR_within_patients": float(rho_p[1]),
         })
     out = pd.DataFrame(rows)
     out["p_adj"] = benjamini_hochberg(out["p_raw"].values)
@@ -4859,23 +4358,21 @@ def hr_adjusted_comparison(df_h, df_p, output_dir):
     out.to_csv(path, index=False, float_format="%.8g")
     print(f"  Heart-rate-adjusted comparison ({len(out)} tests, BH within "
           f"family) -> {path}")
-    print(f"  {'metric':<21}{'unadj':>8}{'| HR':>8}{'p_adj':>10}{'kept':>7}"
-          f"   model forms")
+    print(f"  {'metric':<21}{'unadj':>8}{'| HR':>8}{'p_adj':>10}"
+          f"   model forms         within-group rho with HR")
     for _, rw in out.iterrows():
         print(f"  {rw['Metric']:<21}{rw['r_partial_unadjusted']:>+8.3f}"
-              f"{rw['r_partial_HR']:>+8.3f}{rw['p_adj']:>10.2g}"
-              f"{rw['pct_retained']:>6.0f}%   "
+              f"{rw['r_partial_HR']:>+8.3f}{rw['p_adj']:>10.2g}   "
               f"{rw['r_Model_Form_Weakest']:+.3f} to "
-              f"{rw['r_Model_Form_Strongest']:+.3f}")
+              f"{rw['r_Model_Form_Strongest']:+.3f}    "
+              f"{rw['rho_HR_within_controls']:+.2f} / "
+              f"{rw['rho_HR_within_patients']:+.2f}")
     print("    Heart rate is plausibly downstream of group: read the adjusted "
           "column as a decomposition, not as confounder control.")
     return out
 
 
 def meannn_normalised_comparison(df_h, df_p, output_dir):
-    """Amplitude measures divided by mean NN (band powers by its square) and compared between groups
-    (Sacha, 2014). A sensitivity analysis on measures already in the heart-rate family; not corrected again.
-    """
     if "HRV_MeanNN" not in df_h.columns or "HRV_MeanNN" not in df_p.columns:
         print("  Mean-NN normalisation skipped: HRV_MeanNN absent.")
         return None
@@ -4909,11 +4406,6 @@ def meannn_normalised_comparison(df_h, df_p, output_dir):
 
 
 def vlf_decomposition_report(df_h, df_p, output_dir):
-    """Distribution of total power across the three bands: VLF, LF and HF power, VLF/LF, LF/HF, and each
-    band's share of total power per subject. Shares do not sum to exactly one (the trapezoid between bands
-    belongs to the total only). VLF is integrated from the lowest resolved bin; its actual lower edge and
-    bin count are in the note. p values are uncorrected: these decompose measures tested elsewhere.
-    """
     need = ["VLF_Power_ms2", "LF_Power_ms2", "HF_Power_ms2", "Total_Power_ms2"]
     if any(c not in df_h.columns or c not in df_p.columns for c in need):
         print("  VLF decomposition skipped: band-power columns absent.")
@@ -4964,19 +4456,12 @@ def vlf_decomposition_report(df_h, df_p, output_dir):
         print(f"    {band_note}")
     return out
 
-
-# Nonlinear measures re-quantized inside compute_complexity_metrics().
 REQUANT_NONLINEAR = ("SampEn", "ApEn", "PermEn", "MSE_Mean",
                      "RQA_DET", "RQA_LAM", "RNA_ClusteringCoeff",
                      "RNA_Transitivity", "DFA_Alpha1", "DFA_Alpha2")
 
 
 def requantization_report(df_h, df_p, output_dir):
-    """Every measure at the native 1.000 ms resolution and on the MIT-BIH 7.8125 ms grid, side by side
-    (rank-biserial r in both columns). HRV-ACC comparison only; MIT-BIH is natively on this grid.
-
-    A second table reports RMSSD in grid steps and the resulting tie rates.
-    """
     bases = [b for b in list(REQUANT_NONLINEAR) + list(REQUANT_AMPLITUDE_SPECTRAL)
              if b in df_h.columns and b in df_p.columns
              and f"{b}_Q128" in df_h.columns and f"{b}_Q128" in df_p.columns]
@@ -5039,7 +4524,6 @@ def requantization_report(df_h, df_p, output_dir):
 
 
 def _entrypoint_order_selftest():
-    """Fail fast if a function run_comparison() needs is defined after the __main__ block."""
     import inspect as _inspect
     missing = [name for name in (
         "hr_adjusted_comparison", "meannn_normalised_comparison",
@@ -5066,18 +4550,10 @@ def _entrypoint_order_selftest():
             f"{missing}, which are not defined yet. Move the "
             "`if __name__ == \"__main__\":` block to the END of the file.")
 
-
 _entrypoint_order_selftest()
 
 
-# ---- Entry point ----
-# This block must stay at the end of the file, after every function it calls;
-# _entrypoint_order_selftest() checks this.
-
-
 if __name__ == "__main__":
-
-    # -- Primary comparison: HRV-ACC controls against patients (same device and protocol) --
     res_hrvacc = None
     if os.path.exists(HRVACC_HEALTHY_CSV):
         print("\n### PRIMARY (matched): HRV-ACC healthy vs psychiatric ###")
@@ -5093,7 +4569,6 @@ if __name__ == "__main__":
         print(f"\n[skip] HRV-ACC healthy CSV not found:\n        {HRVACC_HEALTHY_CSV}")
         print("       Run healthy_hrvacc.py first to enable the matched comparison.")
 
-    # -- MIT-BIH controls against patients --
     res_mitbih = None
     if os.path.exists(MITBIH_HEALTHY_CSV):
         print("\n### SUPPLEMENTAL: MIT-BIH NSR healthy vs psychiatric ###")
@@ -5107,7 +4582,6 @@ if __name__ == "__main__":
     else:
         print(f"\n[skip] MIT-BIH healthy CSV not found:\n        {MITBIH_HEALTHY_CSV}")
 
-    # -- Cross-control and three-group analyses (needs all three cohorts) --
     if res_hrvacc is not None and res_mitbih is not None:
         df_h_hrvacc, df_p, stats_hrvacc, _ = res_hrvacc
         df_h_mitbih, _,    stats_mitbih, _ = res_mitbih

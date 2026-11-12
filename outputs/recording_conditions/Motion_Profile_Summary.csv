@@ -1,0 +1,3 @@
+Group,N,Early_0_300_Median_mg,Window_600_2400_Median_mg,N_Early_Below_Window,N_First5_Below_40mg,Quietest_5min_Median_mg,Quietest_5min_Start_Median_min,Early_Group_r,Early_Group_p
+controls,30,93.2035,106.355,17,1,29.103,23,0.16,0.290472
+patients,30,109.728,114.697,15,1,37.9938,18,0.16,0.290472

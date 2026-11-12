@@ -1,13 +1,4 @@
-"""psych_hrvacc.py: run the pipeline on the 30 HRV-ACC patients (Polar H10 R-R intervals).
-
-Mirrors healthy_hrvacc.py: each record goes through pipeline.analyze_hrvacc_record(), with the same
-600 s skip and 1800 s window (both from pipeline.py). Radar charts are z-scored against the control
-cohort, read at run time from the control results file. The input is R-R intervals, so the
-diagnostic figure has R-R panels only.
-
-Usage: python psych_hrvacc.py   (after healthy_hrvacc.py)
-Writes outputs/psychiatric/, including ecg_results_Psychiatric.csv.
-"""
+"""psych_hrvacc.py: run the pipeline on the 30 HRV-ACC patients (Polar H10 R-R intervals)."""
 
 import os
 import numpy as np
@@ -24,7 +15,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# Shared pipeline functions
 from patient_metadata import attach_metadata, parse_metadata_file
 from pipeline import (
     analyze_hrvacc_record,
@@ -42,15 +32,11 @@ from pipeline import (
     plot_correlation_matrices,
     plot_radar_charts,
     plot_radar_comparison,
-    # Constants reused below
     VLF_BAND, LF_BAND, HF_BAND, BETA_FIT_BAND,
     INTERP_FS, PSD_BETA_R2_THRESHOLD,
     N_SURROGATES, SURROGATE_ALPHA,
     RADAR_METRICS, RADAR_LABELS,
 )
-
-
-# ---- Configuration ----
 
 BASE       = "Psychiatric ECGs"
 OUTPUT_DIR = os.path.join("outputs", "psychiatric")
@@ -60,26 +46,15 @@ TREATMENT_IDS = [
     24, 25, 26, 27, 29, 31, 32, 33, 36, 37, 38, 40, 41, 42,
 ]
 
-# Analysis window from pipeline.py (600 s skip, 1800 s window).
 SKIP_SECONDS     = PIPELINE_SKIP_SECONDS
 ANALYSIS_SECONDS = PIPELINE_ANALYSIS_SECONDS
 
-
-# Radar charts use the control cohort's mean and SD, read at run time by load_control_reference().
-# If the control results are absent the chart is self-normalized and a notice is printed; nothing
-# else depends on them.
-
-# ---- Control reference frame (radar chart only), read from the control results file ----
 HEALTHY_CSV_FOR_REFERENCE = os.path.join(
     "outputs", "healthy_hrvacc", "ecg_results_HealthyACC.csv")
 
 
 def load_control_reference(path=HEALTHY_CSV_FOR_REFERENCE,
                            metrics=RADAR_METRICS):
-    """Return (mean, sd) Series over the radar metrics from the control cohort.
-
-    Returns (None, None) if the control results are unavailable; the caller then self-normalizes.
-    """
     if not os.path.exists(path):
         print(f"  ! Control reference not found at {path}. "
               f"Run healthy_hrvacc.py first. Falling back to "
@@ -107,20 +82,13 @@ def load_control_reference(path=HEALTHY_CSV_FOR_REFERENCE,
               f"Falling back to self-normalisation.")
         return None, None
 
+HEALTHY_MEAN, HEALTHY_SD = None, None
 
-HEALTHY_MEAN, HEALTHY_SD = None, None    # populated in the entry point
-
-# ---- Step 1: CSV loader ----
 
 def analyze_psychiatric_record(filepath, plot=True,
                                run_surrogates=True,
                                verbose=True,
                                output_dir=OUTPUT_DIR):
-    """Analyze one HRV-ACC patient record.
-
-    A thin wrapper over pipeline.analyze_hrvacc_record(), the implementation shared with the control
-    cohort; only labels, output folder and plot color differ.
-    """
     return analyze_hrvacc_record(
         filepath, output_dir=output_dir, plot=plot,
         run_surrogates=run_surrogates, verbose=verbose,
@@ -131,13 +99,7 @@ def run_psychiatric_analysis(filepaths, plot=True,
                               run_surrogates=True,
                               save_csv=True,
                               output_dir=OUTPUT_DIR):
-    """Run the pipeline over all patient records.
-
-    Writes per-subject diagnostic, MSE and surrogate plots, a QA summary, cohort statistics,
-    correlation matrices, radar charts and ecg_results_Psychiatric.csv.
-    """
     os.makedirs(output_dir, exist_ok=True)
-    # Each cohort script writes its own environment record (see healthy_hrvacc.py).
     _write_environment_once(output_dir)
 
     all_results = []
@@ -157,14 +119,12 @@ def run_psychiatric_analysis(filepaths, plot=True,
 
     df = pd.DataFrame(all_results).set_index("Record_ID")
 
-    # -- Results table --
     print("\n" + "="*60 + "\n  PSYCHIATRIC RESULTS TABLE\n" + "="*60)
     with pd.option_context('display.max_columns', None,
                            'display.width', 130,
                            'display.float_format', '{:.4f}'.format):
         print(df.T.to_string())
 
-    # -- QA summary --
     qa_cols = ["Num_RR", "Artifact_Percent", "QC_RR_Count_OK",
                "QC_Artifact_OK", "QC_SampEn_Valid", "QC_MSE_Valid",
                "QC_DFA1_Valid", "QC_Overall_Pass"]
@@ -181,7 +141,6 @@ def run_psychiatric_analysis(filepaths, plot=True,
         failed = df.index[~df["QC_Overall_Pass"]].tolist()
         print(f"  Failed: {failed}" if failed else "  All records cleared QC.")
 
-    # -- Cohort stats --
     num_cols  = df.select_dtypes(include=[np.number]).columns.tolist()
     bool_cols = [c for c in df.columns if c.startswith("QC_")]
     stat_cols = [c for c in num_cols if c not in bool_cols]
@@ -197,7 +156,6 @@ def run_psychiatric_analysis(filepaths, plot=True,
                            'display.float_format', '{:.4f}'.format):
         print(stats_df.T.to_string())
 
-    # -- PSD slope fit quality --
     if "PSD_Beta" in df.columns and "PSD_Beta_R2" in df.columns:
         print("\n" + "="*60 + "\n  PSD BETA FIT QUALITY\n" + "="*60)
         print(df[["PSD_Beta", "PSD_Beta_R2"]]
@@ -221,10 +179,8 @@ def run_psychiatric_analysis(filepaths, plot=True,
         )
         plt.close()
 
-    # -- Correlation matrices --
     plot_correlation_matrices(df, output_dir)
 
-    # -- Radar charts, z-scored on the control reference (self-normalized if unavailable) --
     ref_m, ref_s = load_control_reference()
     if ref_m is None:
         print("  NOTE: psychiatric radar chart is SELF-normalised, not scaled "
@@ -236,9 +192,6 @@ def run_psychiatric_analysis(filepaths, plot=True,
         cohort_s=ref_s,
     )
 
-    # -- Subject-level metadata --
-    # Age, sex, ICD codes and quetiapine status are merged into the results file. If the metadata file
-    # is missing the run continues without these columns and says so; other errors are raised.
     try:
         df = attach_metadata(df, cohort="patient")
     except FileNotFoundError as exc:
@@ -251,7 +204,6 @@ def run_psychiatric_analysis(filepaths, plot=True,
         print(f"  WARNING: metadata could not be attached ({type(exc).__name__}"
               f": {exc}). Continuing without it.")
 
-    # -- CSV --
     if save_csv:
         csv_path  = os.path.join(output_dir, "ecg_results_Psychiatric.csv")
         df_export = pd.concat([df, stats_df])
@@ -261,16 +213,12 @@ def run_psychiatric_analysis(filepaths, plot=True,
     return df
 
 
-# ---- Entry point ----
-
 if __name__ == "__main__":
-
     filepaths = [
         os.path.join(BASE, f"treatment_{n}.csv")
         for n in TREATMENT_IDS
     ]
 
-    # Check that all files exist before the run starts.
     missing = [fp for fp in filepaths if not os.path.exists(fp)]
     if missing:
         print("WARNING — the following files were not found:")
@@ -282,9 +230,7 @@ if __name__ == "__main__":
     df_psychiatric = run_psychiatric_analysis(
         filepaths,
         plot=True,
-        run_surrogates=True,    # set False for a fast dry-run
+        run_surrogates=True,
         save_csv=True,
         output_dir=OUTPUT_DIR,
     )
-
-    # The control-against-patient radar overlay is drawn by comparison.py.

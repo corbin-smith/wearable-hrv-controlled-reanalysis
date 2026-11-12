@@ -1,8 +1,4 @@
-"""figures.py: main Figures 2 and 4 and the supplementary figures (HRV-ACC controls against patients, MIT-BIH as external controls).
-
-Usage: python figures.py   (writes outputs/figures/; main Figures 2 and 4 are Figure3_PSD_Curves and
-Figure8_CrossValidation)
-"""
+"""figures.py: main Figures 2 and 4 and the supplementary figures (HRV-ACC controls against patients, MIT-BIH as external controls)."""
 
 import os
 import warnings
@@ -13,7 +9,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import Patch
-from scipy.stats import mannwhitneyu, spearmanr
+from scipy.stats import mannwhitneyu, spearmanr, rankdata, t as t_dist
 from scipy.signal import welch
 from scipy.interpolate import interp1d
 
@@ -21,7 +17,6 @@ warnings.filterwarnings("ignore")
 
 
 def _first_existing(candidates, default=None):
-    """Return the first path in `candidates` that exists, else `default` (or the first candidate)."""
     for c in candidates:
         if c and os.path.exists(c):
             return c
@@ -40,7 +35,7 @@ MITBIH_HEALTHY_CSV = _first_existing([
     "ecg_results_Healthy.csv",
 ])
 
-# Summary CSVs (optional; a figure that needs a missing file is skipped with a note).
+
 def _summary(name):
     return _first_existing([
         os.path.join("outputs", "comparison", "healthy_hrvacc_vs_psych", name),
@@ -50,21 +45,16 @@ BOOTSTRAP_CSV = _summary("Bootstrap_Effect_Sizes.csv")
 COVARIATE_CSV = _summary("PSD_Beta_Covariate_Analysis.csv")
 SURROGATE_CSV = _summary("Surrogate_Nonlinearity_Summary.csv")
 
-# Activity and vagal covariate table from accelerometer_mobility.py (mobility-adjusted partial r for Figure 4).
 ACTIVITY_COV_CSV = _first_existing([
     os.path.join("outputs", "accelerometer", "Beta_Activity_Covariate.csv"),
     "Beta_Activity_Covariate.csv",
 ])
 
-# Band-by-band slope table for Figure 3B.
 BAND_SENS_CSV = _summary("PSD_Beta_Range_Sensitivity.csv")
 
-# Raw R-R folders for Figure 3 (one semicolon-separated CSV per subject, named by Record_ID); the
-# spectra use the pipeline's window, spectrum and slope fit.
 CONTROL_RR_DIR = _first_existing(["Control ECGs"], default="Control ECGs")
 PSYCH_RR_DIR   = _first_existing(["Psychiatric ECGs"], default="Psychiatric ECGs")
 
-# Analysis window constants come from pipeline.py.
 from pipeline import (SKIP_SECONDS as RR_SKIP_SECONDS,
                       ANALYSIS_SECONDS as RR_ANALYSIS_SECONDS)
 
@@ -72,12 +62,10 @@ OUTPUT_DIR = os.path.join("outputs", "figures")
 
 QC_COLUMN = "QC_Overall_Pass"
 
-
 C_HEALTHY  = "#0077BB"
 C_PSYCH    = "#CC3311"
 C_MITBIH   = "#009988"
 
-# Display names for the domain keys.
 DOMAIN_DISPLAY = {"HRV": "Time and frequency domain", "Scaling": "Spectral slope and DFA",
                   "Entropy": "Entropy", "RQA": "Recurrence"}
 
@@ -110,7 +98,6 @@ plt.rcParams.update({
     "savefig.dpi":           300,
     "savefig.bbox":          "tight",
 })
-
 
 METRIC_LABELS = {
     "PSD_Beta_NoMayer": "Slope β (band excised)",
@@ -173,17 +160,14 @@ METRIC_DOMAIN = {
     "RNA_Transitivity": "RQA",
 }
 
-# Figure 2 exemplars: measures that survived the control battery, plus one null (RQA determinism).
-# The full set, including every null, is in the effect-size figure.
 FIG2_METRICS = [
-    "HRV_RMSSD", "Total_Power_ms2",      # autonomic variability
-    "PSD_Beta", "PSD_Beta_NoMayer",      # spectral scaling, raw and Mayer-controlled
-    "DFA_Alpha2",                        # long-range correlation
-    "MFDFA_Width", "MFDFA_H2",           # multifractal scaling
-    "RQA_DET",                           # recurrence structure (null, shown honestly)
+    "HRV_RMSSD", "Total_Power_ms2",
+    "PSD_Beta", "PSD_Beta_NoMayer",
+    "DFA_Alpha2",
+    "MFDFA_Width", "MFDFA_H2",
+    "RQA_DET",
 ]
 
-# Short description shown under each Figure 2 panel title.
 FIG2_DOMAIN_TAG = {
     "HRV_RMSSD": "beat-to-beat variability", "Total_Power_ms2": "total variability",
     "PSD_Beta": "fitted 0.016\u20130.148 Hz", "PSD_Beta_NoMayer": "0.07\u20130.13 Hz excised",
@@ -192,16 +176,10 @@ FIG2_DOMAIN_TAG = {
     "RQA_DET": "recurrence structure",
 }
 
-# Correction families; these must match comparison.py so significance markings agree with the tables.
-# MFDFA_Asymmetry is undefined under positive-q-only estimation and is excluded.
 MFDFA_FAMILY = ["MFDFA_Width", "MFDFA_H_Mean", "MFDFA_H2"]
 RNA_FAMILY   = ["RNA_ClusteringCoeff", "RNA_Transitivity"]
-# Fixed by construction under exact-count recurrence thresholding: plotted, but in no correction family.
 DETERMINISTIC_CHECKS = ["RQA_REC", "RNA_MeanDegree"]
 
-
-# Excluded from the primary family as statistically redundant; must match STATISTICALLY_REDUNDANT in
-# comparison.py (ApEn correlates with SampEn at r = 0.98).
 STATISTICALLY_REDUNDANT = ["ApEn"]
 
 
@@ -213,16 +191,14 @@ def _metric_family(m):
     if m in RNA_FAMILY:
         return "RNA"
     if m in STATISTICALLY_REDUNDANT:
-        return "none"          # reported, never corrected within the family
+        return "none"
     return "primary"
 
 LABEL_TO_COL = {v: k for k, v in METRIC_LABELS.items()}
-# Map comparison.py's display labels too; they call the slope PSD beta.
 LABEL_TO_COL.update({"PSD \u03b2": "PSD_Beta", "PSD \u03b2 (Mayer excised)": "PSD_Beta_NoMayer"})
 
 
 def _load_cohort(path, label):
-    """Load a per-subject CSV, drop appended summary rows, apply QC filter."""
     if not os.path.exists(path):
         print(f"  [!] {label}: file not found at {path}")
         return None
@@ -243,7 +219,6 @@ def _load_cohort(path, label):
 
 
 def rank_biserial(h, p):
-    """Rank-biserial r from a Mann-Whitney U (positive => psychiatric higher)."""
     h = np.asarray(h, float); p = np.asarray(p, float)
     h = h[np.isfinite(h)]; p = p[np.isfinite(p)]
     if len(h) < 3 or len(p) < 3:
@@ -254,7 +229,6 @@ def rank_biserial(h, p):
 
 
 def benjamini_hochberg(pvals):
-    """Benjamini-Hochberg adjusted p values."""
     p = np.asarray(pvals, float)
     n = len(p)
     order = np.argsort(p)
@@ -269,7 +243,6 @@ def benjamini_hochberg(pvals):
 
 
 def _bh_selftest():
-    """Self-test of the BH implementation, as in comparison.py."""
     p = np.array([0.18577, 0.00023, 0.34029, 0.00081])
     expected = np.array([0.24769, 0.00092, 0.34029, 0.00162])
     got = benjamini_hochberg(p)
@@ -280,12 +253,10 @@ def _bh_selftest():
         "BH self-test failed: result is order-dependent"
     assert np.all(got >= p - 1e-12), "BH self-test failed: adjusted p < raw p"
 
-
 _bh_selftest()
 
 
 def compute_stats(df_h, df_p, metrics=METRIC_BATTERY):
-    """Per-metric Mann-Whitney + BH-FDR. Returns a DataFrame indexed by raw col."""
     rows = []
     for m in metrics:
         if m not in df_h.columns or m not in df_p.columns:
@@ -305,19 +276,15 @@ def compute_stats(df_h, df_p, metrics=METRIC_BATTERY):
             "r": r, "p_raw": pval,
         })
     res = pd.DataFrame(rows).set_index("metric")
-    # BH within each family separately, as in comparison.py.
     res["p_adj"] = np.nan
     for fam in res["family"].unique():
         if fam == "none":
-            continue          # deterministic: reported, never corrected
+            continue
         mask = res["family"] == fam
         res.loc[mask, "p_adj"] = benjamini_hochberg(res.loc[mask, "p_raw"].values)
-    res["sig"] = res["p_adj"] < 0.05          # NaN compares False, as intended
+    res["sig"] = res["p_adj"] < 0.05
 
-    # Family-size guard, also asserted by comparison._family_size_selftest(). The primary size is derived
-    # from the exclusion lists; MFDFA and RNA sizes are fixed by definition.
     fam_sizes = res["family"].value_counts().to_dict()
-    # Derived from this file's own battery and exclusion lists.
     _expected_primary = len([m for m in METRIC_BATTERY
                              if _metric_family(m) == "primary"])
     for name, expected in (("primary", _expected_primary),
@@ -330,10 +297,7 @@ def compute_stats(df_h, df_p, metrics=METRIC_BATTERY):
                 f"contradict the table.")
     return res
 
-
-# Main-text figures are drawn at final printed size (180 mm wide, 300 dpi, text at least 8 pt).
-# PRINT_RC is applied only inside those functions.
-PRINT_WIDTH_IN = 7.08          # 180 mm
+PRINT_WIDTH_IN = 7.08
 PRINT_RC = {"font.size": 8, "axes.labelsize": 8, "axes.titlesize": 8.5,
             "xtick.labelsize": 8, "ytick.labelsize": 8, "legend.fontsize": 8}
 
@@ -344,7 +308,6 @@ def _save(fig, name, tiff=False):
     for ext in exts:
         path = os.path.join(OUTPUT_DIR, f"{name}.{ext}")
         if ext == "tif":
-            # TIFF for submission: RGB, 300 dpi, LZW.
             fig.savefig(path, dpi=300, facecolor="white",
                         pil_kwargs={"compression": "tiff_lzw"})
         else:
@@ -361,7 +324,6 @@ def _save(fig, name, tiff=False):
 
 
 def figure1_effect_sizes(stats, bootstrap_csv=BOOTSTRAP_CSV):
-    """Horizontal bar chart of rank-biserial r for all metrics, sorted by |r|, with bootstrap 95% CIs as error bars."""
     ci_lo = {}; ci_hi = {}
     if os.path.exists(bootstrap_csv):
         boot = pd.read_csv(bootstrap_csv, index_col=0)
@@ -373,7 +335,6 @@ def figure1_effect_sizes(stats, bootstrap_csv=BOOTSTRAP_CSV):
         print(f"  [!] bootstrap CSV not found ({bootstrap_csv}); "
               "drawing bars without CIs.")
 
-    # RQA_REC and RNA_MeanDegree are constant by construction and are not drawn.
     df = stats.drop(index=[m for m in DETERMINISTIC_CHECKS if m in stats.index]).copy()
     df["abs_r"] = df["r"].abs()
     df = df.sort_values("abs_r", ascending=True)
@@ -387,7 +348,6 @@ def figure1_effect_sizes(stats, bootstrap_csv=BOOTSTRAP_CSV):
         sig = row["sig"]
         unfamilied = row["family"] == "none"
         if unfamilied:
-            # Outside every correction family (ApEn): outline only.
             ax.barh(i, row["r"], height=0.66, facecolor="white",
                     edgecolor="#777777", linewidth=0.8, zorder=2)
         else:
@@ -401,7 +361,6 @@ def figure1_effect_sizes(stats, bootstrap_csv=BOOTSTRAP_CSV):
             ax.plot([lo, hi], [i, i], color="#333333", lw=1.1, zorder=3)
             ax.plot([lo, lo], [i - 0.13, i + 0.13], color="#333333", lw=1.1, zorder=3)
             ax.plot([hi, hi], [i - 0.13, i + 0.13], color="#333333", lw=1.1, zorder=3)
-        # Value label just beyond the bar or its whisker, whichever is longer.
         end = row["r"]
         if np.isfinite(lo) and np.isfinite(hi):
             end = max(row["r"], hi) if row["r"] >= 0 else min(row["r"], lo)
@@ -437,7 +396,6 @@ def figure1_effect_sizes(stats, bootstrap_csv=BOOTSTRAP_CSV):
     leg._legend_box.align = "left"
 
     ax.text(0.99, 0.01,
-            # comparison.bootstrap_effect_sizes() uses 2,000 resamples per group, primary family only.
             "Error bars: bootstrap 95% CI (2,000 resamples; primary family only)",
             transform=ax.transAxes, ha="right", va="bottom",
             fontsize=6.8, color="#666666", style="italic")
@@ -447,7 +405,6 @@ def figure1_effect_sizes(stats, bootstrap_csv=BOOTSTRAP_CSV):
 
 
 def figure2_boxplots(df_h, df_p, stats):
-    """4×2 grid of box plots with jittered individual points for the 8 primary metrics."""
     fig, axes = plt.subplots(2, 4, figsize=(12.5, 6.6))
     axes = axes.flatten()
     rng = np.random.default_rng(7)
@@ -472,8 +429,6 @@ def figure2_boxplots(df_h, df_p, stats):
             ax.scatter(pos + jit, vals, s=22, color=col, alpha=0.75,
                        edgecolor="white", linewidth=0.4, zorder=3)
 
-        # Sensitivity variants (such as the baroreflex-excised slope) are not in the primary family; their
-        # statistics are computed here and marked as unadjusted.
         if m in stats.index:
             row = stats.loc[m]
         else:
@@ -505,7 +460,6 @@ def figure2_boxplots(df_h, df_p, stats):
         ax.plot([1, 1, 2, 2],
                 [ybr, ybr + rng_y * 0.03, ybr + rng_y * 0.03, ybr],
                 lw=1.0, color="#333333")
-        # Sensitivity variants show their raw p, marked as such.
         if pd.isna(row["p_adj"]):
             p_txt = ("p < 0.001 (uncorr.)" if row["p_raw"] < 0.001
                      else f"p = {row['p_raw']:.3f} (uncorr.)")
@@ -531,7 +485,6 @@ def figure2_boxplots(df_h, df_p, stats):
 
 
 def _rr_path_for(record_id):
-    """Map a Record_ID to its raw R-R CSV path via the filename-stem convention."""
     rid = str(record_id)
     if rid.startswith("treatment"):
         return os.path.join(PSYCH_RR_DIR, f"{rid}.csv")
@@ -545,8 +498,6 @@ def _rr_path_for(record_id):
 
 
 def _load_rr_windowed(record_id):
-    """Load raw R-R (ms), apply the pipeline's skip/analysis window, and return
-    (rr_seconds, rr_times_seconds) for the analysed segment, or None."""
     path = _rr_path_for(record_id)
     if path is None or not os.path.exists(path):
         return None
@@ -563,7 +514,6 @@ def _load_rr_windowed(record_id):
         return None
     rr_s = rr_ms / 1000.0
     cum = np.cumsum(rr_s)
-    # Half-open window, as in pipeline.load_rr_window.
     mask = (cum >= RR_SKIP_SECONDS) & (cum < RR_SKIP_SECONDS + RR_ANALYSIS_SECONDS)
     rr_win = rr_s[mask]
     t_win = cum[mask]
@@ -573,14 +523,10 @@ def _load_rr_windowed(record_id):
 
 
 def _subject_spectrum(record_id, reject, freqdom):
-    """Welch PSD for one subject, as in the pipeline: window, ectopic rejection, cubic-spline 4 Hz Welch.
-    Returns (freqs, power).
-    """
     loaded = _load_rr_windowed(record_id)
     if loaded is None:
         return None
     rr_win, t_win = loaded
-    # reject_ectopic_beats returns a fourth element (per-pass detail); unpack either form.
     _out = reject(rr_win, verbose=False)
     rr_clean = _out[0]
     if len(rr_clean) < 50:
@@ -592,13 +538,10 @@ def _subject_spectrum(record_id, reject, freqdom):
         return None
     if freqs is None or power is None or len(freqs) < 5:
         return None
-    # The pipeline's Welch PSD is in s^2/Hz; convert to ms^2/Hz for the axis label. Slopes and log
-    # residuals do not depend on the factor.
     return np.asarray(freqs, float), np.asarray(power, float) * 1e6
 
 
 def _parse_mean_sd(s):
-    """Parse a 'mean \u00b1 sd' string into (mean, sd) floats; (nan, nan) on failure."""
     try:
         a, b = str(s).replace("\u00b1", "|").split("|")
         return float(a), float(b)
@@ -607,9 +550,6 @@ def _parse_mean_sd(s):
 
 
 def _fitted_bins(band):
-    """The Welch bins inside a nominal band: bins sit at multiples of INTERP_FS / WELCH_NPERSEG
-    (0.0078 Hz), and the 0 Hz bin is never fitted. Labels show these bins, not the nominal edges.
-    """
     from pipeline import INTERP_FS, WELCH_NPERSEG
     step = INTERP_FS / WELCH_NPERSEG
     k_lo = max(1, int(np.ceil(band[0] / step - 1e-9)))
@@ -620,11 +560,10 @@ def _fitted_bins(band):
 def _band_short_label(variant):
     from pipeline import BETA_FIT_BAND, BETA_FIT_BAND_WIDE, BETA_FIT_BAND_FULL
     v = str(variant)
-    # Labeled 'Uncorrected': the slope reported first in the paper is the baroreflex-excised one.
-    for key, name, band in (("Primary", "Uncorrected", BETA_FIT_BAND),
+    for key, name, band in (("Primary", "Primary", BETA_FIT_BAND),
                             ("Wide", "Wide", BETA_FIT_BAND_WIDE),
                             ("Full", "Full", BETA_FIT_BAND_FULL),
-                            ("Linear", "Linear", BETA_FIT_BAND)):
+                            ("Linear", "Linear\ninterp.", BETA_FIT_BAND)):
         if key in v:
             lo, hi = _fitted_bins(band)
             return f"{name}\n{lo:.3f}\u2013\n{hi:.3f}"
@@ -632,10 +571,6 @@ def _band_short_label(variant):
 
 
 def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
-    """Two panels. (A) log-log R-R power spectra with the fitted band shaded and a guide slope at each
-    group's median. (B) the fitted slope across alternative frequency bands. Panel A needs the raw R-R
-    folders, panel B PSD_Beta_Range_Sensitivity.csv; a missing input leaves a short note in its panel.
-    """
     fit_band = (0.01, 0.15)
 
     spec_h, spec_p = {}, {}
@@ -661,7 +596,9 @@ def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
     fig, (ax, ax2) = plt.subplots(1, 2, figsize=(PRINT_WIDTH_IN, 3.7),
                                   gridspec_kw={"width_ratios": [1.12, 1.0], "wspace": 0.32})
 
-    # -- panel A: power spectra --
+    X_MAX_HZ = 0.5
+    visible_min = []
+
     def plot_group(df, specs, color, lab):
         if not specs:
             return
@@ -685,6 +622,9 @@ def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
         for sid, (f0, p0) in specs.items():
             good = (f0 > 0) & np.isfinite(p0) & (p0 > 0)
             ax.loglog(f0[good], p0[good], color=color, lw=0.4, alpha=0.16, zorder=1)
+            shown = good & (f0 <= X_MAX_HZ)
+            if shown.any():
+                visible_min.append(float(p0[shown].min()))
         mean_curve = np.nanmean(stacked, axis=0)
         ok = np.isfinite(mean_curve) & (mean_curve > 0)
         blab = (f"{lab}, median uncorrected \u03b2 {beta_med:.2f}"
@@ -707,7 +647,6 @@ def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
         _flo, _fhi = _fitted_bins(_fb)
         ax.axvspan(_flo, _fhi, color="#FFE9A8", alpha=0.45, zorder=0,
                    label=f"Fitted bins ({_flo:.3f}\u2013{_fhi:.3f} Hz)")
-        # The band removed for the excised slope.
         try:
             from pipeline import MAYER_BAND as _mb
         except Exception:                              # noqa: BLE001
@@ -715,6 +654,9 @@ def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
         ax.axvspan(_mb[0], _mb[1], facecolor="none", edgecolor="#9A9A9A", hatch="////",
                    lw=0.0, zorder=0.5,
                    label=f"Excised ({_mb[0]:.2f}\u2013{_mb[1]:.2f} Hz)")
+        ax.set_xlim(0.006, X_MAX_HZ)
+        if visible_min:
+            ax.set_ylim(bottom=10 ** np.floor(np.log10(min(visible_min))))
         ax.set_xlabel("Frequency (Hz)")
         ax.set_ylabel("Power spectral density (ms\u00b2/Hz)")
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), frameon=False,
@@ -726,7 +668,6 @@ def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
                 ha="center", va="center", fontsize=9, color="#888888")
     ax.set_title("(A) R-R power spectra by group", pad=6)
 
-    # -- panel B: slope across fitting bands --
     if band_csv and os.path.exists(band_csv):
         bs = pd.read_csv(band_csv).reset_index(drop=True)
         label_tops = []
@@ -752,11 +693,10 @@ def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
             except Exception:
                 pass
         ax2.set_xticks(range(len(bs)))
-        ax2.set_xticklabels([_band_short_label(v) for v in bs["Variant"]])
+        ax2.set_xticklabels([_band_short_label(v) for v in bs["Variant"]], fontsize=7.5)
         ax2.set_xlabel("Fitted range (Hz)")
         ax2.set_xlim(-0.75, len(bs) - 0.25)
         ax2.set_ylabel("Uncorrected slope \u03b2 (mean \u00b1 SD)")
-        # Legend below the axis and headroom above the r labels.
         if label_tops:
             lo_y, hi_y = ax2.get_ylim()
             ax2.set_ylim(lo_y, max(hi_y, max(label_tops) + 0.14))
@@ -774,29 +714,25 @@ def figure3_psd_curves(df_h, df_p, band_csv=BAND_SENS_CSV):
 
 
 def _ols_residual(y, X):
-    """Return residuals of y regressed on columns of X (with intercept)."""
     A = np.column_stack([np.ones(len(y))] + [X[:, j] for j in range(X.shape[1])])
     beta = np.linalg.lstsq(A, y, rcond=None)[0]
     return y - A @ beta
 
 
 def _partial_r_resid(beta, grp, cov):
-    """Partial Spearman of beta and group given covariates `cov` (n x k): both residualized on the
-    covariates by OLS (with intercept), then Spearman of the residuals. Returns (r, p).
-    """
     if cov is None or cov.shape[1] == 0:
         return spearmanr(beta, grp)
-    by = _ols_residual(beta, cov)
-    gy = _ols_residual(grp, cov)
-    return spearmanr(by, gy)
+    rc = np.column_stack([rankdata(cov[:, j]) for j in range(cov.shape[1])])
+    by = _ols_residual(rankdata(beta), rc)
+    gy = _ols_residual(rankdata(grp), rc)
+    r = float(np.corrcoef(by, gy)[0, 1])
+    dof = len(by) - 2 - rc.shape[1]
+    p = float(2.0 * t_dist.sf(abs(r * np.sqrt(dof / (1.0 - r ** 2))), dof))
+    return r, p
 
 
 def figure4_covariate(df_h, df_p, covariate_csv=COVARIATE_CSV,
                       activity_csv=ACTIVITY_COV_CSV):
-    """Three panels: (a) the unadjusted slope by group; (b) partial correlations under escalating
-    adjustment sets (heart rate, vagal power, activity, all jointly); (c) residual slope against residual
-    group after HF power. Mobility-adjusted values in (b) are read from the accelerometer output.
-    """
     need = ["PSD_Beta", "HRV_MeanHR", "HRV_RMSSD", "HF_Power_ms2"]
     have = [c for c in need if c in df_h.columns and c in df_p.columns]
     dh = df_h[have].dropna().copy(); dh["g"] = 0
@@ -808,7 +744,6 @@ def figure4_covariate(df_h, df_p, covariate_csv=COVARIATE_CSV,
     def col(name):
         return comb[name].to_numpy(float).reshape(-1, 1) if name in comb else None
 
-    # -- activity (mobility) partials from the accelerometer output --
     activity_lookup = {}
     if activity_csv and os.path.exists(activity_csv):
         a = pd.read_csv(activity_csv)
@@ -816,7 +751,6 @@ def figure4_covariate(df_h, df_p, covariate_csv=COVARIATE_CSV,
             activity_lookup[str(row["Analysis"]).strip()] = (
                 row.get("partial_r", np.nan), row.get("p", np.nan))
 
-    # -- adjustment models: (label, partial r, p) --
     forest = []
 
     def from_data(label, cov_names):
@@ -844,7 +778,6 @@ def figure4_covariate(df_h, df_p, covariate_csv=COVARIATE_CSV,
 
     fig, axes = plt.subplots(1, 3, figsize=(13.8, 4.7))
 
-    # (a) unadjusted slope by group
     ax = axes[0]
     rng = np.random.default_rng(3)
     for g, cc, lab in [(0, C_HEALTHY, "Control"), (1, C_PSYCH, "Patient")]:
@@ -861,12 +794,11 @@ def figure4_covariate(df_h, df_p, covariate_csv=COVARIATE_CSV,
     ax.grid(axis="y", color=C_GRID, lw=0.8)
     ax.legend(fontsize=7.5, loc="upper left")
 
-    # (b) partial correlations across adjustments
     ax = axes[1]
     labels = [f[0] for f in forest]
     rs = [f[1] for f in forest]
     ps = [f[2] for f in forest]
-    ys = np.arange(len(forest))[::-1]        # first entry at the top
+    ys = np.arange(len(forest))[::-1]
     for y, r, p, lab in zip(ys, rs, ps, labels):
         full = lab.startswith("| Activity + HF")
         color = "#222222" if full else C_PSYCH
@@ -885,23 +817,22 @@ def figure4_covariate(df_h, df_p, covariate_csv=COVARIATE_CSV,
                  fontsize=9)
     ax.grid(axis="x", color=C_GRID, lw=0.8)
 
-    # (c) residual scatter after HF power
     ax = axes[2]
     if "HF_Power_ms2" in comb:
         hf = col("HF_Power_ms2")
-        by = _ols_residual(beta, hf)
-        gy = _ols_residual(grp, hf)
-        colors = np.where(grp == 0, C_HEALTHY, C_PSYCH)
-        ax.scatter(gy, by, s=30, color=colors, alpha=0.75,
-                   edgecolor="white", linewidth=0.4)
-        b1 = np.polyfit(gy, by, 1)
-        xs = np.linspace(gy.min(), gy.max(), 50)
-        ax.plot(xs, np.polyval(b1, xs), color="#333333", lw=1.6, ls="--")
-        r_hf, p_hf = spearmanr(by, gy)
+        rhf = rankdata(hf).reshape(-1, 1)
+        by = _ols_residual(rankdata(beta), rhf)
+        r_hf, p_hf = _partial_r_resid(beta, grp, hf.reshape(-1, 1))
+        rng_j = np.random.default_rng(0)
+        for gi, colr in ((0, C_HEALTHY), (1, C_PSYCH)):
+            v = by[grp == gi]
+            ax.scatter(gi + rng_j.uniform(-0.12, 0.12, len(v)), v, s=30, color=colr,
+                       alpha=0.75, edgecolor="white", linewidth=0.4)
+            ax.plot([gi - 0.25, gi + 0.25], [v.mean(), v.mean()], color="#333333", lw=1.6)
         ax.axhline(0, color="#BBBBBB", lw=0.7)
-        ax.axvline(0, color="#BBBBBB", lw=0.7)
-        ax.set_xlabel("Residual group | HF power")
-        ax.set_ylabel("Residual slope \u03b2 | HF power")
+        ax.set_xticks([0, 1]); ax.set_xticklabels(["Control", "Patient"])
+        ax.set_xlim(-0.6, 1.6)
+        ax.set_ylabel("Residual rank of slope \u03b2 | rank of HF power")
         ax.set_title("(C) After HF power\npartial r = %+.2f, p = %.3f"
                      % (r_hf, p_hf), fontsize=9)
         ax.grid(color=C_GRID, lw=0.8)
@@ -917,7 +848,6 @@ def figure4_covariate(df_h, df_p, covariate_csv=COVARIATE_CSV,
 
 
 def figure5_surrogates(df_h, df_p, surrogate_csv=SURROGATE_CSV):
-    """Panel A: per-subject surrogate Z-scores (violin + points) for SampEn, DFA α₁, MSE Mean, control vs patient."""
     surr_cols = {
         "SURR_SampEn_Z": "Sample Entropy",
         "SURR_DFA_Alpha1_Z": "DFA \u03b1\u2081",
@@ -1003,13 +933,6 @@ def figure5_surrogates(df_h, df_p, surrogate_csv=SURROGATE_CSV):
 
 
 def figureS_mse_curves(df_h, df_p):
-    """Group mean multiscale-entropy curves with standard-error bands, and the number of subjects
-    contributing at each scale.
-
-    The curve shows level and shape, which the mean over scales cannot separate. Subjects with fewer
-    beats keep fewer scales, and beat count follows heart rate, so the count panel shows where the group
-    means are computed over different subjects.
-    """
     cols = [c for c in df_h.columns if c.startswith("MSE_Curve_Tau")]
     if not cols:
         print("  figureS_mse_curves skipped: MSE_Curve_Tau* columns absent "
@@ -1031,7 +954,6 @@ def figureS_mse_curves(df_h, df_p):
         m = vals.mean(axis=0).values
         sd = vals.std(axis=0, ddof=1).values
         n = vals.notna().sum(axis=0).values
-        # Standard error: the band shows uncertainty in the group mean.
         se = np.divide(sd, np.sqrt(np.maximum(n, 1)),
                        out=np.full_like(sd, np.nan), where=n > 0)
         t = [taus[cols.index(c)] for c in present]
@@ -1059,16 +981,13 @@ def figureS_mse_curves(df_h, df_p):
 
 
 def figure6_cross_validation(df_mitbih, df_hrvacc, df_psych):
-    """Every subject's excised spectral slope and RMSSD in the three cohorts, with group medians.
-    The age-adjusted cross-cohort statistics are in CrossDevice_AgeAdjusted.csv.
-    """
     groups = [("MIT-BIH\ncontrols", df_mitbih, C_MITBIH, "D"),
               ("HRV-ACC\ncontrols", df_hrvacc, C_HEALTHY, "o"),
               ("HRV-ACC\npatients", df_psych, C_PSYCH, "^")]
     panels = [("PSD_Beta_NoMayer", "(A) Spectral slope, baroreflex band excised",
                "Slope \u03b2 (0.07\u20130.13 Hz excised)", "{:.2f}"),
               ("HRV_RMSSD", "(B) RMSSD", "RMSSD (ms)", "{:.1f}")]
-    rng = np.random.default_rng(20261018)          # fixed: reproducible spread
+    rng = np.random.default_rng(20261018)
 
     _rc = plt.rc_context(PRINT_RC)
     _rc.__enter__()
@@ -1094,13 +1013,11 @@ def figure6_cross_validation(df_mitbih, df_hrvacc, df_psych):
         ax.set_xlim(-0.5, len(groups) - 0.35)
         ax.set_ylabel(ylab)
         ax.set_title(title, loc="left")
-    # Medians and horizontal spread are explained in the caption.
     _save(fig, "Figure8_CrossValidation", tiff=True)
     _rc.__exit__(None, None, None)
 
 
 def figure7_intercorrelation(df_h, df_p, stats):
-    """Two-panel Spearman correlation heatmap (control | patient) over the significant metrics, ordered by domain so the cluster structure is visible."""
     sig = stats.index[stats["sig"] & (stats["family"] == "primary")].tolist()
     domain_order = {"HRV": 0, "Scaling": 1, "Entropy": 2, "RQA": 3}
     sig = sorted(sig, key=lambda m: (domain_order.get(METRIC_DOMAIN.get(m), 9),
@@ -1147,7 +1064,6 @@ def figure7_intercorrelation(df_h, df_p, stats):
 
 
 def figure8_conceptual_synthesis():
-    """Conceptual schematic (not produced; DRAW_SYNTHESIS is False in main)."""
     from matplotlib.patches import FancyBboxPatch
     from matplotlib.patches import Patch as MPatch
 
@@ -1288,9 +1204,6 @@ def figure8_conceptual_synthesis():
 
 
 def figure6_classifier(n_perm=None):
-    """Classifier performance: (a) ROC curve for the nested leave-one-out model; (b) AUC under 1000 label
-    permutations, with the observed AUC marked. Recomputed from nested_classifier.
-    """
     try:
         import nested_classifier as nc
         from sklearn.metrics import roc_curve
@@ -1314,7 +1227,6 @@ def figure6_classifier(n_perm=None):
 
     fig, axes = plt.subplots(1, 2, figsize=(10.6, 4.7))
 
-    # (a) ROC
     ax = axes[0]
     fpr, tpr, _ = roc_curve(y, probs)
     ax.plot(fpr, tpr, color=C_PSYCH, lw=2.2,
@@ -1331,7 +1243,6 @@ def figure6_classifier(n_perm=None):
             (100 * acc, 100 * sens, 100 * spec),
             transform=ax.transAxes, fontsize=7.5, color="#555555")
 
-    # (b) permutation null
     ax = axes[1]
     ax.hist(null, bins=30, color="#BBBBBB", edgecolor="white",
             label="Shuffled-label AUC (null)")
@@ -1381,7 +1292,6 @@ def main():
     print("\n[fig 3] PSD curves")
     figure3_psd_curves(df_hrvacc, df_psych)
 
-    # Baroreflex (Mayer-band) diagnostic, drawn after the spectral figure.
     print("\n[fig M] Mayer-wave diagnostic (decides the headline claim)")
     figure_mayer_diagnostic(df_hrvacc, df_psych)
 
@@ -1394,7 +1304,6 @@ def main():
     print("\n[fig 5] surrogate testing")
     figure5_surrogates(df_hrvacc, df_psych)
 
-    # Group MSE curves; skipped with a notice if the per-scale columns are absent.
     figureS_mse_curves(df_hrvacc, df_psych)
 
     print("\n[fig 7] intercorrelation heatmaps")
@@ -1406,8 +1315,6 @@ def main():
     else:
         print("\n[fig 7] skipped — MIT-BIH cohort not available")
 
-    # -- Conceptual synthesis schematic: not produced --
-    # Its content predates the controlled analysis and does not describe the current results.
     DRAW_SYNTHESIS = False
     if DRAW_SYNTHESIS:
         print("\n[fig 9] conceptual synthesis schematic")
@@ -1425,9 +1332,6 @@ def main():
 
 
 def figure_mayer_diagnostic(df_h, df_p):
-    """Baroreflex (Mayer-band) diagnostic: group-mean spectra with the fitting band shaded, the aperiodic
-    fits drawn, and a residual panel showing deviation from the fit by frequency.
-    """
     import matplotlib.pyplot as plt
     from scipy.stats import linregress
 
@@ -1464,7 +1368,6 @@ def figure_mayer_diagnostic(df_h, df_p):
         m = (f0 >= 0.005) & (f0 <= 0.45)
         ax.loglog(f0[m], mean_p[m], color=colour, lw=2.0, label=label)
 
-        # Aperiodic fit with the Mayer band excluded, and its residual.
         fitm = ((f0 >= 0.01) & (f0 <= 0.15) &
                 ~((f0 >= 0.07) & (f0 <= 0.13)) & (mean_p > 0))
         if fitm.sum() >= 3:
@@ -1481,7 +1384,6 @@ def figure_mayer_diagnostic(df_h, df_p):
         print("  Mayer diagnostic skipped: per-subject spectra unavailable.")
         return None
 
-    # Shade the bins actually fitted: the lowest bin at or above 0.01 Hz is 0.0156 Hz.
     fit_lo, fit_hi = 0.015625, 0.1484
     for a in (ax, axr):
         a.axvspan(fit_lo, fit_hi, color="0.88", alpha=0.45, zorder=0)
@@ -1489,7 +1391,6 @@ def figure_mayer_diagnostic(df_h, df_p):
         a.tick_params(labelsize=9)
     axr.axhline(0.0, color="k", lw=0.8)
     ax.set_ylabel("PSD (ms$^2$/Hz, log scale)", fontsize=10)
-    # Titles state what is plotted.
     ax.set_title("Group-mean power spectra with fitted aperiodic components",
                  fontsize=10.5)
     ax.text(0.012, 0.97, "A", transform=ax.transAxes, fontsize=13,
@@ -1505,10 +1406,6 @@ def figure_mayer_diagnostic(df_h, df_p):
 
 
 def figure_beta_alpha_identity(df_h, df_p):
-    """Consistency check: for stationary fractional Gaussian noise, beta = 2*alpha - 1. Plots beta against
-    2*alpha2 - 1 per subject with the identity line; a group-dependent departure means that group's
-    spectra are less well described by a single power law.
-    """
     import matplotlib.pyplot as plt
     if "PSD_Beta" not in df_h.columns or "DFA_Alpha2" not in df_h.columns:
         print("  beta/alpha figure skipped: columns absent.")

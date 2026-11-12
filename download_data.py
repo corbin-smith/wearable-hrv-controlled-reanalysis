@@ -1,31 +1,20 @@
-"""download_data.py: fetch the MIT-BIH records and print the steps for the HRV-ACC data.
-
-The raw recordings are not part of this repository. Run once from the repository folder:
-
-    python download_data.py
-
-The 18 MIT-BIH Normal Sinus Rhythm records are downloaded from PhysioNet into "Long Healthy ECGs/".
-The HRV-ACC files (Zenodo, version 2) are downloaded by hand; the steps are printed below and in
-DATA_SETUP.md.
-"""
+"""download_data.py: fetch the MIT-BIH records and print the steps for the HRV-ACC data."""
 
 import os
 
-# The 18 MIT-BIH Normal Sinus Rhythm records (the full database; same list as in healthy.py).
 NSR_RECORDS = [
     "16265", "16272", "16273", "16420", "16483",
     "16539", "16773", "16786", "16795", "17052",
     "17453", "18177", "18184", "19088", "19090",
     "19093", "19140", "19830",
 ]
-NSR_DB_NAME = "nsrdb"                 # PhysioNet database slug
-NSR_TARGET_DIR = "Long Healthy ECGs"  # folder healthy.py reads from
+NSR_DB_NAME = "nsrdb"
+NSR_TARGET_DIR = "Long Healthy ECGs"
 
 HRVACC_DOI = "https://doi.org/10.5281/zenodo.21886112"
 
 
 def download_mitbih_nsr():
-    """Download each NSR record into 'Long Healthy ECGs/<id>/<id>.*'."""
     try:
         import wfdb
     except ImportError:
@@ -37,7 +26,6 @@ def download_mitbih_nsr():
     for rid in NSR_RECORDS:
         dest = os.path.join(NSR_TARGET_DIR, rid)
         os.makedirs(dest, exist_ok=True)
-        # .dat (signal) and .hea (header) are required; .atr (annotations) is optional.
         for fname in (f"{rid}.dat", f"{rid}.hea"):
             try:
                 wfdb.dl_files(NSR_DB_NAME, dest, [fname])
@@ -52,7 +40,6 @@ def download_mitbih_nsr():
 
 
 def print_zenodo_instructions():
-    """Print the steps for the HRV-ACC dataset."""
     print("=" * 72)
     print("HRV-ACC dataset, version 2 (Ksiazek et al.)  [download by hand]")
     print("=" * 72)

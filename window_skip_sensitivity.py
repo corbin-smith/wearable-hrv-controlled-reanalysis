@@ -1,13 +1,4 @@
-"""window_skip_sensitivity.py: recompute the main contrasts at each onset skip considered.
-
-The 600 s skip was chosen after inspecting patients' heart rates at skips of 60 and 360 s, so the
-spectral slopes (excised and low band), VLF/LF, SampEn, ApEn, RQA determinism, the two recurrence-
-network measures, mean heart rate, beat count and RMSSD are recomputed at all three skips, each over
-an 1800 s window. Surrogate tests are not repeated.
-
-Usage:  python window_skip_sensitivity.py --check
-        python window_skip_sensitivity.py --run
-"""
+"""window_skip_sensitivity.py: recompute the main contrasts at each onset skip considered."""
 import argparse
 import os
 import sys
@@ -35,7 +26,6 @@ COHORTS = {
 }
 OUT_DIR = os.path.join("outputs", "comparison")
 SKIPS = [60, 360, 600]
-# Window length comes from pipeline.py; the skip is swept here.
 ANALYSIS_SECONDS = PIPE_ANALYSIS
 PRIMARY_BAND = (0.01, 0.15)
 LOW_BAND = (0.01, 0.07)
@@ -59,13 +49,11 @@ def load_window(path, skip_s):
 
 
 def metrics_for(clean):
-    """Spectral, entropy and recurrence metrics for one cleaned R-R series."""
     out = {}
     out["Num_RR"] = int(len(clean))
     out["HRV_MeanHR"] = float(60.0 / np.mean(clean))
     out["HRV_RMSSD"] = float(np.sqrt(np.mean(np.diff(clean) ** 2)) * 1000.0)
 
-    # Spectral slope with the pipeline's Welch settings.
     t = np.cumsum(clean)
     grid = np.arange(t[0], t[-1], 1.0 / INTERP_FS)
     vals = interp1d(t, clean, kind="cubic", bounds_error=False,
@@ -78,9 +66,6 @@ def metrics_for(clean):
                                         exclude_band=MAYER_BAND)[0]
     out["PSD_Beta_low"] = _fit_beta(f, p, LOW_BAND)[0]
 
-    # VLF/LF with the pipeline's band integration (trapezoid over the bins in each band). The spectrum
-    # uses this script's time base (each interval placed at its end), so the 600 s row can differ slightly
-    # from the main-run values, as the slope rows do.
     def _band(lo_hi):
         idx = (f >= lo_hi[0]) & (f <= lo_hi[1])
         return np.trapezoid(p[idx], f[idx]) if idx.sum() > 1 else np.nan
@@ -203,7 +188,6 @@ def main():
                   f"{r['r_effect']:>9.3f}{r['p_raw']:>10.4f}")
         print()
 
-    # Stability of the two slope measures.
     print("=" * 72)
     print("  STABILITY")
     print("=" * 72)

@@ -1,0 +1,27 @@
+**Table 3. Group differences with mean heart rate held constant.**
+
+| Family | Measure | ρ with group, unadjusted [95% CI] | Partial ρ, heart rate held constant [95% CI] | p, adjusted | Change with adjustment [95% CI] | ρ with heart rate, controls | ρ with heart rate, patients |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Amplitude | RMSSD | −0.629 [−0.763, −0.456] | −0.492 [−0.674, −0.278] | <0.001 | +0.137 [+0.019, +0.295] | −0.654 | −0.368 |
+| Amplitude | SDNN | −0.574 [−0.736, −0.389] | −0.450 [−0.653, −0.200] | <0.001 | +0.124 [+0.032, +0.275] | −0.410 | −0.125 |
+| Amplitude | LF power | −0.701 [−0.818, −0.549] | −0.638 [−0.785, −0.449] | <0.001 | +0.062 [+0.007, +0.167] | −0.347 | +0.050 |
+| Amplitude | HF power | −0.604 [−0.753, −0.426] | −0.486 [−0.681, −0.273] | <0.001 | +0.118 [+0.026, +0.262] | −0.508 | −0.233 |
+| Amplitude | VLF power | −0.652 [−0.786, −0.489] | −0.547 [−0.726, −0.317] | <0.001 | +0.105 [+0.022, +0.245] | −0.558 | −0.097 |
+| Amplitude | Total power | −0.679 [−0.797, −0.528] | −0.590 [−0.744, −0.379] | <0.001 | +0.090 [+0.019, +0.217] | −0.535 | −0.017 |
+| Spectral distribution | VLF/LF ratio | +0.531 [+0.304, +0.724] | +0.569 [+0.362, +0.742] | <0.001 | +0.038 [−0.069, +0.139] | −0.113 | −0.296 |
+| Spectral distribution | LF/HF ratio | −0.164 [−0.401, +0.079] | −0.344 [−0.577, −0.076] | 0.011 | −0.180 [−0.323, −0.056] | +0.268 | +0.489 |
+| Spectral distribution | Slope, uncorrected | +0.577 [+0.366, +0.761] | +0.634 [+0.453, +0.784] | <0.001 | +0.057 [−0.038, +0.149] | −0.332 | −0.270 |
+| Spectral distribution | Slope, 0.07–0.13 Hz excised | +0.552 [+0.331, +0.740] | +0.619 [+0.445, +0.768] | <0.001 | +0.066 [−0.030, +0.169] | −0.425 | −0.189 |
+| Fractal scaling (DFA) | DFA α, full range | +0.412 [+0.179, +0.616] | +0.395 [+0.145, +0.611] | 0.003 | −0.017 [−0.147, +0.091] | +0.106 | −0.194 |
+| Fractal scaling (DFA) | DFA α₁ | −0.104 [−0.356, +0.158] | −0.354 [−0.576, −0.091] | 0.009 | −0.250 [−0.402, −0.114] | +0.472 | +0.503 |
+| Fractal scaling (DFA) | DFA α₂ | +0.522 [+0.300, +0.713] | +0.551 [+0.343, +0.728] | <0.001 | +0.030 [−0.077, +0.127] | −0.134 | −0.204 |
+| Entropy | Multiscale entropy | −0.427 [−0.620, −0.204] | −0.364 [−0.577, −0.112] | 0.007 | +0.063 [−0.037, +0.205] | −0.105 | −0.030 |
+| Entropy | Sample entropy | −0.294 [−0.526, −0.052] | −0.090 [−0.365, +0.198] | 0.583 | +0.205 [+0.068, +0.411] | −0.456 | −0.443 |
+| Entropy | Approximate entropy | −0.335 [−0.555, −0.092] | −0.152 [−0.425, +0.128] | 0.329 | +0.183 [+0.054, +0.384] | −0.428 | −0.390 |
+| Entropy | Permutation entropy | +0.346 [+0.087, +0.570] | +0.549 [+0.325, +0.704] | <0.001 | +0.202 [+0.082, +0.336] | −0.404 | −0.625 |
+| Recurrence | Determinism | +0.258 [+0.015, +0.489] | −0.028 [−0.304, +0.255] | 0.863 | −0.286 [−0.490, −0.116] | +0.538 | +0.576 |
+| Recurrence | Laminarity | +0.194 [−0.060, +0.435] | −0.134 [−0.395, +0.155] | 0.385 | −0.328 [−0.536, −0.146] | +0.562 | +0.627 |
+| Recurrence | Network clustering | +0.137 [−0.104, +0.381] | +0.023 [−0.295, +0.298] | 0.863 | −0.114 [−0.323, +0.006] | +0.632 | −0.010 |
+| Recurrence | Network transitivity | +0.252 [+0.000, +0.491] | +0.023 [−0.272, +0.314] | 0.863 | −0.229 [−0.445, −0.075] | +0.565 | +0.437 |
+
+ρ with group: Spearman correlation of the measure with group (positive = higher in patients). Partial ρ: the same correlation with mean heart rate held constant (measure, group and heart rate ranked; heart-rate ranks regressed out of both; residuals correlated). Without a covariate the partial ρ is the ρ in the first column, so the two columns are one statistic. Intervals are percentile bootstrap intervals (subjects resampled within group, 2,000 resamples), not corrected for multiplicity. Adjusted p: Benjamini–Hochberg within the 21 heart-rate-adjusted tests. Change: partial ρ minus ρ; an interval that excludes zero means the adjustment moved the estimate. The last two columns are the Spearman correlation of each measure with mean heart rate inside each group.

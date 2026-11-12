@@ -1,12 +1,4 @@
-"""mayer_residual_check.py: per-subject size of the baroreflex (Mayer-band) bump in the spectrum.
-
-For each subject: the PSD with the pipeline's Welch settings, a log-log line fitted over the slope's
-fitting band with 0.07-0.13 Hz excluded, and the mean and maximum log10 residual inside 0.07-0.13 Hz.
-This avoids both the group-mean spectrum and the peak model, whose fits often reach a parameter bound.
-
-Usage: python mayer_residual_check.py
-Writes outputs/comparison/Mayer_Residual_PerSubject.csv and prints the group comparison.
-"""
+"""mayer_residual_check.py: per-subject size of the baroreflex (Mayer-band) bump in the spectrum."""
 import os
 
 import numpy as np
@@ -33,7 +25,6 @@ RESULT_CSVS = {
                               "ecg_results_Psychiatric.csv"),
 }
 OUT_DIR = os.path.join("outputs", "comparison")
-# Analysis window constants come from pipeline.py.
 SKIP_SECONDS = PIPE_SKIP
 ANALYSIS_SECONDS = PIPE_ANALYSIS
 
@@ -75,8 +66,6 @@ def spectrum(record_id, cohort):
 
 
 def mayer_residual(f, p):
-    """Mean and max log10 residual inside the Mayer band, relative to a fit
-    that excluded that band."""
     ok = np.isfinite(f) & np.isfinite(p) & (f > 0) & (p > 0)
     f, p = f[ok], p[ok]
     band = (f >= BETA_FIT_BAND[0]) & (f <= BETA_FIT_BAND[1])

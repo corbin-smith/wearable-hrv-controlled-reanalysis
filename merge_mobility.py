@@ -1,7 +1,4 @@
-"""merge_mobility.py: copy the per-subject accelerometer mobility value into both HRV-ACC results files.
-
-Run after accelerometer_mobility.py and before comparison.py, which uses it as a covariate.
-"""
+"""merge_mobility.py: copy the per-subject accelerometer mobility value into both HRV-ACC results files."""
 import os
 import sys
 import pandas as pd
@@ -29,7 +26,6 @@ for path in TARGETS:
 
     df["mobility_mg"] = mob["mobility_mg"].reindex(df.index)
 
-    # Refuse to write if anything other than the new column changed.
     guarded = [c for c in before.columns if c != "mobility_mg"]
     changed = [c for c in guarded
                if not before[c].astype(str).equals(df[c].astype(str))]

@@ -1,16 +1,4 @@
-"""nested_classifier.py: classification of HRV-ACC controls against patients from the HRV measures.
-
-Feature selection runs inside each cross-validation training fold, so held-out subjects never inform
-it. Three models: (1) nested selection from the pre-specified feature pool; (2) a fixed five-domain
-model with no selection; (3) mean heart rate plus RMSSD, with and without the spectral slope
-(leave-one-out AUC, bootstrap interval on the difference with both models refitted per replicate).
-Also reported: repeated stratified k-fold AUC, a bootstrap AUC interval with the whole pipeline
-inside each replicate, and a label-permutation null.
-
-This separates treated, hospitalized patients from healthy volunteers; it is a methods comparison,
-not a diagnostic test.
-Usage: python nested_classifier.py   (writes outputs/classification/)
-"""
+"""nested_classifier.py: classification of HRV-ACC controls against patients from the HRV measures."""
 
 import os
 import numpy as np
@@ -22,13 +10,11 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 
-# ---- Configuration ----
 def _first_existing(cands, default=None):
     for c in cands:
         if c and os.path.exists(c):
             return c
     return default if default is not None else cands[0]
-
 
 HEALTHY_CSV = _first_existing([
     os.path.join("outputs", "healthy_hrvacc", "ecg_results_HealthyACC.csv"),
@@ -41,72 +27,46 @@ PSYCH_CSV = _first_existing([
 OUTPUT_DIR = os.path.join("outputs", "classification")
 QC_COLUMN = "QC_Overall_Pass"
 
-# -- Feature pool: the pre-specified primary battery, named explicitly --
-# Any name that is missing raises an error. Variants of the same measure (alternative slope
-# estimators, resolution controls) and diagnostics are not in the pool.
 PRIMARY_FEATURES = [
-    # Time domain
     "HRV_MeanNN", "HRV_SDNN", "HRV_RMSSD", "HRV_pNN50", "HRV_MeanHR",
     "HRV_SD1", "HRV_SD2", "HRV_SD1SD2",
-    # Frequency domain
     "LF_Power_ms2", "HF_Power_ms2", "Total_Power_ms2", "LF_HF_Ratio",
     "PSD_Beta",
-    # Entropy
     "SampEn", "ApEn", "PermEn", "MSE_Mean",
-    # Fractal scaling
     "DFA_Alpha", "DFA_Alpha1", "DFA_Alpha2",
-    # Recurrence
     "RQA_REC", "RQA_DET", "RQA_LAM",
 ]
 
-# Zero-information features, dropped with a printed note.
 MAX_MISSING_FRAC = 0.10
 
-# Measures that the resolution and length controls show to depend on the instrument; a model
-# without them is reported alongside the full one.
 ARTIFACT_DRIVEN = ["SampEn", "ApEn", "RQA_DET", "MSE_Mean"]
 
-# Excluded by name; RQA_REC is fixed at the target recurrence rate by construction.
 EXCLUDE_METRICS = ["RQA_REC",
                    "MFDFA_Width", "MFDFA_Asymmetry", "RNA_MeanDegree"]
 
-# Columns that are not physiological features.
 NON_FEATURE_SUBSTRINGS = ["QC", "Record", "SURR", "_R2", "Group",
                           "coverage", "mobility", "n_acc"]
 
-# Subject-level metadata (age, sex, diagnosis, quetiapine) are excluded: they exist for patients
-# only and would identify group membership.
 METADATA_COLUMNS = ["Age", "Sex", "Diagnosis", "ICD_Primary", "ICD_All",
                     "Patient_ID", "Comorbid_Codes", "Comorbid_Substance",
                     "Quetiapine"]
 
-# Five pre-specified measures, one per domain, for the fixed benchmark model.
 DOMAIN_FEATURES = ["HRV_RMSSD", "PSD_Beta", "DFA_Alpha2", "SampEn", "RQA_DET"]
 
-# Modelling choices fixed in advance.
-SELECT_ALPHA   = 0.05     # keep a metric if its training-set group p < this
-MIN_FEATURES   = 3        # if selection keeps fewer, back-fill to this many
-LOGREG_C       = 1.0      # inverse regularisation strength (fixed a priori)
-N_PERMUTATIONS = 1000     # shuffled-label repeats (a few minutes at 1000)
+SELECT_ALPHA   = 0.05
+MIN_FEATURES   = 3
+LOGREG_C       = 1.0
+N_PERMUTATIONS = 1000
 RANDOM_SEED    = 42
 
-# Repeated stratified k-fold gives a distribution of AUCs. Pooled leave-one-out AUC is biased
-# slightly low (each held-out subject shifts the training class balance), which is why its
-# permutation null sits below 0.5.
 N_SPLITS       = 5
 N_REPEATS      = 100
-# Two bootstrap counts: bootstrap_auc_ci reruns feature selection in every replicate (expensive);
-# bootstrap_delta_auc fits two fixed-feature models per replicate (cheap), so it uses more replicates.
-N_BOOTSTRAP       = 2000     # AUC interval; selection re-run per replicate
-N_BOOTSTRAP_DELTA = 10000    # incremental-AUC interval; fixed feature sets
-# Regularization strengths for the sensitivity sweep only; the primary result uses LOGREG_C = 1.0,
-# fixed in advance.
+N_BOOTSTRAP       = 2000
+N_BOOTSTRAP_DELTA = 10000
 LOGREG_C_SWEEP = (0.1, 1.0, 10.0)
 
 
-# ---- Data ----
 def load_data():
-    """Load both cohorts, keep QC-passing subjects, return (X_df, y, features)."""
     frames = []
     for path, grp in [(HEALTHY_CSV, 0), (PSYCH_CSV, 1)]:
         if path is None or not os.path.exists(path):
@@ -120,7 +80,6 @@ def load_data():
     if QC_COLUMN in data.columns:
         data = data[data[QC_COLUMN] == True]                    # noqa: E712
 
-    # Build the feature pool from the pre-specified battery.
     missing = [c for c in PRIMARY_FEATURES if c not in data.columns]
     if missing:
         raise KeyError(f"pre-specified features absent from the results: "
@@ -133,8 +92,6 @@ def load_data():
                            f"{leaked}. These identify group membership and "
                            f"must never be used as predictors.")
 
-    # Drop features with substantial missingness before complete-case filtering (the respiratory
-    # columns are missing by design for many subjects and would otherwise shrink the sample).
     n_total = len(data)
     sparse = [c for c in features
               if data[c].isna().sum() > MAX_MISSING_FRAC * n_total]
@@ -143,7 +100,6 @@ def load_data():
               f"{MAX_MISSING_FRAC:.0%} missing: {sparse}")
         features = [c for c in features if c not in sparse]
 
-    # Drop zero-variance and near-constant features (standardization would amplify float noise).
     def _degenerate(col):
         v = pd.to_numeric(data[col], errors="coerce")
         sd = v.std(ddof=1)
@@ -174,34 +130,25 @@ def load_data():
     return data, y, features
 
 
-# ---- Nested leave-one-out ----
 def _mwu_pvalues(Xtr, ytr):
-    """Two-sided Mann-Whitney p value for every column (vectorized, normal approximation, no tie correction).
-
-    Used only to rank features inside a training fold. Ignoring ties overstates p, so tied features
-    (such as zero-inflated pNN50) are slightly less likely to be selected.
-    """
     n = len(ytr)
     na = int(np.sum(ytr == 0))
     nb = int(np.sum(ytr == 1))
     if na == 0 or nb == 0:
         return np.ones(Xtr.shape[1])
     try:
-        ranks = rankdata(Xtr, axis=0)                 # scipy >= 1.10
+        ranks = rankdata(Xtr, axis=0)
     except TypeError:
-        ranks = np.apply_along_axis(rankdata, 0, Xtr)  # older scipy fallback
+        ranks = np.apply_along_axis(rankdata, 0, Xtr)
     Rb = ranks[ytr == 1].sum(axis=0)
     U = Rb - nb * (nb + 1) / 2.0
     mu = na * nb / 2.0
-    sigma = np.sqrt(na * nb * (n + 1) / 12.0)          # ties ignored (fine here)
+    sigma = np.sqrt(na * nb * (n + 1) / 12.0)
     z = (U - mu) / sigma
     return 2.0 * norm.sf(np.abs(z))
 
 
 def _select_features(Xtr, ytr, feature_names=None):
-    """Choose features from the training rows only: keep each with p < SELECT_ALPHA, back-filling with the
-    smallest p values up to MIN_FEATURES. Returns column indices.
-    """
     pvals = _mwu_pvalues(Xtr, ytr)
     keep = np.where(pvals < SELECT_ALPHA)[0]
     if len(keep) < MIN_FEATURES:
@@ -210,11 +157,6 @@ def _select_features(Xtr, ytr, feature_names=None):
 
 
 def nested_loo(X, y, feature_names, do_selection=True, fixed_idx=None, seed=RANDOM_SEED):
-    """Leave-one-out predicted patient probabilities, aligned with y.
-
-    With do_selection, features are chosen inside each fold; with fixed_idx, those columns are used.
-    Standardization is fitted on the training rows only.
-    """
     n = len(y)
     probs = np.full(n, np.nan)
     for i in range(n):
@@ -237,7 +179,6 @@ def nested_loo(X, y, feature_names, do_selection=True, fixed_idx=None, seed=RAND
 
 
 def score(y, probs):
-    """AUC, accuracy, sensitivity (patient recall), specificity (control recall)."""
     pred = (probs >= 0.5).astype(int)
     auc = roc_auc_score(y, probs)
     acc = float(np.mean(pred == y))
@@ -246,10 +187,8 @@ def score(y, probs):
     return auc, acc, sens, spec
 
 
-# ---- Permutation null ----
 def permutation_null(X, y, feature_names, observed_auc, n_perm=N_PERMUTATIONS,
                      seed=RANDOM_SEED):
-    """Rerun the nested pipeline on shuffled labels n_perm times. Returns (null_aucs, empirical_p)."""
     rng = np.random.default_rng(seed)
     null = np.empty(n_perm)
     for k in range(n_perm):
@@ -263,15 +202,8 @@ def permutation_null(X, y, feature_names, observed_auc, n_perm=N_PERMUTATIONS,
     return null, float(p)
 
 
-# ---- Repeated stratified k-fold ----
 def repeated_kfold_auc(X, y, feature_names, do_selection=True, fixed_idx=None,
                        n_splits=N_SPLITS, n_repeats=N_REPEATS, seed=RANDOM_SEED):
-    """Repeated stratified k-fold cross-validation, with any feature selection inside each training fold.
-
-    Returns (aucs, mean, lo95, hi95).
-    """
-    # One AUC per repeat: predictions are pooled across the folds of each repeat, and the interval is
-    # taken across repeats.
     rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats,
                                    random_state=seed)
     per_repeat_pred = np.full((n_repeats, len(y)), np.nan)
@@ -281,7 +213,6 @@ def repeated_kfold_auc(X, y, feature_names, do_selection=True, fixed_idx=None,
         Xtr, ytr = X[tr_idx], y[tr_idx]
         Xte, yte = X[te_idx], y[te_idx]
         if len(np.unique(yte)) < 2:
-            # Advance the repeat counter before skipping, so folds stay attributed to the right repeat.
             fold_counter += 1
             continue
         if fixed_idx is not None:
@@ -314,11 +245,6 @@ def repeated_kfold_auc(X, y, feature_names, do_selection=True, fixed_idx=None,
 
 def bootstrap_auc_ci(X, y, feature_names, n_boot=N_BOOTSTRAP, seed=RANDOM_SEED,
                      do_selection=True, fixed_idx=None):
-    """Bootstrap confidence interval for AUC with the whole pipeline inside each replicate.
-
-    Subjects are resampled with replacement; selection, scaling and fitting are rerun per replicate, and
-    out-of-bag subjects are scored.
-    """
     rng = np.random.default_rng(seed)
     n = len(y)
     aucs = []
@@ -352,16 +278,12 @@ def bootstrap_auc_ci(X, y, feature_names, n_boot=N_BOOTSTRAP, seed=RANDOM_SEED,
 
 def bootstrap_delta_auc(X, y, i_base, i_full, n_boot=N_BOOTSTRAP_DELTA,
                         seed=RANDOM_SEED):
-    """Bootstrap confidence interval on the AUC increment from adding a feature.
-
-    Both fixed-feature models are refitted inside every replicate and scored out of bag.
-    """
     rng = np.random.default_rng(seed)
     y = np.asarray(y)
     n = len(y)
     i_base = np.asarray(i_base)
     i_full = np.asarray(i_full)
-    deltas = []
+    deltas, auc_base, auc_full = [], [], []
     for _ in range(n_boot):
         idx = rng.integers(0, n, n)
         oob = np.setdiff1d(np.arange(n), np.unique(idx))
@@ -378,17 +300,26 @@ def bootstrap_delta_auc(X, y, i_base, i_full, n_boot=N_BOOTSTRAP_DELTA,
                 pr = clf.predict_proba(sc.transform(X[oob][:, cols]))[:, 1]
                 aucs.append(roc_auc_score(y[oob], pr))
             deltas.append(aucs[1] - aucs[0])
+            auc_base.append(aucs[0])
+            auc_full.append(aucs[1])
         except ValueError:
             continue
     deltas = np.asarray(deltas, dtype=float)
+    nan3 = {"mean": np.nan, "lo": np.nan, "hi": np.nan}
     if deltas.size == 0:
-        return np.nan, np.nan, np.nan, np.nan
+        return np.nan, np.nan, np.nan, np.nan, {"base": nan3, "full": nan3, "n": 0}
     lo, hi = np.percentile(deltas, [2.5, 97.5])
     p_two = 2.0 * min(float(np.mean(deltas <= 0)), float(np.mean(deltas >= 0)))
-    return float(deltas.mean()), float(lo), float(hi), min(p_two, 1.0)
+
+    def _summary(v):
+        v = np.asarray(v, dtype=float)
+        l, h = np.percentile(v, [2.5, 97.5])
+        return {"mean": float(v.mean()), "lo": float(l), "hi": float(h)}
+
+    oob = {"base": _summary(auc_base), "full": _summary(auc_full), "n": int(deltas.size)}
+    return float(deltas.mean()), float(lo), float(hi), min(p_two, 1.0), oob
 
 
-# ---- Main ----
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     data, y, features = load_data()
@@ -398,17 +329,14 @@ def main():
 
     rows = []
 
-    # Model 1: nested selection
     print("\n  [1] Nested feature-selection model (honest replacement)...")
     probs1 = nested_loo(X, y, features, do_selection=True)
     auc1, acc1, sens1, spec1 = score(y, probs1)
-    # How many features the selection typically kept.
     n_sel = int(np.median([len(_select_features(X[np.arange(len(y)) != i],
                                                 y[np.arange(len(y)) != i], features))
                            for i in range(len(y))]))
     print(f"      AUC {auc1:.3f}, acc {acc1:.1%}, sens {sens1:.1%}, "
           f"spec {spec1:.1%}  (median {n_sel} features/fold)")
-    # Report how many features selection kept; when nearly all are kept, nested and naive estimates agree by construction.
     frac_kept = n_sel / float(len(features)) if features else np.nan
     print(f"      selection kept {n_sel}/{len(features)} features "
           f"({frac_kept:.0%}) -> selection is "
@@ -436,7 +364,6 @@ def main():
                  "Note": "REPORT THIS INTERVAL; full pipeline inside each "
                          "bootstrap replicate, scored out-of-bag"})
 
-    # -- Model without instrument-dependent features --
     af = [c for c in features if c not in ARTIFACT_DRIVEN]
     if len(af) >= 5 and len(af) < len(features):
         idx_af = np.array([features.index(c) for c in af])
@@ -475,7 +402,6 @@ def main():
     null, p_perm = permutation_null(X, y, features, auc1)
     print(f"      shuffled-label AUC = {null.mean():.3f} +/- {null.std():.3f}; "
           f"empirical p = {p_perm:.4f}")
-    # A null below 0.5 reflects the known bias of pooled leave-one-out AUC.
     if null.mean() < 0.48:
         print("      NOTE: the null sits below 0.5. That is the known negative "
               "bias of pooled LOO AUC (each held-out prediction comes from a "
@@ -489,7 +415,6 @@ def main():
                  "Perm_p": round(p_perm, 4),
                  "Note": "honest replacement for the leaky 23-feature model"})
 
-    # Model 2: fixed five-domain benchmark
     dom = [f for f in DOMAIN_FEATURES if f in features]
     if len(dom) == len(DOMAIN_FEATURES):
         print("\n  [2] Fixed 5-domain model (no selection, nothing to leak)...")
@@ -514,7 +439,6 @@ def main():
         print("\n  [2] Fixed 5-domain model skipped (missing columns: "
               f"{[f for f in DOMAIN_FEATURES if f not in features]})")
 
-    # Model 3: incremental value of the spectral slope
     base = ["HRV_MeanHR", "HRV_RMSSD"]
     if all(f in features for f in base) and "PSD_Beta" in features:
         print("\n  [3] Incremental value of PSD beta...")
@@ -524,11 +448,15 @@ def main():
         pf = nested_loo(X, y, features, do_selection=False, fixed_idx=i_full)
         auc_b = roc_auc_score(y, pb)
         auc_f = roc_auc_score(y, pf)
-        d_mean, d_lo, d_hi, d_p = bootstrap_delta_auc(X, y, i_base, i_full)
+        d_mean, d_lo, d_hi, d_p, oob = bootstrap_delta_auc(X, y, i_base, i_full)
         print(f"      MeanHR+RMSSD AUC {auc_b:.3f}  ->  +PSD beta AUC {auc_f:.3f} "
               f"(delta {auc_f - auc_b:+.3f})")
         print(f"      bootstrap delta-AUC {d_mean:+.3f} "
               f"95% interval [{d_lo:+.3f}, {d_hi:+.3f}], p = {d_p:.3f}")
+        print(f"      out-of-bag AUC, MeanHR+RMSSD: {oob['base']['mean']:.3f} "
+              f"[{oob['base']['lo']:.3f}, {oob['base']['hi']:.3f}]; with PSD beta: "
+              f"{oob['full']['mean']:.3f} [{oob['full']['lo']:.3f}, {oob['full']['hi']:.3f}] "
+              f"({oob['n']} replicates)")
         if d_lo <= 0 <= d_hi:
             print("      The interval includes zero: the increment is NOT "
                   "distinguishable from zero at this sample size. Report it "
@@ -537,12 +465,19 @@ def main():
                      "Accuracy": np.nan, "Sensitivity": np.nan,
                      "Specificity": np.nan, "Median_features": 2,
                      "Perm_null_AUC_mean": np.nan, "Perm_p": np.nan,
-                     "Note": "baseline for incremental test"})
+                     "AUC_lo95": round(oob["base"]["lo"], 3),
+                     "AUC_hi95": round(oob["base"]["hi"], 3),
+                     "AUC_oob_mean": round(oob["base"]["mean"], 3),
+                     "Note": "baseline for incremental test; AUC is leave-one-out, "
+                             "the interval and AUC_oob_mean are out-of-bag bootstrap"})
         rows.append({"Model": "MeanHR + RMSSD + PSD_Beta (LOO)",
                      "AUC": round(auc_f, 3), "Accuracy": np.nan,
                      "Sensitivity": np.nan, "Specificity": np.nan,
                      "Median_features": 3, "Perm_null_AUC_mean": np.nan,
                      "Perm_p": np.nan,
+                     "AUC_lo95": round(oob["full"]["lo"], 3),
+                     "AUC_hi95": round(oob["full"]["hi"], 3),
+                     "AUC_oob_mean": round(oob["full"]["mean"], 3),
                      "Delta_AUC": round(auc_f - auc_b, 3),
                      "Delta_AUC_lo95": round(d_lo, 3),
                      "Delta_AUC_hi95": round(d_hi, 3),
@@ -550,7 +485,6 @@ def main():
                      "Note": f"delta AUC = {auc_f - auc_b:+.3f} vs baseline; "
                              f"bootstrap 95% CI [{d_lo:+.3f}, {d_hi:+.3f}]"})
 
-    # -- Provenance and caveats, written beside the results --
     _prov = [
         ("scaling_fitted_where", "inside each fold, on training data only"),
         ("feature_selection_where", "inside each fold"),

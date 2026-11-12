@@ -1,25 +1,4 @@
-"""recording_times_and_gaps.py: time of day and transmission gaps in the HRV-ACC recordings.
-
-Every HRV-ACC interval carries a time-of-day stamp ("Phone timestamp"). The pipeline builds beat time
-from the intervals, so a Bluetooth dropout joins the series across the gap. This script:
-
-1. maps each analysis window (600 s to 2400 s of beat time) to clock time with
-   accelerometer_mobility._rr_window_bounds and compares groups (Mann-Whitney, rank-biserial r with
-   U for controls; positive = later in the day in patients);
-2. finds gaps: excess = clock step - later interval; a gap is an excess above GAP_THRESHOLD_S. The
-   largest non-gap excess and the smallest gap are reported to show the threshold sits in an empty
-   range. A gap is in the window when the interval after it is;
-3. recomputes the 21 primary tests and the 21 heart-rate-adjusted tests (with comparison.py's
-   functions and BH correction) without the records that have a gap in the window. Full-sample values
-   must first reproduce group_comparison_stats.csv and HR_Adjusted_Comparison.csv. A conclusion
-   changes when significance after correction or the sign changes;
-4. repeats the exclusion for N_RANDOM random draws of as many controls and patients (seed 0) and
-   reports, per measure, the share of draws that change its conclusion.
-
-Usage: python recording_times_and_gaps.py
-Writes Recording_Times_Gaps.csv, Recording_Times_Gaps_Summary.csv and Gap_Exclusion_Sensitivity.csv
-in outputs/comparison/healthy_hrvacc_vs_psych/.
-"""
+"""recording_times_and_gaps.py: time of day and transmission gaps in the HRV-ACC recordings."""
 import os
 import sys
 
@@ -52,9 +31,9 @@ def record_info(rid):
     rr = rr[ok].to_numpy(dtype=float) / 1000.0
     clock = ACC._seconds_of_day(df[ts_col][ok])
     cum = np.cumsum(rr)
-    excess = np.diff(clock) - rr[1:]                 # excess[k] belongs to interval k + 1
+    excess = np.diff(clock) - rr[1:]
     after = np.arange(1, len(rr))
-    in_win = (cum[after] >= SKIP_S) & (cum[after] < SKIP_S + WINDOW_S)   # the pipeline's half-open window
+    in_win = (cum[after] >= SKIP_S) & (cum[after] < SKIP_S + WINDOW_S)
     gap = excess > GAP_THRESHOLD_S
     b = ACC._rr_window_bounds(rid)
     if b is None:
@@ -76,7 +55,6 @@ def record_info(rid):
 
 
 def families(df_h, df_p, drop):
-    """Primary and heart-rate-adjusted families on the per-subject results, without the records in drop."""
     h = df_h.drop(index=[i for i in drop if i in df_h.index])
     p = df_p.drop(index=[i for i in drop if i in df_p.index])
     prim = [m for m in CMP.PRIMARY_METRICS if m in h.columns and m in p.columns]
@@ -100,7 +78,6 @@ def main():
     if len(df_h) != 30 or len(df_p) != 30:
         sys.exit(f"expected 30 controls and 30 patients, found {len(df_h)} and {len(df_p)}")
 
-    # 1-2. clock times and gaps
     info = []
     for group, ids in (("control", df_h.index), ("patient", df_p.index)):
         for rid in ids.astype(str):
@@ -114,8 +91,6 @@ def main():
     min_gap = float(info.Min_Gap_s.min())
     if not max_nongap < GAP_THRESHOLD_S < min_gap:
         sys.exit(f"threshold {GAP_THRESHOLD_S} s does not separate jitter ({max_nongap:.2f} s) from gaps ({min_gap:.2f} s)")
-    # Each window's clock span minus its 1800 s beat-time span should equal the seconds lost to gaps, to
-    # within timestamp jitter; this checks the clock mapping and the gap detection against each other.
     info["Clock_Minus_Beat_s"] = info.Window_Clock_Minutes * 60.0 - WINDOW_S
     resid = (info.Clock_Minus_Beat_s - info.Missing_s_Window).abs()
     if resid.max() > 10.0:
@@ -142,7 +117,6 @@ def main():
                  "Gapfree_Clock_Minus_Beat_min_s": float(info.loc[info.Gaps_Window == 0, "Clock_Minus_Beat_s"].min()),
                  "Gapfree_Clock_Minus_Beat_max_s": float(info.loc[info.Gaps_Window == 0, "Clock_Minus_Beat_s"].max())})
 
-    # 3. sensitivity
     full = families(df_h, df_p, [])
     ref = pd.read_csv(os.path.join(OUT_DIR, "group_comparison_stats.csv"), index_col=0)
     for (fam, m), v in full.items():

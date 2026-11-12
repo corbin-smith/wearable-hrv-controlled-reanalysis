@@ -4,19 +4,19 @@ Series_N,2465.555556,2887.366667,0.559259,0.001350,group difference
 Resp_Peak_Freq,0.268415,0.319940,0.397959,0.050419,group difference
 Resp_Peak_Found (detection rate),0.777778,0.700000,,0.740070,detection rate (Fisher exact)
 Resp_Peak_Freq (detected subjects only),0.265625,0.343750,0.397959,0.050419,"DESCRIPTIVE: selected subset, not a covariate"
-PSD_Beta_NoMayer ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.312527,0.030567,JOINT 4-covariate adjustment
-PSD_Beta ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.347047,0.015663,JOINT 4-covariate adjustment
-PSD_Beta_low ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.328376,0.022686,JOINT 4-covariate adjustment
-VLF_LF_Ratio ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.353886,0.013602,JOINT 4-covariate adjustment
-PSD_Beta ~ Group | Num_RR,,,0.637447,0.000001,partial correlation
-PSD_Beta_NoMayer ~ Group | Num_RR,,,0.592993,0.000009,partial correlation
-PSD_Beta_low ~ Group | Num_RR,,,0.394659,0.005506,partial correlation
-DFA_Alpha2 ~ Group | Num_RR,,,0.602111,0.000006,partial correlation
-SampEn ~ Group | Num_RR,,,-0.242896,0.096214,partial correlation
-ApEn ~ Group | Num_RR,,,-0.288110,0.047056,partial correlation
-PermEn ~ Group | Num_RR,,,0.496268,0.000334,partial correlation
-MSE_Mean ~ Group | Num_RR,,,-0.325780,0.023846,partial correlation
-RQA_DET ~ Group | Num_RR,,,0.226179,0.122150,partial correlation
-RQA_LAM ~ Group | Num_RR,,,0.300920,0.037680,partial correlation
-RNA_ClusteringCoeff ~ Group | Num_RR,,,0.169837,0.248476,partial correlation
-RNA_Transitivity ~ Group | Num_RR,,,0.268407,0.065100,partial correlation
+PSD_Beta_NoMayer ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.255201,0.094547,JOINT 4-covariate adjustment
+PSD_Beta ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.289236,0.056876,JOINT 4-covariate adjustment
+PSD_Beta_low ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.296382,0.050758,JOINT 4-covariate adjustment
+VLF_LF_Ratio ~ Group | Age + Sex + HRV_MeanHR + HF_Power_ms2,,,0.381120,0.010697,JOINT 4-covariate adjustment
+PSD_Beta ~ Group | Num_RR,,,0.637307,0.000001,partial correlation
+PSD_Beta_NoMayer ~ Group | Num_RR,,,0.615572,0.000004,partial correlation
+PSD_Beta_low ~ Group | Num_RR,,,0.418929,0.003381,partial correlation
+DFA_Alpha2 ~ Group | Num_RR,,,0.620509,0.000003,partial correlation
+SampEn ~ Group | Num_RR,,,-0.322943,0.026824,partial correlation
+ApEn ~ Group | Num_RR,,,-0.386122,0.007347,partial correlation
+PermEn ~ Group | Num_RR,,,0.497422,0.000375,partial correlation
+MSE_Mean ~ Group | Num_RR,,,-0.357299,0.013680,partial correlation
+RQA_DET ~ Group | Num_RR,,,0.225118,0.128166,partial correlation
+RQA_LAM ~ Group | Num_RR,,,0.324117,0.026244,partial correlation
+RNA_ClusteringCoeff ~ Group | Num_RR,,,0.206961,0.162771,partial correlation
+RNA_Transitivity ~ Group | Num_RR,,,0.328724,0.024068,partial correlation
